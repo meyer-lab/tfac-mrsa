@@ -1,0 +1,27 @@
+pipeline {
+  agent { label 'docker' }
+  options {
+    timeout(time: 1, unit: 'HOURS')
+  }
+  stages {
+    stage('Clean/Setup') {
+      steps {
+        sh 'git submodule update --init --recursive && make clean'
+        sh 'make venv'
+      }
+    }
+    stage('Test/Build/Lint') {
+      steps {
+        sh 'make all -j 2'
+        cobertura coberturaReportFile: 'coverage.xml', failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
+        recordIssues qualityGates: [[threshold: 90, type: 'TOTAL', unstable: true]], tools: [pyLint(pattern: 'pylint.log')]
+      }
+    }
+  }
+  post {
+    always {
+      junit allowEmptyResults: true, testResults: 'junit.xml'
+      cleanWs cleanWhenFailure: false, cleanWhenNotBuilt: false, cleanWhenUnstable: false
+    }
+  }
+}

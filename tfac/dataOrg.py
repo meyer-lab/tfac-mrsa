@@ -10,7 +10,8 @@ def extractCopy(dupes = False):
     
     Returns:
             Order: Methylation, Gene Expression, Copy Number
-            List of length 3 containing 2D arrays with duplicate gene names and indices found
+            List of length 3 containing 3D arrays with 
+            duplicate gene names, indices, and # of dupes corresponding to each name
             Also returns # of duplicates in each data set
     '''
     data = extractData('data/GeneData_All.xlsx', 'A:C')
@@ -33,11 +34,13 @@ def extractCopy(dupes = False):
             
         copyData = []
         idxData = []
+        count = []
         for j in range(uData[0].size):
             if uData[2][j] != 1:
                 copyData.append(uData[0][j])
                 idxData.append(uData[1][j])
-        returnVal.append(np.array([copyData,idxData]))
+                count.append(uData[2][j])
+        returnVal.append(np.array([copyData,idxData,count]))
         
     if dupes:
         return returnVal, duplicates

@@ -8,3 +8,4 @@ pandoc-fignos
 pandoc-eqnos
 pandoc-tablenos
 weasyprint
+synapseclient

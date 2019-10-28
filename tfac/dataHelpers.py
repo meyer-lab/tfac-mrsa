@@ -1,11 +1,10 @@
 '''Contains function for importing data from and sending data to synapse'''
 
-import numpy as np
 import pandas as pd
 from synapseclient import Synapse
 
 
-def importData(username, password, data):
+def importData(username, password, data=None):
     '''Data Import from synapse
     ----------------------------------------------
     Parameters:
@@ -15,23 +14,23 @@ def importData(username, password, data):
             Synapse password
         data: string
             'Copy Number', 'Methylation', or 'Gene Expression'
-    
+
     Returns:
         df: DataFrame
             Data from the CCLE in data frame format
     '''
-    
+
     ## Input Checking
-    if data == None:
-        print('Try Again')
-        print('Enter:', 'Copy Number', 'Methylation', 'or Gene Expression')
-        return
+    if data is None:
+        print('Invalid Data Set')
+        print('Enter:', 'Copy Number,', 'Methylation,', 'or Gene Expression')
+        return None
     syn = Synapse()
     try:
         syn.login(username, password)
     except:
         print('Bad Username or Password')
-        return
+        return None
 
     ## Find Data
     if data == 'Copy Number':
@@ -40,5 +39,7 @@ def importData(username, password, data):
         data = syn.get('syn21033929')
     elif data == 'Gene Expression':
         data = syn.get('syn21033805')
-    
-    return pd.read_excel(data.path)
+
+    df = pd.read_excel(data.path)
+    syn.logout()
+    return df

@@ -1,7 +1,7 @@
 '''Contains function for importing data from and sending data to synapse'''
 
 import pandas as pd
-from synapseclient import Synapse, Project, Folder, File, Link
+from synapseclient import Synapse, File
 
 
 def importData(username, password, dataType=None):
@@ -40,7 +40,7 @@ def importData(username, password, dataType=None):
     elif data == 'Gene Expression All':
         data = syn.get('syn21089539')
 
-    df = pd.read_excel(data.path, index_col = 0)
+    df = pd.read_excel(data.path, index_col=0)
     syn.logout()
     return df
 
@@ -56,7 +56,6 @@ def exportData(username, password, data, nm):
             Pandas object containing the data to upload to synapse as an excel file
         name: String
             A name for the file in synapse
-    
     '''
     syn = Synapse()
     syn.login(username, password)
@@ -64,4 +63,3 @@ def exportData(username, password, data, nm):
     data.to_csv('data/file.csv')
     syn.store(File(path='file.csv', name=nm, parent=proj))
     syn.logout()
-    return

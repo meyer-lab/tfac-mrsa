@@ -5,22 +5,8 @@ import tensorly as tl
 from tensorly.decomposition import parafac, tucker
 from tensorly.metrics.regression import variance as tl_var
 
-tl.set_backend('numpy')
-
 def perform_parafac(tens, rank):
-    '''Run Canonical Polyadic Decomposition on a tensor
-    ---------------------------------------------------------
-    Parameters:
-        tens: numpy tensor
-            Data tensor with which to perform factorization
-        rank: int
-            Number of component vectors desired along each axis during factorization
-
-    Returns:
-        factors: list of numpy arrays (length: dimensionality of the tensor)
-            List of arrays containing the components for each axis (i.e. Factors[0] is the array containing the components for the first axis)
-
-    '''
+    '''Run Canonical Polyadic Decomposition on a tensor'''
     _, factors = parafac(tens, rank)
     return factors
 

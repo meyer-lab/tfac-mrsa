@@ -4,8 +4,10 @@ import numpy as np
 import pandas as pd
 from .dataHelpers import importData
 
+
 def extractData(filename, columns=None, row=0, col=None):
     return pd.read_excel(filename, header=row, index_col=col, usecols=columns)
+
 
 def extractGeneNames():
     '''
@@ -18,11 +20,12 @@ def extractGeneNames():
     data = extractData('data/GeneData_All.xlsx', 'A:C')
     data = data.to_numpy()
 
-    methylation = data[:13493,0].astype(str)
+    methylation = data[:13493, 0].astype(str)
     geneExp = data[:, 1].astype(str)
     copyNum = data[:23316, 2].astype(str)
 
     return methylation, geneExp, copyNum
+
 
 def extractCellLines():
     '''
@@ -41,6 +44,7 @@ def extractCellLines():
 
     return methylation, geneExp, copyNum
 
+
 def findCommonGenes():
     '''
     Finds the set of unique gene names from the copy number, methylation, and gene expression dataset
@@ -52,6 +56,7 @@ def findCommonGenes():
     commonGenes = reduce(np.intersect1d, (methylation, geneExp, copyNum))
     return commonGenes
 
+
 def findCommonCellLines():
     '''
     Finds the set of unique cell lines from the copy number, methylation, and gene expression dataset
@@ -62,6 +67,7 @@ def findCommonCellLines():
     methylation, geneExp, copyNum = extractCellLines()
     commonCellLines = reduce(np.intersect1d, (methylation, geneExp, copyNum))
     return commonCellLines
+
 
 def filterData():
     '''
@@ -94,7 +100,6 @@ def filterData():
     geneCLIndices = np.where(np.in1d(geneCL, commonCL))[0]
     copyCLIndices = np.where(np.in1d(copyCL, commonCL))[0]
 
-
     methFiltered = methValues[methGIndices, methCLIndices]
     geneFiltered = geneValues[geneGIndices, geneCLIndices]
     copyFiltered = copyValues[copyGIndices, copyCLIndices]
@@ -102,8 +107,6 @@ def filterData():
     methDF = pd.DataFrame(data=methFiltered, index=methIdx[methGIndices], columns=commonCL)
     geneDF = pd.DataFrame(data=geneFiltered, index=geneIdx[geneGIndices], columns=commonCL)
     copyDF = pd.DataFrame(data=copyFiltered, index=copyIdx[copyGIndices], columns=commonCL)
-
-
 
     # Use synapse.store with file and activity functions to upload filtered data to synapse
 
@@ -128,7 +131,7 @@ def extractCopy(dupes=False, cellLines=False):
     if dupes:
         duplicates = np.zeros(3)
 
-    returnVal = [] #creates list of 3 2D numpy arrays containing names and indices
+    returnVal = []  # creates list of 3 2D numpy arrays containing names and indices
     for i in range(len(data)):
         uData = np.unique(data[i], return_index=True, return_counts=True)
 
@@ -150,4 +153,4 @@ def extractCopy(dupes=False, cellLines=False):
     else:
         return returnVal
 
-#want to slice into array to create new datafile using indices
+# want to slice into array to create new datafile using indices

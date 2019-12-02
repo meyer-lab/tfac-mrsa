@@ -8,7 +8,7 @@ from .figureCommon import subplotLabel, getSetup
 from ..dataHelpers import makeTensor
 from ..tensor import calc_R2X_parafac, perform_parafac
 
-### Data Tensor Variable Gets Declared Here
+# Data Tensor Variable Gets Declared Here
 tensor = makeTensor('robertt', 'LukeKuechly59!')
 global_factors = perform_parafac(tensor, 2)
 
@@ -21,22 +21,23 @@ def makeFigure():
     ax[0].axis('off')  # blank out first axis for cartoon
     ax[1].axis('off')
 
-    ## R2X Plot
+    # R2X Plot
     R2X_figure(ax[2], tensor)
 
-    ## Cell Line Factor Plots
+    # Cell Line Factor Plots
     cellLinePlot(ax[3], global_factors[2], 1, 2)
 
-    ## Gene Factor Plots
+    # Gene Factor Plots
     genePlot(ax[4], global_factors[1], 1, 2)
 
-    ## Genetic Characteristic Plots
+    # Genetic Characteristic Plots
     characPlot(ax[5], global_factors[0], 1, 2)
 
     # Add subplot labels
     subplotLabel(ax)
 
     return f
+
 
 def R2X_figure(ax, tens):
     '''Create Parafac R2X Figure'''
@@ -51,6 +52,7 @@ def R2X_figure(ax, tens):
     ax.set_yticks([0, .2, .4, .6, .8, 1.0])
     ax.set_xticks(x_axis)
 
+
 def cellLinePlot(ax, factors, r1, r2):
     '''Plot Cell Lines (tensor axis 0) in factorization component space'''
     sns.scatterplot(factors[:, r1 - 1], factors[:, r2 - 1], ax=ax)
@@ -58,6 +60,7 @@ def cellLinePlot(ax, factors, r1, r2):
     ax.set_ylabel('Component ' + str(r2))
     ax.set_title('Cell Line Factors')
     setPlotLimits(ax, factors, r1, r2)
+
 
 def genePlot(ax, factors, r1, r2):
     '''Plot genes (tensor axis 1) in factorization component space'''
@@ -67,6 +70,7 @@ def genePlot(ax, factors, r1, r2):
     ax.set_title('Gene Factors')
     setPlotLimits(ax, factors, r1, r2)
 
+
 def characPlot(ax, factors, r1, r2):
     '''Plot the measured genetic characteristics (tensor axis 2) in component space'''
     sns.scatterplot(factors[:, r1 - 1], factors[:, r2 - 1], ax=ax, style=['Gene Expression', 'Copy Number', 'Methylation'])
@@ -74,6 +78,7 @@ def characPlot(ax, factors, r1, r2):
     ax.set_ylabel('Component ' + str(r2))
     ax.set_title('Genetic Characteristic Factors')
     setPlotLimits(ax, factors, r1, r2)
+
 
 def setPlotLimits(axis, factors, r1, r2):
     '''Set appropriate limits for the borders of each component plot'''

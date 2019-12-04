@@ -2,7 +2,7 @@
 from functools import reduce
 import numpy as np
 import pandas as pd
-from .dataHelpers import importData
+from dataHelpers import importData
 
 
 def extractData(filename, columns=None, row=0, col=None):
@@ -69,13 +69,10 @@ def findCommonCellLines():
     return commonCellLines
 
 
-def filterData():
+def filterData(methData, geneData, copyData):
     '''
     Pushes the filtered data to synapse :D
     '''
-    methData = importData('NilayShah', 'nilayisthebest', 'Methylation All')
-    geneData = importData('NilayShah', 'nilayisthebest', 'Gene Expression All')
-    copyData = importData('NilayShah', 'nilayisthebest', 'Copy Number All')
 
     methValues = np.array(methData.values)
     geneValues = np.array(geneData.values)
@@ -85,30 +82,39 @@ def filterData():
     geneIdx = np.array(geneData.index)
     copyIdx = np.array(copyData.index)
 
-    methG, geneG, copyG = extractGeneNames()
+#     methG, geneG, copyG = extractGeneNames()
     methCL, geneCL, copyCL = extractCellLines()
     commonG = findCommonGenes()
     commonCL = findCommonCellLines()
 
     # Find indices of common genes in full dataset
-    methGIndices = np.where(np.in1d(methG, commonG))[0]
-    geneGIndices = np.where(np.in1d(geneG, commonG))[0]
-    copyGIndices = np.where(np.in1d(copyG, commonG))[0]
+    methGIndices = np.where(np.in1d(methIdx, commonG))[0]
+    geneGIndices = np.where(np.in1d(geneIdx, commonG))[0]
+    copyGIndices = np.where(np.in1d(copyIdx, commonG))[0]
 
     # Find indices of common cell lines in full dataset
     methCLIndices = np.where(np.in1d(methCL, commonCL))[0]
     geneCLIndices = np.where(np.in1d(geneCL, commonCL))[0]
     copyCLIndices = np.where(np.in1d(copyCL, commonCL))[0]
 
-    methFiltered = methValues[methGIndices, methCLIndices]
-    geneFiltered = geneValues[geneGIndices, geneCLIndices]
-    copyFiltered = copyValues[copyGIndices, copyCLIndices]
+    methFiltered = methValues[methGIndices, :]
+    methFiltered = methFiltered[:, methCLIndices]
+
+    geneFiltered = geneValues[geneGIndices, :]
+    geneFiltered = geneFiltered[:, geneCLIndices]
+
+    copyFiltered = copyValues[copyGIndices, :]
+    copyFiltered = copyFiltered[:, copyCLIndices]
 
     methDF = pd.DataFrame(data=methFiltered, index=methIdx[methGIndices], columns=commonCL)
     geneDF = pd.DataFrame(data=geneFiltered, index=geneIdx[geneGIndices], columns=commonCL)
     copyDF = pd.DataFrame(data=copyFiltered, index=copyIdx[copyGIndices], columns=commonCL)
 
-    # Use synapse.store with file and activity functions to upload filtered data to synapse
+#     exportData('NilayShah', 'nilayisthebest', methDF, 'MethAligned')
+#     exportData('NilayShah', 'nilayisthebest', geneDF, 'GeneAligned')
+#     exportData('NilayShah', 'nilayisthebest', copyDF, 'CopyAligned')
+
+    return methDF, geneDF, copyDF
 
 
 def extractCopy(dupes=False, cellLines=False):
@@ -118,7 +124,7 @@ def extractCopy(dupes=False, cellLines=False):
     Returns:
             Order: Methylation, Gene Expression, Copy Number
             List of length 3 containing 3D arrays with
-            duplicate gene names, indices, and # of dupes corresponding to each name
+            duplicate EGIDs, indices, and # of dupes corresponding to each EGID
             Also returns # of duplicates in each data set
     '''
     if cellLines:

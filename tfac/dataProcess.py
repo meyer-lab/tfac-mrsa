@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import scale
 
 
 def cutMissingValues(data, threshold):
@@ -54,3 +55,9 @@ def cutMissingValues(data, threshold):
         cut_col_count += 1
 
     return (freshlyChopped)
+
+
+def normalize(data):
+    data_1 = scale(data[0, :, :])
+    data_2 = scale(data[1, :, :])
+    data_3 = scale(data[0, :, :])

@@ -60,4 +60,5 @@ def cutMissingValues(data, threshold):
 def normalize(data):
     data_1 = scale(data[0, :, :])
     data_2 = scale(data[1, :, :])
-    data_3 = scale(data[0, :, :])
+    data_3 = scale(data[2, :, :])
+    return np.array((data_1, data_2, data_3))

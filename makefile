@@ -26,5 +26,8 @@ coverage.xml: venv
 pylint.log: venv
 	. venv/bin/activate && (pylint --rcfile=./common/pylintrc tfac > pylint.log || echo "pylint exited with $?")
 
+style.csl:
+	curl -o $@ https://www.zotero.org/styles/plos-computational-biology
+
 clean:
-	rm -rf coverage.xml junit.xml output venv
+	rm -rf coverage.xml junit.xml output venv style.csl

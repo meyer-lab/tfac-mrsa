@@ -38,7 +38,8 @@ def extractCellLines():
     '''
     data = extractData('data/CellLines_All.xlsx', 'A:C')
     data = data.to_numpy()
-
+    if cut:
+        methylation
     methylation = data[:843, 0].astype(str)
     geneExp = data[:1019, 1].astype(str)
     copyNum = data[:, 2].astype(str)
@@ -46,27 +47,25 @@ def extractCellLines():
     return methylation, geneExp, copyNum
 
 
-def findCommonGenes():
+def findCommonGenes(methIdx, geneIdx, copyIdx):
     '''
     Finds the set of unique gene names from the copy number, methylation, and gene expression dataset
 
     Returns:
             Numpy array of unique common gene names
     '''
-    methylation, geneExp, copyNum = extractGeneNames()
-    commonGenes = reduce(np.intersect1d, (methylation, geneExp, copyNum))
+    commonGenes = reduce(np.intersect1d, (methIdx, geneIdx, copyIdx))
     return commonGenes
 
 
-def findCommonCellLines():
+def findCommonCellLines(methCL, geneCL, copyCL):
     '''
     Finds the set of unique cell lines from the copy number, methylation, and gene expression dataset
 
     Returns:
             Numpy array of unique common cell lines
     '''
-    methylation, geneExp, copyNum = extractCellLines()
-    commonCellLines = reduce(np.intersect1d, (methylation, geneExp, copyNum))
+    commonCellLines = reduce(np.intersect1d, (methCL, geneCL, copyCL))
     return commonCellLines
 
 
@@ -83,10 +82,16 @@ def filterData(methData, geneData, copyData):
     geneIdx = np.array(geneData.index)
     copyIdx = np.array(copyData.index)
 
-#     methG, geneG, copyG = extractGeneNames()
-    methCL, geneCL, copyCL = extractCellLines()
-    commonG = findCommonGenes()
-    commonCL = findCommonCellLines()
+    methCL = np.array(methData.columns)
+    geneCL = np.array(geneData.columns)
+    copyCL = np.array(copyData.columns)
+
+    
+
+#   methG, geneG, copyG = extractGeneNames()
+#   methCL, geneCL, copyCL = extractCellLines(cut, methCell)
+    commonG = findCommonGenes(methIdx, geneIdx, copyIdx)
+    commonCL = findCommonCellLines(methCL, geneCL, copyCL)
 
     # Find indices of common genes in full dataset
     methGIndices = np.where(np.in1d(methIdx, commonG))[0]

@@ -33,8 +33,7 @@ def importData(username, password, dataType=None):
         print('Bad Username or Password')
         return None
 
-
-    ## Find Data
+    # Find Data
     if dataType == 'Copy Number All':
         data = syn.get('syn21089502')
     elif dataType == 'Methylation All':

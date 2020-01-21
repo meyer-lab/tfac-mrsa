@@ -86,7 +86,6 @@ def filterData(methData, geneData, copyData):
     geneCL = np.array(geneData.columns)
     copyCL = np.array(copyData.columns)
 
-    
 
 #   methG, geneG, copyG = extractGeneNames()
 #   methCL, geneCL, copyCL = extractCellLines(cut, methCell)

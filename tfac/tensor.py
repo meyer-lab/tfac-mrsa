@@ -2,7 +2,7 @@
 Contains functions having to do wth tensor decomposition
 '''
 import tensorly as tl
-from tensorly.decomposition import parafac, tucker
+from tensorly.decomposition import parafac
 from tensorly.metrics.regression import variance as tl_var
 
 

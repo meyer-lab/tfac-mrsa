@@ -2,15 +2,9 @@
 This creates Figure 1.
 """
 import numpy as np
-import tensorly as tl
 import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
-from ..dataHelpers import makeTensor
-from ..tensor import calc_R2X_parafac, perform_parafac
-
-# Data Tensor Variable Gets Declared Here
-tensor = makeTensor('robertt', 'LukeKuechly59!')
-global_factors = perform_parafac(tensor, 2)
+from ..tensor import calc_R2X_parafac
 
 
 def makeFigure():
@@ -20,18 +14,6 @@ def makeFigure():
 
     ax[0].axis('off')  # blank out first axis for cartoon
     ax[1].axis('off')
-
-    # R2X Plot
-    R2X_figure(ax[2], tensor)
-
-    # Cell Line Factor Plots
-    cellLinePlot(ax[3], global_factors[2], 1, 2)
-
-    # Gene Factor Plots
-    genePlot(ax[4], global_factors[1], 1, 2)
-
-    # Genetic Characteristic Plots
-    characPlot(ax[5], global_factors[0], 1, 2)
 
     # Add subplot labels
     subplotLabel(ax)

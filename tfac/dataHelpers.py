@@ -1,9 +1,13 @@
 '''Contains function for importing data from and sending data to synapse'''
 import numpy as np
 import pandas as pd
+import os
 import tqdm
+import h5py
 from synapseclient import Synapse, File
 from .dataProcess import normalize
+
+path = os.path.dirname(os.path.abspath(__file__))
 
 
 def importData(username, password, dataType=None):
@@ -97,9 +101,25 @@ def makeTensor(username, password):
     return normalize(np.stack((gene_expression.values[:, 1:], copy_number.values[:, 1:], methylation.values[:, 1:])))
 
 def getCellLineComps():
-    with h5py.File("tfac/data/HDF5/cell_comps_20.hdf5", 'r') as f:
+    '''Import cell line components --- rank 25 cp'''
+    filename = os.path.join(path, './data/HDF5/cell_comps_25.hdf5')
+    with h5py.File(filename, 'r') as f:
         data = f["comps"][:]
         f.close()
-    if np.shape(data) != (807, 20):
-        data = data.T
-    return data
+    return data.T
+
+def getGeneComps():
+    '''Import gene components --- rank 25 cp'''
+    filename = os.path.join(path, './data/HDF5/gene_comps_25.hdf5')
+    with h5py.File(filename, 'r') as f:
+        data = f["comps"][:]
+        f.close()
+    return data.T
+
+def getCharacteristicComps():
+    '''Import characteristic components --- rank 25 cp'''
+    filename = os.path.join(path, './data/HDF5/measurement_comps_25.hdf5')
+    with h5py.File(filename, 'r') as f:
+        data = f["comps"][:]
+        f.close()
+    return data.T

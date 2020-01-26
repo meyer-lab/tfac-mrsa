@@ -3,6 +3,7 @@ import numpy as np
 import numpy.ma as ma
 import pandas as pd
 
+
 def cutMissingValues(data, threshold):
     ''' Function takes in data and cuts rows & columns
     that have more missing values than the threshold set.
@@ -25,20 +26,18 @@ def cutMissingValues(data, threshold):
     for _ in range(len(cols)):
         masked_cols.append(0)
 
-
     uncutData = pd.DataFrame.to_numpy(data)
 
     cutData = uncutData
     data_size = uncutData.shape
 
-    limit_rows = (1 - threshold)*data_size[1]
-    limit_cols = (1 - threshold)*data_size[0]
+    limit_rows = (1 - threshold) * data_size[1]
+    limit_cols = (1 - threshold) * data_size[0]
 
     cut_row_count = 0
     cut_col_count = 0
 
-
-    #cut along genes
+    # cut along genes
     for row_name in range(data_size[0]):
         count = 0
         for col_name in range(data_size[1]):
@@ -50,7 +49,7 @@ def cutMissingValues(data, threshold):
             cut_row_count -= 1
         cut_row_count += 1
 
-    #cut along cell lines
+    # cut along cell lines
     data_size = cutData.shape
     freshlyChopped = cutData
 

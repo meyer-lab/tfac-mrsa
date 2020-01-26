@@ -100,6 +100,7 @@ def makeTensor(username, password):
     syn.logout()
     return normalize(np.stack((gene_expression.values[:, 1:], copy_number.values[:, 1:], methylation.values[:, 1:])))
 
+
 def getCellLineComps():
     '''Import cell line components --- rank 25 cp'''
     filename = os.path.join(path, './data/HDF5/cell_comps_25.hdf5')
@@ -108,6 +109,7 @@ def getCellLineComps():
         f.close()
     return data.T
 
+
 def getGeneComps():
     '''Import gene components --- rank 25 cp'''
     filename = os.path.join(path, './data/HDF5/gene_comps_25.hdf5')
@@ -115,6 +117,7 @@ def getGeneComps():
         data = f["comps"][:]
         f.close()
     return data.T
+
 
 def getCharacteristicComps():
     '''Import characteristic components --- rank 25 cp'''

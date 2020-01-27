@@ -5,7 +5,7 @@ import os
 import tqdm
 import h5py
 from synapseclient import Synapse, File
-from .dataProcess import normalize
+from dataProcess import normalize
 
 path = os.path.dirname(os.path.abspath(__file__))
 

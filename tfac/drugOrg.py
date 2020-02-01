@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from functools import reduce
+from dataHelpers import getCellLineComps
 
 
 def importDrugs():
@@ -11,10 +12,13 @@ def importDrugs():
             List of length 24 where each element defines a single compound as a 2D numpy array
     '''
     drugData = pd.read_csv('data/DrugData.csv', header=0, index_col=False).values
-    drugIdx = np.unique(drugData[:, 2], return_index=True)[1]
-    drugArr = np.split(drugData, drugIdx[1:])
+    drugs = np.unique(drugData[:, 2])
+    drugList = []
+    for drug in drugs:
+        drugIdx = np.where(np.in1d(drugData[:,2], drug))[0]
+        drugList.append(drugData[drugIdx,:])
 
-    return drugArr
+    return drugList
 
 
 def tempFilter(drugData):

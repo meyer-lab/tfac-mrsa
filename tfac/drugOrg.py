@@ -15,8 +15,8 @@ def importDrugs():
     drugs = np.unique(drugData[:, 2])
     drugList = []
     for drug in drugs:
-        drugIdx = np.where(np.in1d(drugData[:,2], drug))[0]
-        drugList.append(drugData[drugIdx,:])
+        drugIdx = np.where(np.in1d(drugData[:, 2], drug))[0]
+        drugList.append(drugData[drugIdx, :])
 
     return drugList
 

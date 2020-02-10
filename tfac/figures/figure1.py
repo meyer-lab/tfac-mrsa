@@ -5,6 +5,11 @@ import numpy as np
 import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
 from ..tensor import calc_R2X_parafac
+from ..dataHelpers import getCellLineComps, getGeneComps, getCharacteristicComps, cellLineNames
+
+cell_comps = getCellLineComps()
+gene_comps = getGeneComps()
+characteristic_comps = getCharacteristicComps()
 
 
 def makeFigure():
@@ -14,6 +19,15 @@ def makeFigure():
 
     ax[0].axis('off')  # blank out first axis for cartoon
     ax[1].axis('off')
+    
+    R2X_figure(ax[2])
+    cellLinePlot(ax[3], getCellLineComps(), 1, 2)
+    cellLinePlot(ax[4], getCellLineComps(), 2, 4)
+    cellLinePlot(ax[5], getCellLineComps(), 6, 7)
+    cellLinePlot(ax[6], getCellLineComps(), 12, 2)
+    cellLinePlot(ax[7], getCellLineComps(), 19, 6)
+    cellLinePlot(ax[8], getCellLineComps(), 22, 6)
+
 
     # Add subplot labels
     subplotLabel(ax)
@@ -21,23 +35,21 @@ def makeFigure():
     return f
 
 
-def R2X_figure(ax, tens):
+def R2X_figure(ax):
     '''Create Parafac R2X Figure'''
-    x_axis = np.arange(4)
-    R2X = np.zeros(4)
-    for i in range(1, 4):
-        R2X[i] = calc_R2X_parafac(tens, i)
-    ax.scatter(x_axis, R2X)
-    ax.set_xlabel('Decomposition Rank')
-    ax.set_ylabel('R2X')
-    ax.set_title('PARAFAC')
-    ax.set_yticks([0, .2, .4, .6, .8, 1.0])
-    ax.set_xticks(x_axis)
+    ### THIS DATA COMES FROM MATLAB ###
+    nComps = [0, 1, 2, 3, 4, 5, 10, 15, 20, 25]
+    R2X = [0, .681, .744, .787, .805, .819, .861, .887, .904, .916]
+    ax = sns.scatterplot(nComps, R2X, ax=ax)
+    ax.set_xlabel("Rank Decomposition")
+    ax.set_ylabel("R2X")
+    ax.set_xticks([0, 5, 10, 15, 20])
+    ax.set_title("CP Decomposition")
 
 
 def cellLinePlot(ax, factors, r1, r2):
     '''Plot Cell Lines (tensor axis 0) in factorization component space'''
-    sns.scatterplot(factors[:, r1 - 1], factors[:, r2 - 1], ax=ax)
+    sns.scatterplot(factors[:, r1 - 1], factors[:, r2 - 1], ax=ax, hue=cellLineNames(), legend=False)
     ax.set_xlabel('Component ' + str(r1))
     ax.set_ylabel('Component ' + str(r2))
     ax.set_title('Cell Line Factors')

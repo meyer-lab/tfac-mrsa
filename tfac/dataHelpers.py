@@ -5,7 +5,7 @@ import os
 import tqdm
 import h5py
 from synapseclient import Synapse, File
-from dataProcess import normalize
+from .dataProcess import normalize
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -126,3 +126,14 @@ def getCharacteristicComps():
         data = f["comps"][:]
         f.close()
     return data.T
+
+def cellLineNames():
+    """Get a Full List of Cell Lines for a plot legend
+    ------------------------------------------------------------
+    ***Calling np.unique(ls) yields the 23 different cancer types***
+    """
+    filename = os.path.join(path, "./data/cellLines(aligned,precut).csv")
+    df = pd.read_csv(filename)
+    names = np.insert(df.values, 0, "22RV1_PROSTATE")
+    ls = [x.split('_', maxsplit=1)[1] for x in names]
+    return ls

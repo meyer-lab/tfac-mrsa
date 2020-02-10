@@ -16,3 +16,4 @@ tensorly
 tqdm
 sklearn
 pybiomart
+h5py

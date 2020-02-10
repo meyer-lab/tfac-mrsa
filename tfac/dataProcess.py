@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from synapseclient import Synapse
 from sklearn.preprocessing import scale
-from dataOrg import filterData
-from fixCutDataScript import cutMissingValues
+from .dataOrg import filterData
+from .fixCutDataScript import cutMissingValues
 
 
 def DataWorkFlow(username, password, threshold):

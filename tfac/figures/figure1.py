@@ -19,7 +19,7 @@ def makeFigure():
 
     ax[0].axis('off')  # blank out first axis for cartoon
     ax[1].axis('off')
-    
+
     R2X_figure(ax[2])
     cellLinePlot(ax[3], getCellLineComps(), 1, 2)
     cellLinePlot(ax[4], getCellLineComps(), 2, 4)
@@ -27,7 +27,6 @@ def makeFigure():
     cellLinePlot(ax[6], getCellLineComps(), 12, 2)
     cellLinePlot(ax[7], getCellLineComps(), 19, 6)
     cellLinePlot(ax[8], getCellLineComps(), 22, 6)
-
 
     # Add subplot labels
     subplotLabel(ax)

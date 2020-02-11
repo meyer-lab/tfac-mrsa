@@ -8,6 +8,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error r2_score
 from sklearn.ensemble import RandomForestRegressor
 
+
 sns.set()
 
 def errorMetrics(y_test, y_pred):
@@ -52,6 +53,8 @@ def dTreePred(xTrain, yTrain, xTest, yTest):
     return yPred, metrics
 
 # XGBoost Model
+
+
 def xgbPred(xTrain, yTrain, xTest, yTest):
     '''
     Makes a prediction after fitting the model to the training data
@@ -68,7 +71,8 @@ def xgbPred(xTrain, yTrain, xTest, yTest):
     metrics = errorMetrics(yTest, yPred)
     return yPred, metrics
 
-def xgbPlot(xTrain, yTrain, xTest, yTest, title, tree=False):#could potentially generalize to all regressions
+
+def xgbPlot(xTrain, yTrain, xTest, yTest, title, tree=False):  # could potentially generalize to all regressions
     '''
     Plots and saves the Predicted vs. Actual plot and the tree plot if desired
 
@@ -94,6 +98,8 @@ def xgbPlot(xTrain, yTrain, xTest, yTest, title, tree=False):#could potentially 
         plt.savefig('tree.png', dpi=1000)
 
 # Random Forest Model
+
+
 def rfPred(xTrain, yTrain, xTest, yTest):
     '''
     Makes a prediction after fitting the model to the training data
@@ -103,7 +109,7 @@ def rfPred(xTrain, yTrain, xTest, yTest):
     Outputs: 1D Numpy Array, 1D Numpy Array
     '''
 
-    rf = RandomForestRegressor(random_state = 42, n_estimators = 2000)
+    rf = RandomForestRegressor(random_state=42, n_estimators=2000)
     rf.fit(X_train, y_train)
     yPred = rf.predict(xTest)
     metrics = errorMetrics(yTest, yPred)

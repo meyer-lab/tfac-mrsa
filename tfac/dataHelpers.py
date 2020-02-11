@@ -127,6 +127,7 @@ def getCharacteristicComps():
         f.close()
     return data.T
 
+
 def cellLineNames():
     """Get a Full List of Cell Lines for a plot legend
     ------------------------------------------------------------

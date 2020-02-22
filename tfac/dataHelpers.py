@@ -95,7 +95,7 @@ def makeTensor(username, password, impute=False):
         methylation = pd.concat((methylation, chunk2))
     for chunk3 in tqdm.tqdm(pd.read_csv(syn.get('syn21303731').path, chunksize=150), ncols=100, total=87):
         gene_expression = pd.concat((gene_expression, chunk3))
-        
+
     arr = normalize(np.stack((gene_expression.values[:, 1:], copy_number.values[:, 1:], methylation.values[:, 1:])))
     if impute:
         arr = np.nan_to_num(arr)

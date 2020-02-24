@@ -1,7 +1,7 @@
 '''Contains function for importing data from and sending data to synapse'''
+import os
 import numpy as np
 import pandas as pd
-import os
 import tqdm
 import h5py
 from synapseclient import Synapse, File

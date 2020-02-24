@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import xgboost as xgb
 from xgboost import XGBRegressor
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import mean_squared_error, mean_absolute_error r2_score
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.ensemble import RandomForestRegressor
 
 
@@ -50,7 +50,7 @@ def dTreePred(xTrain, yTrain, xTest, yTest):
     '''
 
     dTree = DecisionTreeRegressor(random_state=42)
-    dTree.fit(X_train, y_train)
+    dTree.fit(xTrain, yTrain)
     yPred = dTree.predict(xTest)
     metrics = errorMetrics(yTest, yPred)
     return yPred, metrics
@@ -69,7 +69,7 @@ def xgbPred(xTrain, yTrain, xTest, yTest):
 
     xgb_model = XGBRegressor(objective='reg:squarederror', n_estimators=1000, seed=24,
                              subsample=0.1, colsample_bytree=0.1)
-    xgb_model.fit(X_train, y_train)
+    xgb_model.fit(xTrain, yTrain)
     yPred = xgb_model.predict(xTest)
     metrics = errorMetrics(yTest, yPred)
     return yPred, metrics
@@ -85,14 +85,14 @@ def xgbPlot(xTrain, yTrain, xTest, yTest, title, tree=False):  # could potential
     '''
     xgb_model = XGBRegressor(objective='reg:squarederror', n_estimators=1000, seed=24,
                              subsample=0.1, colsample_bytree=0.1)
-    xgb_model.fit(X_train, y_train)
+    xgb_model.fit(xTrain, yTrain)
     yPred = xgb_model.predict(xTest)
 
     plt.figure()
     plt.title(title)
     plt.xlabel('Actual')
     plt.ylabel('Predicted')
-    plt.scatter(y_test, y_pred)
+    plt.scatter(yTest, yPred)
     plt.savefig('Predicted vs. Actual.png', dpi=500)
 
     if tree:
@@ -113,7 +113,7 @@ def rfPred(xTrain, yTrain, xTest, yTest):
     '''
 
     rf = RandomForestRegressor(random_state=42, n_estimators=2000)
-    rf.fit(X_train, y_train)
+    rf.fit(xTrain, yTrain)
     yPred = rf.predict(xTest)
     metrics = errorMetrics(yTest, yPred)
     return yPred, metrics

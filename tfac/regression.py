@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import xgboost as xgb
 from xgboost import XGBRegressor
+from sklearn.model_selection import KFold
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.ensemble import RandomForestRegressor
@@ -40,7 +41,7 @@ def errorMetrics(y_test, y_pred):
 # Decision Tree Model
 
 
-def dTreePred(xTrain, yTrain, xTest, yTest):
+def dTreePred(xTrain, yTrain, xTest):
     '''
     Makes a prediction after fitting the model to the training data
 
@@ -52,13 +53,12 @@ def dTreePred(xTrain, yTrain, xTest, yTest):
     dTree = DecisionTreeRegressor(random_state=42)
     dTree.fit(xTrain, yTrain)
     yPred = dTree.predict(xTest)
-    metrics = errorMetrics(yTest, yPred)
-    return yPred, metrics
+    return yPred
 
 # XGBoost Model
 
 
-def xgbPred(xTrain, yTrain, xTest, yTest):
+def xgbPred(xTrain, yTrain, xTest):
     '''
     Makes a prediction after fitting the model to the training data
 
@@ -71,8 +71,7 @@ def xgbPred(xTrain, yTrain, xTest, yTest):
                              subsample=0.1, colsample_bytree=0.1)
     xgb_model.fit(xTrain, yTrain)
     yPred = xgb_model.predict(xTest)
-    metrics = errorMetrics(yTest, yPred)
-    return yPred, metrics
+    return yPred
 
 
 def xgbPlot(xTrain, yTrain, xTest, yTest, title, tree=False):  # could potentially generalize to all regressions
@@ -103,7 +102,7 @@ def xgbPlot(xTrain, yTrain, xTest, yTest, title, tree=False):  # could potential
 # Random Forest Model
 
 
-def rfPred(xTrain, yTrain, xTest, yTest):
+def rfPred(xTrain, yTrain, xTest):
     '''
     Makes a prediction after fitting the model to the training data
 
@@ -115,5 +114,21 @@ def rfPred(xTrain, yTrain, xTest, yTest):
     rf = RandomForestRegressor(random_state=42, n_estimators=2000)
     rf.fit(xTrain, yTrain)
     yPred = rf.predict(xTest)
-    metrics = errorMetrics(yTest, yPred)
-    return yPred, metrics
+    return yPred
+
+def KFoldCV(X, Y, reg, n_splits = 5):
+    '''Performs KFold Cross Validation on data'''
+    kfold = KFold(n_splits, True, 19)
+    y_pred = 0
+    r2_scores = np.zeros(n_splits)
+    for rep, indices in enumerate(kfold.split(X)):
+        X_train, X_test = X[indices[0]], X[indices[1]]
+        y_train, y_test = y[indices[0]], y[indices[1]]
+        if reg == 'XG':
+            y_pred = xgbPred(X_train, y_train, X_test)
+        elif reg == 'RF':
+            y_pred = rfPred(X_train, y_train, X_test)
+        elif reg == 'DT':
+            y_pred = dTreePred(X_train, y_train, X_test)
+        r2_scores[rep] = r2_score(y_test, y_pred)
+    return np.mean(r2_scores)

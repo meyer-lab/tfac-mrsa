@@ -116,7 +116,8 @@ def rfPred(xTrain, yTrain, xTest):
     yPred = rf.predict(xTest)
     return yPred
 
-def KFoldCV(X, Y, reg, n_splits = 5):
+
+def KFoldCV(X, Y, reg, n_splits=5):
     '''Performs KFold Cross Validation on data'''
     kfold = KFold(n_splits, True, 19)
     y_pred = 0

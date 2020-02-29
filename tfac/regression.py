@@ -8,6 +8,7 @@ from sklearn.model_selection import KFold
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression, Lasso
 
 
 sns.set()
@@ -114,6 +115,36 @@ def rfPred(xTrain, yTrain, xTest):
     rf = RandomForestRegressor(random_state=42, n_estimators=2000)
     rf.fit(xTrain, yTrain)
     yPred = rf.predict(xTest)
+    return yPred
+
+
+def OLSPred(xTrain, yTrain, xTest):
+    '''
+    Makes a prediction after fitting the model to the training data
+
+    Inputs: 2D Numpy Array, 1D Numpy Array, 2D Numpy Array, 1D Numpy Array
+
+    Outputs: 1D Numpy Array, 1D Numpy Array
+    '''
+
+    OLS = LinearRegression()
+    OLS.fit(xTrain, yTrain)
+    yPred = OLS.predict(xTest)
+    return yPred
+
+
+def LASSOPred(xTrain, yTrain, xTest):
+    '''
+    Makes a prediction after fitting the model to the training data
+
+    Inputs: 2D Numpy Array, 1D Numpy Array, 2D Numpy Array, 1D Numpy Array
+
+    Outputs: 1D Numpy Array, 1D Numpy Array
+    '''
+
+    LASSO = Lasso(alpha = 0.075)
+    LASSO.fit(xTrain, yTrain)
+    yPred = LASSO.predict(xTest)
     return yPred
 
 

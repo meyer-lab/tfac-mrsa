@@ -8,6 +8,7 @@ from sklearn.model_selection import KFold
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.ensemble import RandomForestRegressor
+from sklearn import svm
 from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
 
 
@@ -178,6 +179,20 @@ def ElasticNetPred(xTrain, yTrain, xTest):
     return yPred
 
 
+def svrPred(xTrain, yTrain, xTest):
+    '''
+    Makes a prediction after fitting the model to the training data
+
+    Inputs: 2D Numpy Array, 1D Numpy Array, 2D Numpy Array, 1D Numpy Array
+
+    Outputs: 1D Numpy Array, 1D Numpy Array
+    '''
+    clf = svm.SVR()
+    clf.fit(xTrain, yTrain)
+    yPred = clf.predict(xTest)
+    return yPred
+
+
 def KFoldCV(X, Y, reg, n_splits=5):
     '''Performs KFold Cross Validation on data'''
     kfold = KFold(n_splits, True, 19)
@@ -192,5 +207,7 @@ def KFoldCV(X, Y, reg, n_splits=5):
             y_pred = rfPred(X_train, y_train, X_test)
         elif reg == 'DT':
             y_pred = dTreePred(X_train, y_train, X_test)
+        elif reg == 'SVR':
+            y_pred = svrPred(X_train, y_train, X_test)
         r2_scores[rep] = r2_score(y_test, y_pred)
     return np.mean(r2_scores)

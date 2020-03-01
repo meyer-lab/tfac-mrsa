@@ -2,6 +2,7 @@
 This creates Figure 2.
 """
 from .figureCommon import subplotLabel, getSetup
+import seaborn as sns
 
 
 def makeFigure():
@@ -13,5 +14,13 @@ def makeFigure():
 
     # Add subplot labels
     subplotLabel(ax)
+    
+    myFigure(ax[1])
 
     return f
+
+
+def myFigure(axis):
+    array1 = [1, 2, 3, 4, 5]
+    array2 = [5, 4, 3, 2, 1]
+    sns.scatterplot(array1, array2, ax = axis)

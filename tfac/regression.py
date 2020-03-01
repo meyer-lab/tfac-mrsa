@@ -142,10 +142,11 @@ def LASSOPred(xTrain, yTrain, xTest):
     Outputs: 1D Numpy Array, 1D Numpy Array
     '''
 
-    LASSO = Lasso(alpha = 0.075, random_state = 42)
+    LASSO = Lasso(alpha=0.075, random_state=42)
     LASSO.fit(xTrain, yTrain)
     yPred = LASSO.predict(xTest)
     return yPred
+
 
 def RidgePred(xTrain, yTrain, xTest):
     '''
@@ -156,10 +157,11 @@ def RidgePred(xTrain, yTrain, xTest):
     Outputs: 1D Numpy Array, 1D Numpy Array
     '''
 
-    Ridge = Ridge(alpha = 122.358, random_state = 42)
+    Ridge = Ridge(alpha=122.358, random_state=42)
     Ridge.fit(xTrain, yTrain)
     yPred = Ridge.predict(xTest)
     return yPred
+
 
 def ElasticNetPred(xTrain, yTrain, xTest):
     '''
@@ -170,7 +172,7 @@ def ElasticNetPred(xTrain, yTrain, xTest):
     Outputs: 1D Numpy Array, 1D Numpy Array
     '''
 
-    elasticNet = ElasticNet(alpha = 0.59, l1_ratio = 0.031)
+    elasticNet = ElasticNet(alpha=0.59, l1_ratio=0.031)
     elasticNet.fit(xTrain, yTrain)
     yPred = elasticNet.predict(xTest)
     return yPred

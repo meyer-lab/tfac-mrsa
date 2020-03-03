@@ -5,7 +5,6 @@ import pandas as pd
 from .dataHelpers import getCellLineComps
 
 
-
 def importDrugs():
     '''
     Imports Drug Data and separates it by compound
@@ -21,10 +20,11 @@ def importDrugs():
 
     return drugList
 
+
 def tempFilter(drugData):
     '''temporarily uses known cell lines and factors for initial regression testing
     Inputs: one compound (e.g. drugArr[0]) from the drugArr (a 2d numpy array)
-    
+
     Outputs:
     two 2d numpy arrays containing the drugArr and factors with common cell lines
     '''
@@ -33,11 +33,12 @@ def tempFilter(drugData):
     factFiltered, drugFiltered = filterCells(factCells, factors, drugData)
     return factFiltered, drugFiltered
 
+
 def filterCells(factCells, factors, drugData):
     '''aligns factors and drug data by common cell lines'''
-    commonCL = reduce(np.intersect1d, (factCells, drugData[:,0]))
+    commonCL = reduce(np.intersect1d, (factCells, drugData[:, 0]))
     factIdx = np.where(np.in1d(factCells, commonCL))[0]
-    drugIdx = np.where(np.in1d(drugData[:,0], commonCL))[0]
+    drugIdx = np.where(np.in1d(drugData[:, 0], commonCL))[0]
     factFiltered = factors[factIdx, :]
     drugFiltered = drugData[drugIdx, :]
     return factFiltered, drugFiltered

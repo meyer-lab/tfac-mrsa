@@ -14,7 +14,7 @@ def makeFigure():
 
     # Add subplot labels
     subplotLabel(ax)
-    
+
     myFigure(ax[1])
 
     return f
@@ -23,4 +23,4 @@ def makeFigure():
 def myFigure(axis):
     array1 = [1, 2, 3, 4, 5]
     array2 = [5, 4, 3, 2, 1]
-    sns.scatterplot(array1, array2, ax = axis)
+    sns.scatterplot(array1, array2, ax=axis)

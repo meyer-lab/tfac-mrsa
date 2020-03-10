@@ -1,9 +1,11 @@
 '''Imports, Organizes, and Filters Drug Data'''
+import os
 from functools import reduce
 import numpy as np
 import pandas as pd
 from .dataHelpers import getCellLineComps
 
+path = os.path.dirname(os.path.abspath(__file__))
 
 def importDrugs():
     '''
@@ -11,7 +13,8 @@ def importDrugs():
     Returns:
             List of length 24 where each element defines a single compound as a 2D numpy array
     '''
-    drugData = pd.read_csv('data/DrugData.csv', header=0, index_col=False).values
+    filename = os.path.join(path, './data/DrugData.csv')
+    drugData = pd.read_csv(filename, header=0, index_col=False).values
     drugs = np.unique(drugData[:, 2])
     drugList = []
     for drug in drugs:
@@ -28,7 +31,8 @@ def tempFilter(drugData):
     Outputs:
     two 2d numpy arrays containing the drugArr and factors with common cell lines
     '''
-    factCells = pd.read_csv('data/cellLines(aligned,precut).csv', header=None, index_col=False).values
+    filename = os.path.join(path, "./data/cellLines(aligned,precut).csv")
+    factCells = pd.read_csv(filename, header=None, index_col=False).values
     factors = getCellLineComps(imputed=True)
     factFiltered, drugFiltered = filterCells(factCells, factors, drugData)
     return factFiltered, drugFiltered

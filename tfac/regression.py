@@ -188,7 +188,6 @@ def svrPred(xTrain, yTrain, xTest):
     return yPred
 
 
-
 def KFoldCV(X, y, reg, n_splits=5):
     '''Performs KFold Cross Validation on data'''
     kfold = KFold(n_splits, True, 19)

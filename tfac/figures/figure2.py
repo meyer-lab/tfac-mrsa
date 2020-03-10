@@ -10,6 +10,7 @@ from ..regression import KFoldCV
 sns.set(style="white")
 sns.set_context('notebook')
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
@@ -17,10 +18,9 @@ def makeFigure():
 
     ax[0].axis('off')  # blank out first axis for cartoon
 
-
     drugArr = importDrugs()
     x, y = tempFilter(drugArr[5])
-    y = y[:,-1]
+    y = y[:, -1]
 
     ax[0].axis('off')
     ax[1].axis('off')
@@ -32,6 +32,7 @@ def makeFigure():
     # Add subplot labels
     subplotLabel(ax)
     return f
+
 
 def barPlot(ax):
     average = np.array([-0.216, -0.124, 0.178, 0.28, 0.29, 0.305, 0.306, 0.309])
@@ -47,7 +48,7 @@ def barPlot(ax):
 def predVsActual(ax, x, y, reg):
     _, predicted, actual = KFoldCV(x, y, reg)
 
-    sns.scatterplot(actual, predicted, color = 'darkslategrey', ax=ax)
+    sns.scatterplot(actual, predicted, color='darkslategrey', ax=ax)
     sns.despine()
     ax.set_xlabel('Actual')
     ax.set_ylabel('Predicted')

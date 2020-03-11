@@ -78,7 +78,7 @@ def exportData(username, password, data, nm):
     syn.logout()
 
 
-def makeTensor(username, password, impute=False):
+def makeTensor(username, password, impute=False, returndf=False):
     '''Generate correctly aligned tensor for factorization'''
     syn = Synapse()
     syn.login(username, password)
@@ -96,6 +96,9 @@ def makeTensor(username, password, impute=False):
     for chunk3 in tqdm.tqdm(pd.read_csv(syn.get('syn21303731').path, chunksize=150), ncols=100, total=87):
         gene_expression = pd.concat((gene_expression, chunk3))
 
+    if returndf:
+        return gene_expression, copy_number, methylation
+    
     arr = normalize(np.stack((gene_expression.values[:, 1:], copy_number.values[:, 1:], methylation.values[:, 1:])))
     if impute:
         arr = np.nan_to_num(arr)
@@ -154,6 +157,7 @@ def getCharacteristicComps(imputed=False, rank=100):
             data = f["Characteristic_Comps"][:]
             f.close()
         return data
+
     filename = os.path.join(path, './data/HDF5/measurement_comps_25.hdf5')
     with h5py.File(filename, 'r') as f:
         data = f["comps"][:]

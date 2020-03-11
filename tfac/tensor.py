@@ -14,7 +14,7 @@ def perform_parafac(tens, rank):
 
 def calc_R2X_parafac(tens, rank):
     '''Calculate R2X of the decomposition of a tensor'''
-    output = parafac(tens, rank)
+    output = parafac(tens, rank, n_iter_max=300, init="random", verbose=1)
     reconstructed = tl.kruskal_to_tensor(output)
     R2X = 1.0 - tl_var(reconstructed - tens) / tl_var(tens)
-    return R2X
+    return R2X, output[1]

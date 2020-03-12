@@ -20,8 +20,6 @@ def makeFigure():
     ax[0].axis('off')  # blank out axes for cartoon
     ax[1].axis('off')
 
-    
-
     # Add subplot labels
     subplotLabel(ax)
 

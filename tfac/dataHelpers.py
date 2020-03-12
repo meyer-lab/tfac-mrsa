@@ -98,7 +98,7 @@ def makeTensor(username, password, impute=False, returndf=False):
 
     if returndf:
         return gene_expression, copy_number, methylation
-    
+
     arr = normalize(np.stack((gene_expression.values[:, 1:], copy_number.values[:, 1:], methylation.values[:, 1:])))
     if impute:
         arr = np.nan_to_num(arr)

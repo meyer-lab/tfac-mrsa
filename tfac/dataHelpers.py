@@ -1,13 +1,26 @@
 '''Contains function for importing data from and sending data to synapse'''
-import os
+from os.path import join, dirname
 import numpy as np
 import pandas as pd
 import tqdm
 import h5py
-from synapseclient import Synapse, File
+from synapseclient import Synapse
 from .dataProcess import normalize
 
-path = os.path.dirname(os.path.abspath(__file__))
+path_here = dirname(dirname(__file__))
+
+
+def importLINCSprotein():
+    """ Import protein characterization from LINCS. """
+    dataA = pd.read_csv(join(path_here, "tfac/data/01_Laura_Heiser__Sean_Gross_A.csv"))
+    dataB = pd.read_csv(join(path_here, "tfac/data/01_Laura_Heiser__Sean_Gross_B.csv"))
+    dataC = pd.read_csv(join(path_here, "tfac/data/01_Laura_Heiser__Sean_Gross_C.csv"))
+
+    dataA["File"] = "A"
+    dataB["File"] = "B"
+    dataC["File"] = "C"
+
+    return pd.concat([dataA, dataB, dataC])
 
 
 def importData(username, password, dataType=None):
@@ -57,27 +70,6 @@ def importData(username, password, dataType=None):
     return df
 
 
-def exportData(username, password, data, nm):
-    '''Pandas Data Frame to upload back to synapse as an excel file
-    ---------------------------------------------------------------
-    Parameters:
-        username: String
-            Your synapse username
-        password: String
-            You synapse password
-        data: Data Frame
-            Pandas object containing the data to upload to synapse as an excel file
-        name: String
-            A name for the file in synapse
-    '''
-    syn = Synapse()
-    syn.login(username, password)
-    proj = syn.get('syn21032722')
-    data.to_csv('data/file.csv')
-    syn.store(File(path='data/file.csv', name=nm, parent=proj))
-    syn.logout()
-
-
 def makeTensor(username, password, impute=False, returndf=False):
     '''Generate correctly aligned tensor for factorization'''
     syn = Synapse()
@@ -108,57 +100,51 @@ def makeTensor(username, password, impute=False, returndf=False):
     return arr
 
 
-def getCellLineComps(imputed=False, rank=100):
+def getCellLineComps(imputed=False):
     '''Import cell line components'''
     if imputed:
-        if rank == 100:
-            filename = os.path.join(path, './data/Imputed_Components_100.hdf5')
-        else:
-            filename = os.path.join(path, './data/Imputed_Components_50.hdf5')
+        filename = join(path_here, 'tfac/data/Imputed_Components_100.hdf5')
+
         with h5py.File(filename, 'r') as f:
             data = f["Cell_Line_Comps"][:]
             f.close()
         return data
     else:
-        filename = os.path.join(path, './data/HDF5/cell_comps_25.hdf5')
+        filename = join(path_here, 'tfac/data/HDF5/cell_comps_25.hdf5')
         with h5py.File(filename, 'r') as f:
             data = f["comps"][:]
             f.close()
         return data.T
 
 
-def getGeneComps(imputed=False, rank=100):
+def getGeneComps(imputed=False):
     '''Import gene components'''
     if imputed:
-        if rank == 100:
-            filename = os.path.join(path, './data/Imputed_Components_100.hdf5')
-        else:
-            filename = os.path.join(path, './data/Imputed_Components_50.hdf5')
+        filename = join(path_here, 'tfac/data/Imputed_Components_100.hdf5')
+
         with h5py.File(filename, 'r') as f:
             data = f["Gene_Comps"][:]
             f.close()
         return data
     else:
-        filename = os.path.join(path, './data/HDF5/gene_comps_25.hdf5')
+        filename = join(path_here, 'tfac/data/HDF5/gene_comps_25.hdf5')
         with h5py.File(filename, 'r') as f:
             data = f["comps"][:]
             f.close()
         return data.T
 
 
-def getCharacteristicComps(imputed=False, rank=100):
+def getCharacteristicComps(imputed=False):
     '''Import characteristic components'''
     if imputed:
-        if rank == 100:
-            filename = os.path.join(path, './data/Imputed_Components_100.hdf5')
-        else:
-            filename = os.path.join(path, './data/Imputed_Components_50.hdf5')
+        filename = join(path_here, 'tfac/data/Imputed_Components_100.hdf5')
+
         with h5py.File(filename, 'r') as f:
             data = f["Characteristic_Comps"][:]
             f.close()
         return data
 
-    filename = os.path.join(path, './data/HDF5/measurement_comps_25.hdf5')
+    filename = join(path_here, 'tfac/data/HDF5/measurement_comps_25.hdf5')
     with h5py.File(filename, 'r') as f:
         data = f["comps"][:]
         f.close()
@@ -170,7 +156,7 @@ def cellLineNames():
     ------------------------------------------------------------
     ***Calling np.unique(ls) yields the 23 different cancer types***
     """
-    filename = os.path.join(path, "./data/cellLines(aligned,precut).csv")
+    filename = join(path_here, "./data/cellLines(aligned,precut).csv")
     df = pd.read_csv(filename)
     names = np.insert(df.values, 0, "22RV1_PROSTATE")
     ls = [x.split('_', maxsplit=1)[1] for x in names]

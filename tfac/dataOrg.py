@@ -112,10 +112,6 @@ def filterData(methData, geneData, copyData):
     geneDF = pd.DataFrame(data=geneFiltered, index=geneIdx[geneGIndices], columns=commonCL)
     copyDF = pd.DataFrame(data=copyFiltered, index=copyIdx[copyGIndices], columns=commonCL)
 
-#     exportData('NilayShah', 'nilayisthebest', methDF, 'MethAligned')
-#     exportData('NilayShah', 'nilayisthebest', geneDF, 'GeneAligned')
-#     exportData('NilayShah', 'nilayisthebest', copyDF, 'CopyAligned')
-
     return methDF, geneDF, copyDF
 
 

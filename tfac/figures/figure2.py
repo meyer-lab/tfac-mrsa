@@ -17,14 +17,6 @@ def makeFigure():
 
     ax[0].axis('off')  # blank out first axis for cartoon
 
-    drugArr = importDrugs()
-    x, y = tempFilter(drugArr[5])
-    y = y[:, -1]
-
-    ax[0].axis('off')
-    ax[1].axis('off')
-    ax[2].axis('off')
-    ax[3].axis('off')
 
     # Add subplot labels
     subplotLabel(ax)

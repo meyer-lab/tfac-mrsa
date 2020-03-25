@@ -3,7 +3,6 @@ import os
 from functools import reduce
 import numpy as np
 import pandas as pd
-from .dataHelpers import getCellLineComps
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,16 +24,16 @@ def importDrugs():
     return drugList
 
 
-def tempFilter(drugData):
+def tempFilter(drugData, factors):
     '''temporarily uses known cell lines and factors for initial regression testing
     Inputs: one compound (e.g. drugArr[0]) from the drugArr (a 2d numpy array)
+            Factorization output (cell line components -- serves as the X in regression)
 
     Outputs:
     two 2d numpy arrays containing the drugArr and factors with common cell lines
     '''
     filename = os.path.join(path, "./data/cellLines(aligned,precut).csv")
     factCells = pd.read_csv(filename, header=None, index_col=False).values
-    factors = getCellLineComps(imputed=True)
     factFiltered, drugFiltered = filterCells(factCells, factors, drugData)
     return factFiltered, drugFiltered
 

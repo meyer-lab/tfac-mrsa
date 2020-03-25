@@ -4,11 +4,7 @@ This creates Figure 1.
 import numpy as np
 import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
-from ..dataHelpers import getCellLineComps, getGeneComps, getCharacteristicComps, cellLineNames
-
-cell_comps = getCellLineComps(imputed=True)
-gene_comps = getGeneComps(imputed=True)
-characteristic_comps = getCharacteristicComps()
+from ..dataHelpers import cellLineNames
 
 
 def makeFigure():
@@ -27,7 +23,7 @@ def makeFigure():
 
 def R2X_figure(ax):
     '''Create Parafac R2X Figure'''
-    ### THIS DATA COMES FROM MATLAB ###
+    ### THIS DATA COMES FROM MATLAB -- INSERT NEW DATA HERE/CALL FUNCTION HERE ###
     nComps = [0, 1, 2, 3, 4, 5, 10, 15, 20, 25]
     R2X = [0, .681, .744, .787, .805, .819, .861, .887, .904, .916]
     ax = sns.scatterplot(nComps, R2X, ax=ax)

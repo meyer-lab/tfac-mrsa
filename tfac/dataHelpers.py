@@ -51,26 +51,26 @@ def importData(username, password, dataType=None):
         print('Bad Username or Password')
         return None
 
-    # Find Data
-    if dataType == 'Copy Number All':
-        data = syn.get('syn21089502')
+    # Find Data -- TODO: FIGURE OUT WHAT THESE ALL SPECIFICALLY REPRESENT
+    if dataType == 'Copy Number All':        
+        data = syn.get('syn21089502')             # Insert Non-Processed Data
     elif dataType == 'Methylation All':
-        data = syn.get('syn21089540')
+        data = syn.get('syn21089540')             # Insert Non-Processed Data
     elif dataType == 'Gene Expression All':
-        data = syn.get('syn21089539')
+        data = syn.get('syn21089539')             # Insert Non-Processed Data
     elif dataType == 'Copy Number':
-        data = syn.get('syn21303730')
+        data = syn.get('syn21303730')             # Insert Processed Data
     elif dataType == 'Methylation':
-        data = syn.get('syn21303732')
+        data = syn.get('syn21303732')             # Insert Processed Data
     elif dataType == 'Gene Expression':
-        data = syn.get('syn21303731')
+        data = syn.get('syn21303731')             # Insert Processed Data
 
     df = pd.read_csv(data.path, index_col=0, header=0)
     syn.logout()
     return df
 
 
-def makeTensor(username, password, impute=False, returndf=False):
+def makeTensor(username, password, returndf=False):
     '''Generate correctly aligned tensor for factorization'''
     syn = Synapse()
     syn.login(username, password)
@@ -92,63 +92,10 @@ def makeTensor(username, password, impute=False, returndf=False):
         return gene_expression, copy_number, methylation
 
     arr = normalize(np.stack((gene_expression.values[:, 1:], copy_number.values[:, 1:], methylation.values[:, 1:])))
-    if impute:
-        arr = np.nan_to_num(arr)
 
     # Create final tensor
     syn.logout()
     return arr
-
-
-def getCellLineComps(imputed=False):
-    '''Import cell line components'''
-    if imputed:
-        filename = join(path_here, 'tfac/data/Imputed_Components_100.hdf5')
-
-        with h5py.File(filename, 'r') as f:
-            data = f["Cell_Line_Comps"][:]
-            f.close()
-        return data
-    else:
-        filename = join(path_here, 'tfac/data/HDF5/cell_comps_25.hdf5')
-        with h5py.File(filename, 'r') as f:
-            data = f["comps"][:]
-            f.close()
-        return data.T
-
-
-def getGeneComps(imputed=False):
-    '''Import gene components'''
-    if imputed:
-        filename = join(path_here, 'tfac/data/Imputed_Components_100.hdf5')
-
-        with h5py.File(filename, 'r') as f:
-            data = f["Gene_Comps"][:]
-            f.close()
-        return data
-    else:
-        filename = join(path_here, 'tfac/data/HDF5/gene_comps_25.hdf5')
-        with h5py.File(filename, 'r') as f:
-            data = f["comps"][:]
-            f.close()
-        return data.T
-
-
-def getCharacteristicComps(imputed=False):
-    '''Import characteristic components'''
-    if imputed:
-        filename = join(path_here, 'tfac/data/Imputed_Components_100.hdf5')
-
-        with h5py.File(filename, 'r') as f:
-            data = f["Characteristic_Comps"][:]
-            f.close()
-        return data
-
-    filename = join(path_here, 'tfac/data/HDF5/measurement_comps_25.hdf5')
-    with h5py.File(filename, 'r') as f:
-        data = f["comps"][:]
-        f.close()
-    return data.T
 
 
 def cellLineNames():

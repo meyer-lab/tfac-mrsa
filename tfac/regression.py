@@ -62,13 +62,13 @@ def KFoldCV(X, y, n_splits=5):
 
 
 def predVsActual(predicted, actual, reg, drug, save=False):
-    sns.scatterplot(actual, predicted, color = 'darkmagenta')
+    sns.scatterplot(actual, predicted, color='darkmagenta')
     sns.despine()
     plt.xlabel('Actual')
     plt.ylabel('Predicted')
     plt.title('Predicted vs Actual ' + reg + ' ' + drug, size=15)
-    plt.xlim((0,6))
-    plt.ylim((0,6))
+    plt.xlim((0, 6))
+    plt.ylim((0, 6))
     if save:
-        plt.savefig(reg + '.png', dpi = 1000, bbox_inches = "tight")
+        plt.savefig(reg + '.png', dpi=1000, bbox_inches="tight")
     plt.show()

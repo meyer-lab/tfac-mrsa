@@ -52,7 +52,7 @@ def importData(username, password, dataType=None):
         return None
 
     # Find Data -- TODO: FIGURE OUT WHAT THESE ALL SPECIFICALLY REPRESENT
-    if dataType == 'Copy Number All':        
+    if dataType == 'Copy Number All':
         data = syn.get('syn21089502')             # Insert Non-Processed Data
     elif dataType == 'Methylation All':
         data = syn.get('syn21089540')             # Insert Non-Processed Data

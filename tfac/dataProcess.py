@@ -53,7 +53,7 @@ def cutMissingValues(data, threshold):
     uncutData = pd.DataFrame.to_numpy(data)
 
     cutData = uncutData
-    data_size = uncutData.shape
+    data_size = tuple(uncutData.shape)
 
     limit_rows = (1 - threshold) * data_size[1]
     limit_cols = (1 - threshold) * data_size[0]

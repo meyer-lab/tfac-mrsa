@@ -2,7 +2,6 @@
 This creates Figure 2.
 """
 import seaborn as sns
-from ..drugOrg import importDrugs, tempFilter
 from .figureCommon import subplotLabel, getSetup
 from ..regression import KFoldCV
 
@@ -23,8 +22,8 @@ def makeFigure():
 
 
 def predVsActual(ax, x, y, reg):
+    '''Predicted vs Actual plotting function for regression'''
     _, predicted, actual = KFoldCV(x, y, reg)
-
     sns.scatterplot(actual, predicted, color='darkslategrey', ax=ax)
     sns.despine()
     ax.set_xlabel('Actual')

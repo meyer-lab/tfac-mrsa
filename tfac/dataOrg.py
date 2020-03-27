@@ -136,7 +136,7 @@ def extractCopy(dupes=False, cellLines=False):
         duplicates = np.zeros(3)
 
     returnVal = []  # creates list of 3 2D numpy arrays containing names and indices
-    for i in range(len(data)):
+    for i, _ in enumerate(data):
         uData = np.unique(data[i], return_index=True, return_counts=True)
 
         if dupes:
@@ -154,5 +154,4 @@ def extractCopy(dupes=False, cellLines=False):
 
     if dupes:
         return returnVal, duplicates
-    else:
-        return returnVal
+    return returnVal, None

@@ -3,7 +3,6 @@ from os.path import join, dirname
 import numpy as np
 import pandas as pd
 import tqdm
-import h5py
 from synapseclient import Synapse
 from .dataProcess import normalize
 

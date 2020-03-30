@@ -2,7 +2,6 @@
 from os.path import join, dirname
 import numpy as np
 import pandas as pd
-import tqdm
 from synapseclient import Synapse
 from .dataProcess import normalize
 
@@ -41,7 +40,8 @@ def importData(username, password, dataType=None):
     # Input Checking
     if dataType is None:
         print('Invalid Data Set')
-        print('Enter:', 'Copy Number All,', 'Methylation All,', 'or Gene Expression All')
+        print('For Raw Data Enter:', '"Copy Number All",', '"Methylation All",', 'or "Gene Expression All"')
+        print('For Processed Data Enter:', '"Copy Number"', '"Methylation"', 'or "Gene Expression"')
         return None
     syn = Synapse()
     try:
@@ -52,47 +52,35 @@ def importData(username, password, dataType=None):
 
     # Find Data -- TODO: FIGURE OUT WHAT THESE ALL SPECIFICALLY REPRESENT
     if dataType == 'Copy Number All':
-        data = syn.get('syn21089502')             # Insert Non-Processed Data
+        df = pd.read_excel(syn.get('syn21033823').path)
     elif dataType == 'Methylation All':
-        data = syn.get('syn21089540')             # Insert Non-Processed Data
+        df = pd.read_excel(syn.get('syn21033929').path)
     elif dataType == 'Gene Expression All':
-        data = syn.get('syn21089539')             # Insert Non-Processed Data
+        df = pd.read_excel(syn.get('syn21033805').path)
     elif dataType == 'Copy Number':
-        data = syn.get('syn21303730')             # Insert Processed Data
+        df = pd.read_csv(syn.get('syn21303730').path, index_col=0, header=0)
     elif dataType == 'Methylation':
-        data = syn.get('syn21303732')             # Insert Processed Data
+        df = pd.read_csv(syn.get('syn21303732').path, index_col=0, header=0)
     elif dataType == 'Gene Expression':
-        data = syn.get('syn21303731')             # Insert Processed Data
+        df = pd.read_csv(syn.get('syn21303731').path, index_col=0, header=0)
 
-    df = pd.read_csv(data.path, index_col=0, header=0)
     syn.logout()
     return df
 
 
-def makeTensor(username, password, returndf=False):
+def makeTensor(username, password):
     '''Generate correctly aligned tensor for factorization'''
     syn = Synapse()
     syn.login(username, password)
 
-    # Setup Data Carriers
-    copy_number = pd.DataFrame()
-    methylation = pd.DataFrame()
-    gene_expression = pd.DataFrame()
-
     # Get Data
-    for chunk1 in tqdm.tqdm(pd.read_csv(syn.get('syn21303730').path, chunksize=150), ncols=100, total=87):
-        copy_number = pd.concat((copy_number, chunk1))
-    for chunk2 in tqdm.tqdm(pd.read_csv(syn.get('syn21303732').path, chunksize=150), ncols=100, total=87):
-        methylation = pd.concat((methylation, chunk2))
-    for chunk3 in tqdm.tqdm(pd.read_csv(syn.get('syn21303731').path, chunksize=150), ncols=100, total=87):
-        gene_expression = pd.concat((gene_expression, chunk3))
-
-    if returndf:
-        return gene_expression, copy_number, methylation
-
-    arr = normalize(np.stack((gene_expression.values[:, 1:], copy_number.values[:, 1:], methylation.values[:, 1:])))
+    copy_number = importData(username, password, 'Copy Number')
+    methylation = importData(username, password, 'Methylation')
+    gene_expression = importData(username, password, 'Gene Expression')
 
     # Create final tensor
+    arr = normalize(np.stack((gene_expression.values, copy_number.values, methylation.values)))
+
     syn.logout()
     return arr
 
@@ -107,3 +95,8 @@ def cellLineNames():
     names = np.insert(df.values, 0, "22RV1_PROSTATE")
     ls = [x.split('_', maxsplit=1)[1] for x in names]
     return ls
+
+def geneNames():
+    '''Get a full list of the ordered gene names in the tensor (names are EGID's)'''
+    genes = importData("robertt", "LukeKuechly59!", "Gene Expression")
+    return np.array(genes.index)

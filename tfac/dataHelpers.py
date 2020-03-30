@@ -96,6 +96,7 @@ def cellLineNames():
     ls = [x.split('_', maxsplit=1)[1] for x in names]
     return ls
 
+
 def geneNames():
     '''Get a full list of the ordered gene names in the tensor (names are EGID's)'''
     genes = importData("robertt", "LukeKuechly59!", "Gene Expression")

@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 from .dataHelpers import importLINCSprotein
 
-def data_mod(x, df = None):
+
+def data_mod(x, df=None):
     '''Creates a slice of the data tensor corresponding to the inputted treatment'''
-    if type(df) != pd.core.frame.DataFrame:
+    if df is None:
         df = importLINCSprotein()
     spec_df = df.loc[(df['Treatment'] == 'Control') | (df['Treatment'] == x)]
     times = spec_df['Time'].to_numpy().tolist()
@@ -20,9 +21,8 @@ def form_tensor():
     unique_treatments.remove('Control')
 
     slices = []
-    df_slices = []
     for treatment in unique_treatments:
-        array, df_array, times = data_mod(treatment, df)
+        array, _, times = data_mod(treatment, df)
         slices.append(array)
     tensor = np.stack(slices)
     return tensor, unique_treatments, times

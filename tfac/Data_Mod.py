@@ -9,9 +9,10 @@ def data_mod(x, df=None):
         df = importLINCSprotein()
     spec_df = df.loc[(df['Treatment'] == 'Control') | (df['Treatment'] == x)]
     times = spec_df['Time'].to_numpy().tolist()
-    spec_df = spec_df.drop(columns = ['Sample description', 'Treatment', 'File', 'Time'])
+    spec_df = spec_df.drop(columns=['Sample description', 'Treatment', 'File', 'Time'])
     y = spec_df.to_numpy()
     return y, spec_df, times
+
 
 def form_tensor():
     '''Creates tensor in numpy array form and returns tensor, treatments, and time'''

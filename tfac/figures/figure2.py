@@ -12,6 +12,7 @@ tensor, treatments, times = form_tensor()
 results = tucker_decomp(tensor, (2, 2, 2))
 factors = results[1]
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
@@ -25,6 +26,7 @@ def makeFigure():
     # Add subplot labels
     subplotLabel(ax)
     return f
+
 
 def R2X_figure(ax):
     '''Create Tucker R2X Figure'''

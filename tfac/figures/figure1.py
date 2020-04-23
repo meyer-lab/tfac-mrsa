@@ -12,6 +12,7 @@ tensor, treatments, times = form_tensor()
 results = cp_decomp(tensor, 2)
 comps = results[1]
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
@@ -49,7 +50,8 @@ def treatmentPlot(ax, factors, r1, r2, senthue):
     ax.set_ylabel('Component ' + str(r2))
     ax.set_title('Treatment Factors')
     setPlotLimits(ax, factors, r1, r2)
-    
+
+
 def timePlot(ax, factors):
     '''Plot time points (tensor axis 1) in factorization component space'''
     for i in np.arange(factors.shape[1]):
@@ -58,6 +60,7 @@ def timePlot(ax, factors):
     ax.set_ylabel('Component Value')
     ax.set_title('Time Components')
 
+
 def proteinPlot(ax, factors, r1, r2):
     '''Plot proteins (tensor axis 2) in factorization component space'''
     sns.scatterplot(factors[:, r1 - 1], factors[:, r2 - 1], ax=ax)
@@ -65,6 +68,7 @@ def proteinPlot(ax, factors, r1, r2):
     ax.set_ylabel('Component ' + str(r2))
     ax.set_title('Protein Factors')
     setPlotLimits(ax, factors, r1, r2)
+
 
 def setPlotLimits(axis, factors, r1, r2):
     '''Set appropriate limits for the borders of each component plot'''

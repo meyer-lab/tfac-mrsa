@@ -26,6 +26,7 @@ def R2X(reconstructed, original):
 
 #### Decomposition Methods ###################################################################
 
+
 def cp_decomp(tensor, r, nneg=False):
     """Perform PARAFAC decomposition.
     -----------------------------------------------
@@ -61,9 +62,11 @@ def tucker_decomp(tensor, rank_list, nneg=False):
 
 #### For R2X Plots ###########################################################################
 
+
 def find_R2X_parafac(cp_output, orig):
     """Compute R2X for the tucker decomposition."""
     return R2X(tl.kruskal_to_tensor(cp_output), orig)
+
 
 def find_R2X_tucker(tucker_output, orig):
     """Compute R2X for the tucker decomposition."""

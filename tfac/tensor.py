@@ -40,7 +40,7 @@ def cp_decomp(tensor, r, nneg=False):
     if nneg:
         output = non_negative_parafac(tensor, r, tol=1.0e-10, n_iter_max=6000)
     else:
-        output = parafac(tensor, r, tol=1.0e-10, n_iter_max=6000)
+        output = parafac(tensor, r, tol=1.0e-10, n_iter_max=6000, orthogonalise=True)
     return output
 
 

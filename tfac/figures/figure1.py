@@ -5,12 +5,12 @@ import numpy as np
 import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
 from ..Data_Mod import form_tensor
-from ..tensor import cp_decomp, find_R2X_parafac
+from ..tensor import cp_decomp, find_R2X_parafac, reorient_factors
 
 
 tensor, treatments, times = form_tensor()
-results = cp_decomp(tensor, 2)
-comps = results[1]
+results = cp_decomp(tensor, 5)
+comps = reorient_factors(results[1])
 
 
 def makeFigure():

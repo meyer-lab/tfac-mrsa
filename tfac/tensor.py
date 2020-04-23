@@ -24,6 +24,19 @@ def R2X(reconstructed, original):
     """ Calculates R2X of two tensors. """
     return 1.0 - tl_var(reconstructed - original) / tl_var(original)
 
+
+def reorient_factors(factors):
+    """ Reorient factors based on the sign of the mean so that only the last factor can have negative means. """
+    for index in range(len(factors) - 1):
+        meann = np.sign(np.mean(factors[index], axis = 0))
+        assert meann.size == factors[0].shape[1]
+
+        factors[index] *= meann
+        factors[index + 1] *= meann
+
+    return factors
+
+
 #### Decomposition Methods ###################################################################
 
 
@@ -59,6 +72,7 @@ def tucker_decomp(tensor, rank_list, nneg=False):
     else:
         output = tucker(tensor, rank_list, tol=1.0e-10, n_iter_max=2000)
     return output
+
 
 #### For R2X Plots ###########################################################################
 

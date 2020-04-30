@@ -48,7 +48,7 @@ def treatmentPlot(ax, factors, senthue):
     for i in np.arange(len(treatments)):
         sns.lineplot(complist, factors[i, :], ax=ax, label=treatments[i])
     ax.set_xlabel('Component')
-    ax.set_ylabel('Component Value' )
+    ax.set_ylabel('Component Value')
     ax.set_title('Treatment Factors')
 
 

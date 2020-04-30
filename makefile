@@ -9,7 +9,7 @@ pandocCommon = -f markdown \
 	--csl=style.csl -F pandoc-fignos -F pandoc-eqnos -F pandoc-tablenos \
 	--metadata link-citations=true
 
-all: pylint.log $(flistFull) output/manuscript.html output/manuscript.pdf output/manuscript.docx
+all: pylint.log $(flistFull) output/manuscript.html
 
 venv: venv/bin/activate
 
@@ -46,13 +46,6 @@ output/manuscript.html: venv output/manuscript.md style.csl $(flistFull)
 		--include-after-body=common/templates/manubot/plugins/math.html \
 		--include-after-body=common/templates/manubot/plugins/hypothesis.html \
 		--output=output/manuscript.html output/manuscript.md
-
-output/manuscript.pdf: venv output/manuscript.md $(flistFull) style.csl
-	. venv/bin/activate && pandoc -t html5 $(pandocCommon) \
-	--pdf-engine=weasyprint --pdf-engine-opt=--presentational-hints \
-	--webtex=https://latex.codecogs.com/svg.latex? \
-	--include-after-body=common/templates/manubot/default.html \
-	-o $@ output/manuscript.md
 
 output/manuscript.docx: venv output/manuscript.md $(flistFull) style.csl
 	. venv/bin/activate && pandoc --verbose -t docx $(pandocCommon) \

@@ -9,8 +9,9 @@ from ..Data_Mod import form_tensor
 from ..tensor import tucker_decomp, find_R2X_tucker
 
 tensor, treatments, times = form_tensor()
-results = tucker_decomp(tensor, (2, 2, 2))
+results = tucker_decomp(tensor, (5, 4, 10))
 factors = results[1]
+print("Tucker R2X: " + str(find_R2X_tucker(results, tensor)))
 
 
 def makeFigure():
@@ -33,7 +34,7 @@ def R2X_figure(ax):
     R2X = np.zeros(14)
     nComps = range(1, len(R2X))
     for i in nComps:
-        output = tucker_decomp(tensor, (i, i, i))
+        output = tucker_decomp(tensor, (5, 4, i))
         R2X[i] = find_R2X_tucker(output, tensor)
     sns.scatterplot(np.arange(len(R2X)), R2X, ax=ax)
     ax.set_xlabel("Rank Decomposition")

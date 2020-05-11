@@ -3,7 +3,7 @@ Tensor decomposition methods
 """
 import numpy as np
 import tensorly as tl
-from tensorly.decomposition import non_negative_parafac, non_negative_tucker, parafac, tucker
+from tensorly.decomposition import non_negative_tucker, parafac, tucker
 from tensorly.metrics.regression import variance as tl_var
 
 tl.set_backend("numpy")  # Set the backend

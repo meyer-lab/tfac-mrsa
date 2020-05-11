@@ -1,8 +1,6 @@
 '''Contains function for importing data from and sending data to synapse'''
 from os.path import join, dirname
-import numpy as np
 import pandas as pd
-from synapseclient import Synapse
 
 path_here = dirname(dirname(__file__))
 

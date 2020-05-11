@@ -10,6 +10,8 @@ from sklearn.preprocessing import scale
 path = os.path.dirname(os.path.abspath(__file__))
 
 ################################ Summary Function for All Preprocessing #################################################
+
+
 def DataWorkFlow(username, password, threshold):
     """Contain the full preprocessing procedure in one function"""
     # import data from synapse
@@ -31,6 +33,8 @@ def DataWorkFlow(username, password, threshold):
     return meth2, gene2, copy2
 
 ################################ Individual Data Import Functions ###############################################################
+
+
 def importData(username, password, dataType=None):
     '''Data Import from synapse
     ----------------------------------------------
@@ -113,6 +117,8 @@ def geneNames():
     return np.array(genes.index)
 
 ################################ Tensor Data Preprocessing ######################################################################
+
+
 def extractData(filename, columns=None, row=0, col=None):
     '''useless -- to be deleted'''
     return pd.read_excel(filename, header=row, index_col=col, usecols=columns)
@@ -260,6 +266,7 @@ def extractCopy(dupes=False, cellLines=False):
         return returnVal, duplicates
     return returnVal, None
 
+
 def cutMissingValues(data, threshold):
     ''' Function takes in data and cuts rows & columns
     that have more missing values than the threshold set.
@@ -338,6 +345,8 @@ def normalize(data):
     return np.array((data_1, data_2, data_3))
 
 ################################ Drug Data Processing ############################################################
+
+
 def importDrugs():
     '''
     Imports Drug Data and separates it by compound

@@ -3,7 +3,7 @@ Tensor decomposition methods
 """
 import numpy as np
 import tensorly as tl
-from tensorly.decomposition import non_negative_tucker, parafac, tucker
+from tensorly.decomposition import parafac, tucker
 from tensorly.metrics.regression import variance as tl_var
 
 tl.set_backend("numpy")  # Set the backend
@@ -47,39 +47,30 @@ def cp_decomp(tensor, r):
         tensor: 3D data tensor
         r: rank of decomposition
     Returns
-        factors: list of factor matrices
+        output[0]: reconstruction variance explained
+        output[1]: list of factor matrices
     """
-    weights, factors = parafac(tensor, r, tol=1.0e-10, n_iter_max=6000, orthogonalise=True, normalize_factors=True)
+    weights, factors = parafac(tensor, r, tol=1.0e-15, n_iter_max=2000, orthogonalise=10, random_state=1, normalize_factors=True)
     factors[2] *= weights[np.newaxis, :]  # Put weighting in designated factor
     weights /= weights
-    return weights, factors
+
+    factors = reorient_factors(factors)
+
+    recon2X = R2X(tl.kruskal_to_tensor((weights, factors)), tensor)
+    return recon2X, factors
 
 
-def tucker_decomp(tensor, rank_list, nneg=False):
+def tucker_decomp(tensor, rank_list):
     """Perform Tucker decomposition.
     -----------------------------------------------
     Input:
         tensor: 3D data tensor
         r: rank of decomposition (list of ranks)
     Returns
-        output[0]: core tensor
+        output[0]: reconstruction variance explained
         output[1]: list of factor matrices
     """
-    if nneg:
-        output = non_negative_tucker(tensor, rank_list, tol=1.0e-10, n_iter_max=2000)
-    else:
-        output = tucker(tensor, rank_list, tol=1.0e-10, n_iter_max=2000)
-    return output
+    tucked = tucker(tensor, rank_list, tol=1.0e-15)
+    recon2X = R2X(tl.tucker_to_tensor(tucked), tensor)
 
-
-#### For R2X Plots ###########################################################################
-
-
-def find_R2X_parafac(cp_output, orig):
-    """Compute R2X for the tucker decomposition."""
-    return R2X(tl.kruskal_to_tensor(cp_output), orig)
-
-
-def find_R2X_tucker(tucker_output, orig):
-    """Compute R2X for the tucker decomposition."""
-    return R2X(tl.tucker_to_tensor(tucker_output), orig)
+    return recon2X, tucked

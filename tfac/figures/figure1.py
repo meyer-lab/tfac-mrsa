@@ -4,23 +4,24 @@ This creates Figure 1 - CP Decomposition Plots
 import numpy as np
 import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
-from ..tensor import cp_decomp, find_R2X_parafac, reorient_factors
+from ..tensor import cp_decomp
 from ..Data_Mod import form_tensor
 
 tensor, treatments, times = form_tensor()
-results = cp_decomp(tensor, 8)
-comps = reorient_factors(results[1])
+comps = cp_decomp(tensor, 6)[1]
 
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    ax, f = getSetup((7, 6), (2, 2))
+    ax, f = getSetup((7, 6), (3, 3))
 
     R2X_figure(ax[0])
     treatmentPlot(ax[1], comps[0], treatments)
     timePlot(ax[2], comps[1])
     proteinPlot(ax[3], comps[2], 1, 2)
+    proteinPlot(ax[4], comps[2], 3, 4)
+    proteinPlot(ax[5], comps[2], 5, 6)
 
     # Add subplot labels
     subplotLabel(ax)
@@ -33,8 +34,7 @@ def R2X_figure(ax):
     R2X = np.zeros(10)
     nComps = range(1, len(R2X))
     for i in nComps:
-        output = cp_decomp(tensor, i)
-        R2X[i] = find_R2X_parafac(output, tensor)
+        R2X[i] = cp_decomp(tensor, i)[0]
     sns.scatterplot(np.arange(len(R2X)), R2X, ax=ax)
     ax.set_xlabel("Rank Decomposition")
     ax.set_ylabel("R2X")

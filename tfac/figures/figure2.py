@@ -6,23 +6,25 @@ import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
 from .figure1 import treatmentPlot, timePlot, proteinPlot
 from ..Data_Mod import form_tensor
-from ..tensor import tucker_decomp, find_R2X_tucker
+from ..tensor import tucker_decomp
 
 tensor, treatments, times = form_tensor()
-results = tucker_decomp(tensor, (5, 4, 10))
+R2xx, results = tucker_decomp(tensor, (5, 4, 6))
 factors = results[1]
-print("Tucker R2X: " + str(find_R2X_tucker(results, tensor)))
+print("Tucker R2X: " + str(R2xx))
 
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    ax, f = getSetup((7, 6), (2, 2))
+    ax, f = getSetup((7, 6), (3, 3))
 
     R2X_figure(ax[0])
     treatmentPlot(ax[1], factors[0], treatments)
     timePlot(ax[2], factors[1])
     proteinPlot(ax[3], factors[2], 1, 2)
+    proteinPlot(ax[4], factors[2], 3, 4)
+    proteinPlot(ax[5], factors[2], 5, 6)
 
     # Add subplot labels
     subplotLabel(ax)
@@ -34,8 +36,7 @@ def R2X_figure(ax):
     R2X = np.zeros(14)
     nComps = range(1, len(R2X))
     for i in nComps:
-        output = tucker_decomp(tensor, (5, 4, i))
-        R2X[i] = find_R2X_tucker(output, tensor)
+        R2X[i] = tucker_decomp(tensor, (5, 4, i))[0]
     sns.scatterplot(np.arange(len(R2X)), R2X, ax=ax)
     ax.set_xlabel("Rank Decomposition")
     ax.set_ylabel("R2X")

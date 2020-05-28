@@ -11,6 +11,7 @@ components = 7
 tensor, treatments, times = form_tensor()
 results = partial_tucker_decomp(tensor, [2], components)
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
@@ -39,6 +40,7 @@ def proteinScatterPlot(ax, results, components):
     for _ in range(counter, len(ax)):
         ax[counter].axis('off')
         counter += 1
+
 
 def setPlotLimits(axis, factors, r1, r2):
     '''Set appropriate limits for the borders of each component plot'''

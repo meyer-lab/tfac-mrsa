@@ -46,19 +46,19 @@ def outliersForPlot(dframe):
         prots[i].sort(key=lambda x: x[1])
         for idx, tup in enumerate(prots[i]):
             if idx < len(prots[i]) - 4:
-                if tup[1] > prots[i][idx+2][1] - .012 and tup[3] == tup[4] == True:
+                if tup[1] > prots[i][idx + 2][1] - .012 and tup[3] == tup[4]:
                     random1 = np.random.choice([0, 1, 1])
-                    prots[i][idx+(random1*2)][3] = False
+                    prots[i][idx + (random1 * 2)][3] = False
                     tup[4] = False
-                    prots[i][idx+2][4] = False
-                elif tup[1] > prots[i][idx+2][1] - .012 and tup[3]:
-                    prots[i][idx+2][3] = False
-                    prots[i][idx+2][4] = False
-                if tup[1] > prots[i][idx+4][1] - .012 and tup[3]:
+                    prots[i][idx + 2][4] = False
+                elif tup[1] > prots[i][idx + 2][1] - .012 and tup[3]:
+                    prots[i][idx + 2][3] = False
+                    prots[i][idx + 2][4] = False
+                if tup[1] > prots[i][idx + 4][1] - .012 and tup[3]:
                     random2 = np.random.randint(0, 2)
                     #print(tup[2], random1, random2)
-                    prots[i][idx+random2*4][3] = False
-                    prots[i][idx+4][4] = False
+                    prots[i][idx + random2 * 4][3] = False
+                    prots[i][idx + 4][4] = False
     return prots
 
 

@@ -12,6 +12,7 @@ components = 7
 tensor, treatments, times = form_tensor()
 results = partial_tucker_decomp(tensor, [2], components)
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
@@ -42,6 +43,6 @@ def treatmentvsTimePlot(results, components, ax):
         df['Times'] = [0, 2, 4, 8, 24, 48]
         df = df.set_index('Times')
         b = sns.lineplot(data=df, ax=ax[component], dashes=None)
-        b.set_title('Component ' + str(component+1))
+        b.set_title('Component ' + str(component + 1))
     for i in range(component + 1, len(ax)):
         ax[i].axis('off')

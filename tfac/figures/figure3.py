@@ -8,8 +8,8 @@ from ..tensor import find_R2X_partialtucker, partial_tucker_decomp
 from ..Data_Mod import form_tensor
 
 
-
 tensor, treatments, times = form_tensor()
+
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """

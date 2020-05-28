@@ -50,6 +50,7 @@ def proteinNames():
     proteinN = data.columns.values.tolist()
     return proteinN
 
+
 def printOutliers(results):
     '''Prints most extremem protein outliers of partial tucker decomposition of OHSU data based on IQR'''
     df = pd.DataFrame(results[1][0])
@@ -61,7 +62,7 @@ def printOutliers(results):
     IQR = Q3 - Q1
     prots = {}
     for i in range(df.columns.size - 1):
-        print("Component", str(i + 1), "1.5*IQR:", np.round((Q1[i] - 1.5*IQR[i]), 2), np.round((Q3[i] + 1.5*IQR[i]), 2))
+        print("Component", str(i + 1), "1.5*IQR:", np.round((Q1[i] - 1.5 * IQR[i]), 2), np.round((Q3[i] + 1.5 * IQR[i]), 2))
         positives = []
         negatives = []
         for row, col in df.iterrows():
@@ -174,6 +175,7 @@ def geneNames():
     '''Get a full list of the ordered gene names in the tensor (names are EGID's)'''
     genes = importData("robertt", "LukeKuechly59!", "Gene Expression")
     return np.array(genes.index)
+
 
 def normalize(data):
     """Scale the data along cell lines"""

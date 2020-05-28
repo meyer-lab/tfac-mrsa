@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .PHONY: clean test
 
-flist = 1 2 3 4 5 6
+flist = 1 2 3 4
 flistFull = $(patsubst %, output/figure%.svg, $(flist))
 pandocCommon = -f markdown \
 	--bibliography=output/references.json \

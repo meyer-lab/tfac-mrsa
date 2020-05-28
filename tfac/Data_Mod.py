@@ -40,29 +40,3 @@ def form_tensor():
         slices.append(array)
     tensor = np.stack(slices)
     return tensor, unique_treatments, times
-
-
-def z_score_tensor_bymeasure(tensor):
-    '''z-scores the LINCS data across all proteins in particular measurement (ie 1 treatment at 1 time) for all measurements.'''
-    for treatment in tensor:
-        for time in treatment:
-            mean_val = np.mean(time)
-            sd_val = np.std(time)
-            for i in range(time.shape[0]):
-                time[i] = ((time[i] - mean_val) / sd_val)
-    return tensor
-
-
-def z_score_tensor_byprotein(tensor):
-    '''z-scores the LINCS data across all measurements for one protein for all proteins.'''
-    for prot_idx in range(tensor.shape[2]):
-        prot_list = []
-        for treat_idx in range(tensor.shape[0]):
-            for time_idx in range(tensor.shape[1]):
-                prot_list.append(tensor[treat_idx][time_idx][prot_idx])
-        mean_val = np.mean(prot_list)
-        std_val = np.std(prot_list)
-        for treat_idx in range(tensor.shape[0]):
-            for time_idx in range(tensor.shape[1]):
-                tensor[treat_idx][time_idx][prot_idx] = (tensor[treat_idx][time_idx][prot_idx] - mean_val) / std_val
-    return tensor

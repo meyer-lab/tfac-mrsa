@@ -9,7 +9,7 @@ from ..dataHelpers import importLINCSprotein
 from ..tensor import partial_tucker_decomp
 from ..Data_Mod import form_tensor
 
-components = 7
+components = 5
 tensor, treatments, times = form_tensor()
 results = partial_tucker_decomp(tensor, [2], components)
 
@@ -39,7 +39,7 @@ def outliersForPlot(dframe):
     prots = {}
     for i in range(df.columns.size - 1):
         prots[i] = []
-        for row, col in df.iterrows():
+        for _, col in df.iterrows():
             if (col[i] < (Q1[i] - 1.7 * IQR[i])) or (col[i] > (Q3[i] + 1.7 * IQR[i])):
                 tup = [i, col[i], col['Proteins'][:-4], True, True]
                 prots[i].append(tup)
@@ -62,11 +62,11 @@ def outliersForPlot(dframe):
     return prots
 
 
-def proteinBoxPlot(ax, results, components):
+def proteinBoxPlot(ax, resultsIn, componentsIn):
     '''Plots protein component in partial tucker factorization space with annotation of some outliers'''
-    df = pd.DataFrame(results[1][0])
+    df = pd.DataFrame(resultsIn[1][0])
     prots = outliersForPlot(df)
-    complist = range(1, (components + 1))
+    complist = range(1, (componentsIn + 1))
     df.columns = complist
     sns.boxplot(data=df, ax=ax)
     ax.set_xlabel("Component")

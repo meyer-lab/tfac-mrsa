@@ -25,7 +25,7 @@ def compProteins(comps):
     """Returns the top three weighted proteins for each component in input protein component matrix"""
     i = np.shape(comps)  # input tensor decomp output
     proteins = proteinNames()
-    proteinNum, compNum = np.shape(comps[i[0] - 1])
+    _, compNum = np.shape(comps[i[0] - 1])
     compName = []
     topProtein = []
 
@@ -65,7 +65,7 @@ def printOutliers(results):
         print("Component", str(i + 1), "1.5*IQR:", np.round((Q1[i] - 1.5 * IQR[i]), 2), np.round((Q3[i] + 1.5 * IQR[i]), 2))
         positives = []
         negatives = []
-        for row, col in df.iterrows():
+        for _, col in df.iterrows():
             if col[i] < (Q1[i] - 1.5 * IQR[i]):
                 negatives.append((col[i], col["Proteins"]))
                 if col['Proteins'] not in prots:

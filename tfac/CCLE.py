@@ -1,13 +1,13 @@
 """Functions for importing and manipulating data from the Cancer Cell Line Encyclopedia"""
 import os
-from os.path import join, dirname
+from os.path import join
 from functools import reduce
 import numpy as np
 import pandas as pd
 from synapseclient import Synapse
 from sklearn.preprocessing import scale
 
-path = os.path.dirname(os.path.abspath(__file__))
+path_here = os.path.dirname(os.path.abspath(__file__))
 
 ################################ Summary Function for All Preprocessing #################################################
 
@@ -353,7 +353,7 @@ def importDrugs():
     Returns:
             List of length 24 where each element defines a single compound as a 2D numpy array
     '''
-    filename = os.path.join(path, './data/DrugData.csv')
+    filename = os.path.join(path_here, './data/DrugData.csv')
     drugData = pd.read_csv(filename, header=0, index_col=False).values
     drugs = np.unique(drugData[:, 2])
     drugList = []
@@ -371,7 +371,7 @@ def tempFilter(drugData, factors):
     Outputs:
     two 2d numpy arrays containing the drugArr and factors with common cell lines
     '''
-    filename = os.path.join(path, "./data/cellLines(aligned,precut).csv")
+    filename = os.path.join(path_here, "./data/cellLines(aligned,precut).csv")
     factCells = pd.read_csv(filename, header=None, index_col=False).values
     factFiltered, drugFiltered = filterCells(factCells, factors, drugData)
     return factFiltered, drugFiltered

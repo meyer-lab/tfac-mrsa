@@ -1,27 +1,24 @@
 """
-This creates Figure 1 - CP Decomposition Plots
+This creates Figure 1 - Partial Tucker Decomposition Protein Plots
 """
 import numpy as np
 import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
-from ..tensor import cp_decomp
+from ..tensor import partial_tucker_decomp
 from ..Data_Mod import form_tensor
 
+components = 7
 tensor, treatments, times = form_tensor()
-comps = cp_decomp(tensor, 6)[1]
-
+results = partial_tucker_decomp(tensor, [2], components)
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    ax, f = getSetup((7, 6), (3, 3))
+    row = 3
+    col = 7
+    ax, f = getSetup((21, 7), (row, col))
 
-    R2X_figure(ax[0])
-    treatmentPlot(ax[1], comps[0], treatments)
-    timePlot(ax[2], comps[1])
-    proteinPlot(ax[3], comps[2], 1, 2)
-    proteinPlot(ax[4], comps[2], 3, 4)
-    proteinPlot(ax[5], comps[2], 5, 6)
+    proteinScatterPlot(ax, results, components)
 
     # Add subplot labels
     subplotLabel(ax)
@@ -29,46 +26,19 @@ def makeFigure():
     return f
 
 
-def R2X_figure(ax):
-    '''Create Parafac R2X Figure'''
-    R2X = np.zeros(10)
-    nComps = range(1, len(R2X))
-    for i in nComps:
-        R2X[i] = cp_decomp(tensor, i)[0]
-    sns.scatterplot(np.arange(len(R2X)), R2X, ax=ax)
-    ax.set_xlabel("Rank Decomposition")
-    ax.set_ylabel("R2X")
-    ax.set_title("CP Decomposition")
-    ax.set_yticks([0, .2, .4, .6, .8, 1])
-
-
-def treatmentPlot(ax, factors, senthue):
-    '''Plot treatments (tensor axis 0) in factorization component space'''
-    complist = np.arange(factors.shape[1])
-    for i in np.arange(len(treatments)):
-        sns.lineplot(complist, factors[i, :], ax=ax, label=treatments[i])
-    ax.set_xlabel('Component')
-    ax.set_ylabel('Component Value')
-    ax.set_title('Treatment Factors')
-
-
-def timePlot(ax, factors):
-    '''Plot time points (tensor axis 1) in factorization component space'''
-    for i in np.arange(factors.shape[1]):
-        sns.lineplot(times, factors[:, i], ax=ax, label="Component " + str(i))
-    ax.set_xlabel("Measurement Time")
-    ax.set_ylabel('Component Value')
-    ax.set_title('Time Factors')
-
-
-def proteinPlot(ax, factors, r1, r2):
-    '''Plot proteins (tensor axis 2) in factorization component space'''
-    sns.scatterplot(factors[:, r1 - 1], factors[:, r2 - 1], ax=ax)
-    ax.set_xlabel('Component ' + str(r1))
-    ax.set_ylabel('Component ' + str(r2))
-    ax.set_title('Protein Factors')
-    setPlotLimits(ax, factors, r1, r2)
-
+def proteinScatterPlot(ax, results, components):
+    '''Plot compared proteins (tensor axis 2) in factorization component space'''
+    counter = 0
+    for i in range(components):
+        for j in range(i + 1, components):
+            sns.scatterplot(results[1][0][:, i], results[1][0][:, j], ax=ax[counter])
+            ax[counter].set_xlabel('Component ' + str(i + 1))
+            ax[counter].set_ylabel('Component ' + str(j + 1))
+            ax[counter].set_title('Protein Factors')
+            counter += 1
+    for _ in range(counter, len(ax)):
+        ax[counter].axis('off')
+        counter += 1
 
 def setPlotLimits(axis, factors, r1, r2):
     '''Set appropriate limits for the borders of each component plot'''

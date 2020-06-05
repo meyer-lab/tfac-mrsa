@@ -1,4 +1,4 @@
-'''Contains function for importing and handling OHSU data'''
+"""Contains function for importing and handling OHSU data"""
 from os.path import join, dirname
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ def compProteins(comps):
     topProtein = []
 
     for x in range(0, compNum):
-        compName.append('Col' + str(x + 1))
+        compName.append("Col" + str(x + 1))
 
     dfComps = pd.DataFrame(data=comps[i[0] - 1], index=proteins, columns=compName)
     for y in range(0, compNum):
@@ -44,19 +44,19 @@ def compProteins(comps):
 def proteinNames():
     """Return protein names (data columns)"""
     data = importLINCSprotein()
-    data = data.drop(columns=['Treatment', 'Sample description', 'File', 'Time'], axis=1)
+    data = data.drop(columns=["Treatment", "Sample description", "File", "Time"], axis=1)
     proteinN = data.columns.values.tolist()
     return proteinN
 
 
 def printOutliers(results):
-    '''Prints most extremem protein outliers of partial tucker decomposition of OHSU data based on IQR'''
+    """Prints most extremem protein outliers of partial tucker decomposition of OHSU data based on IQR"""
     df = pd.DataFrame(results[1][0])
     proteins = importLINCSprotein()
     columns = proteins.columns[3:298]
     df["Proteins"] = columns
-    Q1 = df.quantile(.25)
-    Q3 = df.quantile(.75)
+    Q1 = df.quantile(0.25)
+    Q3 = df.quantile(0.75)
     IQR = Q3 - Q1
     prots = {}
     for i in range(df.columns.size - 1):
@@ -66,16 +66,16 @@ def printOutliers(results):
         for _, col in df.iterrows():
             if col[i] < (Q1[i] - 1.5 * IQR[i]):
                 negatives.append((col[i], col["Proteins"]))
-                if col['Proteins'] not in prots:
-                    prots[col['Proteins']] = 1
+                if col["Proteins"] not in prots:
+                    prots[col["Proteins"]] = 1
                 else:
-                    prots[col['Proteins']] += 1
+                    prots[col["Proteins"]] += 1
             elif col[i] > (Q3[i] + 1.5 * IQR[i]):
-                positives.append((col[i], col['Proteins']))
-                if col['Proteins'] not in prots:
-                    prots[col['Proteins']] = 1
+                positives.append((col[i], col["Proteins"]))
+                if col["Proteins"] not in prots:
+                    prots[col["Proteins"]] = 1
                 else:
-                    prots[col['Proteins']] += 1
+                    prots[col["Proteins"]] += 1
         print()
         negatives = sorted(negatives)[:7]
         positives = sorted(positives)[-7:]

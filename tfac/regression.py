@@ -10,29 +10,29 @@ path = os.path.dirname(os.path.abspath(__file__))
 
 
 def errorMetrics(y_test, y_pred):
-    '''
+    """
     Determines error values based off of predicted and actual values
     Inputs: 1D Numpy Arrays
     Outputs: Prints rmse and r2  and returns them as Float64
-    '''
+    """
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     mae = mean_absolute_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
 
-    print('Model Performance')
-    print('Root Mean Squared Error: {:0.4f}'.format(rmse))
-    print('Mean Absolute Error: {:0.4f}'.format(mae))
-    print('R2 Score: {:0.4f}'.format(r2))
+    print("Model Performance")
+    print("Root Mean Squared Error: {:0.4f}".format(rmse))
+    print("Mean Absolute Error: {:0.4f}".format(mae))
+    print("R2 Score: {:0.4f}".format(r2))
     metrics = np.array([rmse, mae, r2])
     return metrics
 
 
 def ElasticNetPred(xTrain, yTrain, xTest):
-    '''
+    """
     Makes a prediction after fitting the model to the training data
     Inputs: 2D Numpy Array, 1D Numpy Array, 2D Numpy Array, 1D Numpy Array
     Outputs: 1D Numpy Array, 1D Numpy Array
-    '''
+    """
 
     elasticNet = ElasticNet(alpha=0.59, l1_ratio=0.031)
     elasticNet.fit(xTrain, yTrain)
@@ -41,7 +41,7 @@ def ElasticNetPred(xTrain, yTrain, xTest):
 
 
 def KFoldCV(X, y, n_splits=5):
-    '''Performs KFold Cross Validation on data'''
+    """Performs KFold Cross Validation on data"""
     kfold = KFold(n_splits, True, 19)
     y_pred = 0
     yPredicted = 0

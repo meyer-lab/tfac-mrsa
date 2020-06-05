@@ -1,5 +1,8 @@
 # Improving cancer drug response prediction using tensor factorization
 
+[![Build Status](https://transduc.seas.ucla.edu/buildStatus/icon?job=meyer-lab%2Ftfac-ccle%2Fasm-edits)](https://transduc.seas.ucla.edu/job/meyer-lab/job/tfac-ccle/job/asm-edits/)
+[![Manuscript](https://img.shields.io/static/v1?label=manuscript&message=master&color=blue)](https://transduc.seas.ucla.edu/job/meyer-lab/job/tfac-ccle/job/master/Manuscript/)
+
 Identifying the molecular changes that drive cancer development has led to targeted inhibitors that selectively block these processes. These agents can be remarkably effective; however, they are usually effective only in a small subset of patients. Consequently, if we can identify features that predict which patients will respond to a targeted agent, we might vastly improve the benefit of these drugs for patients.
 
 One strategy to identify which cancer features might predict drug response has been to take a panel of cell lines of varied origin, then profile both their molecular and drug response features. The Cancer Cell Line Encyclopedia is one such effort, wherein over one thousand cell lines have been profiled for their response to a panel of compounds, gene expression, mutations, and other molecular features. These data then make it possible to build models that attempt to predict drug response.

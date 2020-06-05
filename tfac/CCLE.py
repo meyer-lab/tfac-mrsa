@@ -16,9 +16,9 @@ def DataWorkFlow(username, password, threshold):
     # import data from synapse
     syn = Synapse()
     syn.login(username, password)
-    meth0 = pd.read_csv(syn.get('syn21303732').path, index_col=0)
-    copy0 = pd.read_csv(syn.get('syn21303730').path, index_col=0)
-    gene0 = pd.read_csv(syn.get('syn21303731').path, index_col=0)
+    meth0 = pd.read_csv(syn.get("syn21303732").path, index_col=0)
+    copy0 = pd.read_csv(syn.get("syn21303730").path, index_col=0)
+    gene0 = pd.read_csv(syn.get("syn21303731").path, index_col=0)
 
     # run filter - aligns all 3 data sets to the same size
     meth1, gene1, copy1 = filterData(meth0, gene0, copy0)
@@ -31,11 +31,12 @@ def DataWorkFlow(username, password, threshold):
 
     return meth2, gene2, copy2
 
+
 ################################ Individual Data Import Functions ###############################################################
 
 
 def importData(username, password, dataType=None):
-    '''Data Import from synapse
+    """Data Import from synapse
     ----------------------------------------------
     Parameters:
         username: string
@@ -48,48 +49,48 @@ def importData(username, password, dataType=None):
     Returns:
         df: DataFrame
             Data from the CCLE in data frame format
-    '''
+    """
 
     # Input Checking
     if dataType is None:
-        print('Invalid Data Set')
-        print('For Raw Data Enter:', '"Copy Number All",', '"Methylation All",', 'or "Gene Expression All"')
-        print('For Processed Data Enter:', '"Copy Number"', '"Methylation"', 'or "Gene Expression"')
+        print("Invalid Data Set")
+        print("For Raw Data Enter:", '"Copy Number All",', '"Methylation All",', 'or "Gene Expression All"')
+        print("For Processed Data Enter:", '"Copy Number"', '"Methylation"', 'or "Gene Expression"')
         return None
     syn = Synapse()
     try:
         syn.login(username, password)
     except BaseException:
-        print('Bad Username or Password')
+        print("Bad Username or Password")
         return None
 
     # Find Data -- TODO: FIGURE OUT WHAT THESE ALL SPECIFICALLY REPRESENT
-    if dataType == 'Copy Number All':
-        df = pd.read_excel(syn.get('syn21033823').path)
-    elif dataType == 'Methylation All':
-        df = pd.read_excel(syn.get('syn21033929').path)
-    elif dataType == 'Gene Expression All':
-        df = pd.read_excel(syn.get('syn21033805').path)
-    elif dataType == 'Copy Number':
-        df = pd.read_csv(syn.get('syn21303730').path, index_col=0, header=0)
-    elif dataType == 'Methylation':
-        df = pd.read_csv(syn.get('syn21303732').path, index_col=0, header=0)
-    elif dataType == 'Gene Expression':
-        df = pd.read_csv(syn.get('syn21303731').path, index_col=0, header=0)
+    if dataType == "Copy Number All":
+        df = pd.read_excel(syn.get("syn21033823").path)
+    elif dataType == "Methylation All":
+        df = pd.read_excel(syn.get("syn21033929").path)
+    elif dataType == "Gene Expression All":
+        df = pd.read_excel(syn.get("syn21033805").path)
+    elif dataType == "Copy Number":
+        df = pd.read_csv(syn.get("syn21303730").path, index_col=0, header=0)
+    elif dataType == "Methylation":
+        df = pd.read_csv(syn.get("syn21303732").path, index_col=0, header=0)
+    elif dataType == "Gene Expression":
+        df = pd.read_csv(syn.get("syn21303731").path, index_col=0, header=0)
 
     syn.logout()
     return df
 
 
 def makeTensor(username, password):
-    '''Generate correctly aligned tensor for factorization'''
+    """Generate correctly aligned tensor for factorization"""
     syn = Synapse()
     syn.login(username, password)
 
     # Get Data
-    copy_number = importData(username, password, 'Copy Number')
-    methylation = importData(username, password, 'Methylation')
-    gene_expression = importData(username, password, 'Gene Expression')
+    copy_number = importData(username, password, "Copy Number")
+    methylation = importData(username, password, "Methylation")
+    gene_expression = importData(username, password, "Gene Expression")
 
     # Create final tensor
     arr = normalize(np.stack((gene_expression.values, copy_number.values, methylation.values)))
@@ -106,31 +107,32 @@ def cellLineNames():
     filename = join(path_here, "./data/cellLines(aligned,precut).csv")
     df = pd.read_csv(filename)
     names = np.insert(df.values, 0, "22RV1_PROSTATE")
-    ls = [x.split('_', maxsplit=1)[1] for x in names]
+    ls = [x.split("_", maxsplit=1)[1] for x in names]
     return ls
 
 
 def geneNames():
-    '''Get a full list of the ordered gene names in the tensor (names are EGID's)'''
+    """Get a full list of the ordered gene names in the tensor (names are EGID's)"""
     genes = importData("robertt", "LukeKuechly59!", "Gene Expression")
     return np.array(genes.index)
+
 
 ################################ Tensor Data Preprocessing ######################################################################
 
 
 def extractData(filename, columns=None, row=0, col=None):
-    '''useless -- to be deleted'''
+    """useless -- to be deleted"""
     return pd.read_excel(filename, header=row, index_col=col, usecols=columns)
 
 
 def extractGeneNames():
-    '''
+    """
     Extracts sorted gene names from all data sets
     Returns:
             Order: Methylation, Gene Expression, Copy Number
             Returns three numpy arrays with gene names from aforementioned datasets
-    '''
-    data = extractData('data/GeneData_All.xlsx', 'A:C')
+    """
+    data = extractData("data/GeneData_All.xlsx", "A:C")
     data = data.to_numpy()
 
     methylation = data[:13493, 0].astype(str)
@@ -141,13 +143,13 @@ def extractGeneNames():
 
 
 def extractCellLines():
-    '''
+    """
     Extracts sorted cell lines from all data sets
     Returns:
             Order: Methylation, Gene Expression, Copy Number
             Returns three numpy arrays with cell lines from aforementioned datasets
-    '''
-    data = extractData('data/CellLines_All.xlsx', 'A:C')
+    """
+    data = extractData("data/CellLines_All.xlsx", "A:C")
     data = data.to_numpy()
     methylation = data[:843, 0].astype(str)
     geneExp = data[:1019, 1].astype(str)
@@ -157,29 +159,29 @@ def extractCellLines():
 
 
 def findCommonGenes(methIdx, geneIdx, copyIdx):
-    '''
+    """
     Finds the set of unique gene names from the copy number, methylation, and gene expression dataset
     Returns:
             Numpy array of unique common gene names
-    '''
+    """
     commonGenes = reduce(np.intersect1d, (methIdx, geneIdx, copyIdx))
     return commonGenes
 
 
 def findCommonCellLines(methCL, geneCL, copyCL):
-    '''
+    """
     Finds the set of unique cell lines from the copy number, methylation, and gene expression dataset
     Returns:
             Numpy array of unique common cell lines
-    '''
+    """
     commonCellLines = reduce(np.intersect1d, (methCL, geneCL, copyCL))
     return commonCellLines
 
 
 def filterData(methData, geneData, copyData):
-    '''
+    """
     Pushes the filtered data to synapse :D
-    '''
+    """
 
     methValues = np.array(methData.values)
     geneValues = np.array(geneData.values)
@@ -193,9 +195,8 @@ def filterData(methData, geneData, copyData):
     geneCL = np.array(geneData.columns)
     copyCL = np.array(copyData.columns)
 
-
-#   methG, geneG, copyG = extractGeneNames()
-#   methCL, geneCL, copyCL = extractCellLines(cut, methCell)
+    #   methG, geneG, copyG = extractGeneNames()
+    #   methCL, geneCL, copyCL = extractCellLines(cut, methCell)
     commonG = findCommonGenes(methIdx, geneIdx, copyIdx)
     commonCL = findCommonCellLines(methCL, geneCL, copyCL)
 
@@ -226,14 +227,14 @@ def filterData(methData, geneData, copyData):
 
 
 def extractCopy(dupes=False, cellLines=False):
-    '''
+    """
     Extracts out all duplicates data using excel file of gene names
     Returns:
             Order: Methylation, Gene Expression, Copy Number
             List of length 3 containing 3D arrays with
             duplicate EGIDs, indices, and # of dupes corresponding to each EGID
             Also returns # of duplicates in each data set
-    '''
+    """
     if cellLines:
         methylation, geneExp, copyNum = extractCellLines()
     else:
@@ -267,11 +268,11 @@ def extractCopy(dupes=False, cellLines=False):
 
 
 def cutMissingValues(data, threshold):
-    ''' Function takes in data and cuts rows & columns
+    """ Function takes in data and cuts rows & columns
     that have more missing values than the threshold set.
     (Currently only used for methylation)
     Inputs: data to be cut, threshold to keep (as a fraction)
-    Returns: cut data set '''
+    Returns: cut data set """
 
     uncutData = data
     rows = uncutData.index
@@ -343,16 +344,17 @@ def normalize(data):
     data_3 = scale(data[2, :, :])
     return np.array((data_1, data_2, data_3))
 
+
 ################################ Drug Data Processing ############################################################
 
 
 def importDrugs():
-    '''
+    """
     Imports Drug Data and separates it by compound
     Returns:
             List of length 24 where each element defines a single compound as a 2D numpy array
-    '''
-    filename = os.path.join(path_here, './data/DrugData.csv')
+    """
+    filename = os.path.join(path_here, "./data/DrugData.csv")
     drugData = pd.read_csv(filename, header=0, index_col=False).values
     drugs = np.unique(drugData[:, 2])
     drugList = []
@@ -364,12 +366,12 @@ def importDrugs():
 
 
 def tempFilter(drugData, factors):
-    '''temporarily uses known cell lines and factors for initial regression testing
+    """temporarily uses known cell lines and factors for initial regression testing
     Inputs: one compound (e.g. drugArr[0]) from the drugArr (a 2d numpy array)
             Factorization output (cell line components -- serves as the X in regression)
     Outputs:
     two 2d numpy arrays containing the drugArr and factors with common cell lines
-    '''
+    """
     filename = os.path.join(path_here, "./data/cellLines(aligned,precut).csv")
     factCells = pd.read_csv(filename, header=None, index_col=False).values
     factFiltered, drugFiltered = filterCells(factCells, factors, drugData)
@@ -377,7 +379,7 @@ def tempFilter(drugData, factors):
 
 
 def filterCells(factCells, factors, drugData):
-    '''aligns factors and drug data by common cell lines'''
+    """aligns factors and drug data by common cell lines"""
     commonCL = reduce(np.intersect1d, (factCells, drugData[:, 0]))
     factIdx = np.where(np.in1d(factCells, commonCL))[0]
     drugIdx = np.where(np.in1d(drugData[:, 0], commonCL))[0]

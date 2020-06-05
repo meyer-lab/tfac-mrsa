@@ -4,12 +4,8 @@ SHELL := /bin/bash
 
 flist = 1 2 3 4 5
 flistFull = $(patsubst %, output/figure%.svg, $(flist))
-pandocCommon = -f markdown \
-	--bibliography=output/references.json \
-	--csl=style.csl -F pandoc-fignos -F pandoc-eqnos -F pandoc-tablenos \
-	--metadata link-citations=true
 
-all: pylint.log $(flistFull) output/manuscript.html
+all: pylint.log $(flistFull) output/manuscript.md
 
 venv: venv/bin/activate
 
@@ -18,55 +14,35 @@ venv/bin/activate: requirements.txt
 	. venv/bin/activate && pip install -Uqr requirements.txt
 	touch venv/bin/activate
 
-output/figure%.svg: venv genFigures.py tfac/figures/figure%.py
-	mkdir -p ./output
+output/figure%.svg: genFigures.py tfac/figures/figure%.py venv
+	@ mkdir -p ./output
 	. venv/bin/activate && ./genFigures.py $*
 
-output/manuscript.md: venv manuscript/*.md
-	mkdir -p ./output/%
-	. venv/bin/activate && manubot process --content-directory=manuscript/ --output-directory=output/ --log-level=WARNING
+output/manuscript.md: venv manuscript/*.md venv/bin/activate
+	. venv/bin/activate && manubot process --content-directory=manuscript --output-directory=output --cache-directory=cache --skip-citations --log-level=INFO
+	git remote rm rootstock
 
-output/manuscript.html: venv output/manuscript.md style.csl $(flistFull)
-	. venv/bin/activate && pandoc \
-		--from=markdown --to=html5 --filter=pandoc-fignos --filter=pandoc-eqnos --filter=pandoc-tablenos \
-		--bibliography=output/$*/references.json \
-		--csl=style.csl \
-		--metadata link-citations=true \
-		--include-after-body=common/templates/manubot/default.html \
-		--include-after-body=common/templates/manubot/plugins/table-scroll.html \
-		--include-after-body=common/templates/manubot/plugins/anchors.html \
-		--include-after-body=common/templates/manubot/plugins/accordion.html \
-		--include-after-body=common/templates/manubot/plugins/tooltips.html \
-		--include-after-body=common/templates/manubot/plugins/jump-to-first.html \
-		--include-after-body=common/templates/manubot/plugins/link-highlight.html \
-		--include-after-body=common/templates/manubot/plugins/table-of-contents.html \
-		--include-after-body=common/templates/manubot/plugins/lightbox.html \
-		--mathjax \
-		--variable math="" \
-		--include-after-body=common/templates/manubot/plugins/math.html \
-		--include-after-body=common/templates/manubot/plugins/hypothesis.html \
-		--output=output/manuscript.html output/manuscript.md
+output/manuscript.html: venv output/manuscript.md $(patsubst %, output/figure%.svg, $(flist))
+	mkdir output/output
+	cp output/*.svg output/output/
+	. venv/bin/activate && pandoc --verbose \
+		--defaults=./common/templates/manubot/pandoc/common.yaml \
+		--defaults=./common/templates/manubot/pandoc/html.yaml output/manuscript.md
 
-output/manuscript.docx: venv output/manuscript.md $(flistFull) style.csl
+output/manuscript.docx: venv output/manuscript.md $(flistFull)
 	. venv/bin/activate && pandoc --verbose -t docx $(pandocCommon) \
 		--reference-doc=common/templates/manubot/default.docx \
 		--resource-path=.:content \
 		-o $@ output/manuscript.md
 
 test: venv
-	. venv/bin/activate; pytest -s
+	. venv/bin/activate && pytest -s
 
 coverage.xml: venv
-	. venv/bin/activate; pytest --junitxml=junit.xml --cov=tfac --cov-report xml:coverage.xml
+	. venv/bin/activate && pytest --junitxml=junit.xml --cov=tfac --cov-report xml:coverage.xml
 
 pylint.log: venv
 	. venv/bin/activate && (pylint --rcfile=./common/pylintrc tfac > pylint.log || echo "pylint exited with $?")
 
-style.csl:
-	curl -o $@ https://www.zotero.org/styles/plos-computational-biology
-
 clean:
-	mv output/requests-cache.sqlite requests-cache.sqlite || true
-	rm -rf coverage.xml junit.xml output venv style.csl
-	mkdir output
-	mv requests-cache.sqlite output/requests-cache.sqlite || true
+	rm -rf coverage.xml junit.xml output venv

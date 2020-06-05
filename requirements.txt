@@ -1,9 +1,9 @@
-numpy==1.18.4
+numpy==1.18.5
 scipy==1.4.1
-pytest==5.4.2
+pytest==5.4.3
 pytest-cov==2.9.0
 pylint==2.5.2
-manubot==0.3.1
+manubot==0.4.0
 pandoc-fignos
 pandoc-eqnos
 pandoc-tablenos
@@ -12,7 +12,6 @@ matplotlib==3.2.1
 seaborn==0.10.1
 svgutils==0.3.1
 git+git://github.com/tensorly/tensorly.git@b479f18d9b1658f9e849538dce1fd87931d2017a
-tqdm
 scikit-learn==0.23.1
 pybiomart
 h5py

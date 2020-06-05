@@ -18,4 +18,4 @@ if __name__ == '__main__':
     ff = eval(nameOut + '.makeFigure()')
     ff.savefig(fdir + nameOut + '.svg', dpi=300, bbox_inches='tight', pad_inches=0)
 
-    logging.info('%s is done after %s seconds.', nameOut, time.time() - start)
+    logging.info(f'Figure {sys.argv[1]} is done after {time.time() - start} seconds.')

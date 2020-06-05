@@ -5,18 +5,18 @@ from .dataHelpers import importLINCSprotein
 
 
 def data_mod(x, df=None):
-    '''Creates a slice of the data tensor corresponding to the inputted treatment'''
+    """Creates a slice of the data tensor corresponding to the inputted treatment"""
     if not isinstance(df, pd.core.frame.DataFrame):
         df = importLINCSprotein()
-    spec_df = df.loc[(df['Treatment'] == 'Control') | (df['Treatment'] == x)]
-    times = spec_df['Time'].to_numpy().tolist()
-    spec_df = spec_df.drop(columns=['Sample description', 'Treatment', 'Time'])
+    spec_df = df.loc[(df["Treatment"] == "Control") | (df["Treatment"] == x)]
+    times = spec_df["Time"].to_numpy().tolist()
+    spec_df = spec_df.drop(columns=["Sample description", "Treatment", "Time"])
     y = spec_df.to_numpy()
     return y, spec_df, times
 
 
 def form_tensor():
-    '''Creates tensor in numpy array form and returns tensor, treatments, and time'''
+    """Creates tensor in numpy array form and returns tensor, treatments, and time"""
     df = importLINCSprotein()
     tempindex = df["Sample description"]
     tempindex = tempindex[:36]
@@ -31,8 +31,8 @@ def form_tensor():
     df_means = by_row_index.mean()
     df_means.insert(0, "Treatment", value=treatments)
     df_means.insert(0, "Sample description", tempindex)
-    unique_treatments = np.unique(df_means['Treatment'].values).tolist()
-    unique_treatments.remove('Control')
+    unique_treatments = np.unique(df_means["Treatment"].values).tolist()
+    unique_treatments.remove("Control")
 
     slices = []
     for treatment in unique_treatments:

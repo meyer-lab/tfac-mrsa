@@ -8,8 +8,9 @@ flistFull = $(patsubst %, output/figure%.svg, $(flist))
 all: pylint.log $(flistFull) output/manuscript.md
 
 venv: venv/bin/activate
+download: tfac/data/mrsa/MRSA.Methylation.txt.xz
 
-venv/bin/activate: requirements.txt
+venv/bin/activate: requirements.txt tfac/data/mrsa/MRSA.Methylation.txt.xz
 	test -d venv || virtualenv venv
 	. venv/bin/activate && pip install -Uqr requirements.txt
 	touch venv/bin/activate
@@ -34,6 +35,9 @@ output/manuscript.docx: venv output/manuscript.md $(flistFull)
 		--reference-doc=common/templates/manubot/default.docx \
 		--resource-path=.:content \
 		-o $@ output/manuscript.md
+
+tfac/data/mrsa/MRSA.Methylation.txt.xz:
+	wget -nv -P ./tfac/data/mrsa/ "https://syno.seas.ucla.edu:9001/gc-cytokines/MRSA.Methylation.txt.xz"
 
 test: venv
 	. venv/bin/activate && pytest -s

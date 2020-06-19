@@ -2,6 +2,7 @@
 from os.path import join, dirname
 import numpy as np
 import pandas as pd
+from tensorly.metrics.regression import variance as tl_var
 
 path_here = dirname(dirname(__file__))
 

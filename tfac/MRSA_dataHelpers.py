@@ -2,13 +2,37 @@
 from os.path import join, dirname
 import numpy as np
 import pandas as pd
-from tensorly.metrics.regression import variance as tl_var
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import KFold
+from sklearn.metrics import roc_auc_score
 
 path_here = dirname(dirname(__file__))
 
 
+def find_CV_decisions(patient_matrix, outcomes, n_splits=61, random_state=None):
+    kf = KFold(n_splits=n_splits)
+    decisions = []
+    for train, test in kf.split(patient_matrix):
+        clf = LogisticRegression(random_state=random_state, max_iter=10000).fit(patient_matrix[train], outcomes[train])
+        decisions.append(clf.decision_function(patient_matrix[test]))
+    score_y = decisions
+    return score_y
+
+
+def produce_outcome_bools(statusID):
+    """Returns a list of booleans for progressor/resolver status ready to use for logistic regression"""
+    outcome_bools = []
+    for outcome in statusID:
+        if outcome == 'APMB':
+            outcome_bools.append(0)
+        else:
+            outcome_bools.append(1)
+
+    return np.asarray(outcome_bools)
+
+
 def get_patient_info():
-    """Return specific patiend ID information"""
+    """Return specific patient ID information"""
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
     cohortID = list(dataCohort["sample"])
     statusID = list(dataCohort["outcome_txt"])
@@ -16,7 +40,7 @@ def get_patient_info():
     return cohortID, statusID
 
 
-def form_MRSA_tensor():
+def form_MRSA_tensor(variance):
     """Create list of data matrices for parafac2"""
     dfClin, dfCoh = importClinicalMRSA()
     dfCyto = clinicalCyto(dfClin, dfCoh)
@@ -34,8 +58,7 @@ def form_MRSA_tensor():
     expNumpy = dfExp.to_numpy().T
 
     expNumpy = expNumpy.astype(float)
-    var = tl_var(expNumpy) / tl_var(cytoNumpy)
-    cytoNumpy = cytoNumpy * 29
+    cytoNumpy = cytoNumpy * variance
 
     tensor_slices = [cytoNumpy, expNumpy]
 
@@ -51,16 +74,16 @@ def importClinicalMRSA():
 
 def clinicalCyto(dataClinical, dataCohort):
     """isolate cytokine data from clinical"""
-    rowSize, colSize = dataClinical.shape
+    rowSize, _ = dataClinical.shape
     patientID = list(dataClinical["sid"])
 
     dataClinical = dataClinical.drop(dataClinical.iloc[:, 0:3], axis=1)
-    dataClinical = dataClinical.drop(dataClinical.iloc[:, 1:207], axis=1)
+    dataClinical = dataClinical.drop(dataClinical.iloc[:, 1:206], axis=1)
 
-    """isolate patient IDs from cohort 1"""
+    #isolate patient IDs from cohort 1
     dataCohort = dataCohort.drop(columns=["age", "gender", "race", "sampletype", "pair", "outcome_txt"], axis=1)
     cohortID = list(dataCohort["sample"])
-    IDSize, column = dataCohort.shape
+    IDSize, _ = dataCohort.shape
 
     cytokineData = pd.DataFrame()
 

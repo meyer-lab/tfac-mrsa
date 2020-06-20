@@ -25,6 +25,7 @@ for variance in variance_list:
 df_var = pd.DataFrame(values_vars)
 df_var.columns = ['Variance', 'AUC']
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects

@@ -67,10 +67,11 @@ def partial_tucker_decomp(tensor, mode_list, rank):
     """
     return partial_tucker(tensor, mode_list, rank, tol=1.0e-12)
 
+
 def MRSA_decomposition(variance, components):
     '''Perform tensor formation and decomposition for particular variance and component number
     ---------------------------------------------
-    Returns 
+    Returns
         parafac2tensor object
         tensor_slices list
     '''

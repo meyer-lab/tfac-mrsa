@@ -29,7 +29,6 @@ df.columns = ['Cytokines', 'GeneIDs', 'Component']
 test = pd.melt(df, id_vars=['Component'])
 
 
-
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
@@ -40,9 +39,8 @@ def makeFigure():
     b.tick_params(labelsize=15)
     plt.legend(prop={'size': 15})
     ax[0].set_ylim(0, 1)
-    
+
     # Add subplot labels
     subplotLabel(ax)
 
     return f
-

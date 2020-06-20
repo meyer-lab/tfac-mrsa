@@ -80,7 +80,7 @@ def clinicalCyto(dataClinical, dataCohort):
     dataClinical = dataClinical.drop(dataClinical.iloc[:, 0:3], axis=1)
     dataClinical = dataClinical.drop(dataClinical.iloc[:, 1:206], axis=1)
 
-    #isolate patient IDs from cohort 1
+    # isolate patient IDs from cohort 1
     dataCohort = dataCohort.drop(columns=["age", "gender", "race", "sampletype", "pair", "outcome_txt"], axis=1)
     cohortID = list(dataCohort["sample"])
     IDSize, _ = dataCohort.shape

@@ -22,6 +22,7 @@ for components in range(1, 39):
 df_comp = pd.DataFrame(values_comps)
 df_comp.columns = ['Components', 'AUC']
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects

@@ -3,7 +3,7 @@ Tensor decomposition methods
 """
 import numpy as np
 import tensorly as tl
-from tensorly.decomposition import partial_tucker
+from tensorly.decomposition import partial_tucker, parafac2
 from tensorly.metrics.regression import variance as tl_var
 from tensorly.decomposition import parafac2
 from tensorly.parafac2_tensor import parafac2_to_slice
@@ -66,6 +66,19 @@ def partial_tucker_decomp(tensor, mode_list, rank):
         output[1]: list of factor matrices
     """
     return partial_tucker(tensor, mode_list, rank, tol=1.0e-12)
+
+def OHSU_parafac2_decomp(tensorSlice, rank):
+    """Perform PARAFAC2 decomposition.
+    -----------------------------------------------
+    Input:
+        tensor: 3D data tensor
+        rank: rank of decomposition
+    Returns
+        output[0]: PARAFAC2 tensor, decomp[0] = weights, decomp[1] = factors, decomp[2] = projection matricies
+        output[1]: reconstruction error
+    """
+    decomp, error = parafac2(tensorSlice, rank, n_iter_max=1000, return_errors=True, random_state=1)
+    return decomp, error
 
 
 def MRSA_decomposition(variance, components):

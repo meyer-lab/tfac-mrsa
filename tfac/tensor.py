@@ -67,6 +67,7 @@ def partial_tucker_decomp(tensor, mode_list, rank):
     """
     return partial_tucker(tensor, mode_list, rank, tol=1.0e-12)
 
+
 def OHSU_parafac2_decomp(tensorSlice, rank):
     """Perform PARAFAC2 decomposition.
     -----------------------------------------------

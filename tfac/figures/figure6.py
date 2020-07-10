@@ -1,6 +1,7 @@
 """
 This creates Figure 6 - ROC Curve.
 """
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -11,17 +12,16 @@ from ..tensor import MRSA_decomposition
 _, outcomeID = get_patient_info()
 
 true_y = produce_outcome_bools(outcomeID)
-variance = 1
-components = 38
+variance = .007
+components = 21
 tensor_slices, parafac2tensor = MRSA_decomposition(variance, components)
 patient_matrix = parafac2tensor[1][2]
 
-score_y = find_CV_decisions(patient_matrix, true_y)
+score_y = find_CV_decisions(patient_matrix, true_y, C=10)
 
 fpr, tpr, thresholds = roc_curve(true_y, score_y)
 auc = roc_auc_score(true_y, score_y)
-print(auc)
-
+auc = np.round(auc, 3)
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
@@ -31,7 +31,8 @@ def makeFigure():
     df = pd.DataFrame()
     df['FPR'] = fpr
     df['TPR'] = tpr
-    sns.lineplot(data=df, x='FPR', y='TPR', estimator=None, ax=ax[0])
+    b = sns.lineplot(data=df, x='FPR', y='TPR', estimator=None, ax=ax[0])
+    b.legend(["AUC = " + str(auc)], fontsize=15)
     df = pd.DataFrame()
     df['FPR'] = [0, 1]
     df['TPR'] = [0, 1]

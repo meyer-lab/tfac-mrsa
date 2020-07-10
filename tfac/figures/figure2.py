@@ -44,16 +44,16 @@ def treatmentvsTimePlot(results, components, treatments, ax):
         df = pd.DataFrame(results[0][i])
         frame_list.append(df)
 
-    for component in range(components):
+    for comp in range(components):
         column_list = []
         for i in range(len(treatments)):
-            column_list.append(pd.DataFrame(frame_list[i].iloc[:, component]))
+            column_list.append(pd.DataFrame(frame_list[i].iloc[:, comp]))
         df = pd.concat(column_list, axis=1)
         df.columns = treatments
         df['Times'] = [0, 2, 4, 8, 24, 48]
         df = df.set_index('Times')
-        b = sns.lineplot(data=df, ax=ax[component], dashes=None)
-        b.set_title('Component ' + str(component + 1))
+        b = sns.lineplot(data=df, ax=ax[comp], dashes=None)
+        b.set_title('Component ' + str(comp + 1))
     for i in range(component + 1, len(ax)):
         ax[i].axis('off')
 
@@ -114,9 +114,9 @@ def proteinBoxPlot(ax, resultsIn, componentIn):
     ax.set_xlabel("Component " + str(componentIn))
     ax.set_ylabel('Component Value')
     ax.set_title('Protein Factors')
-    for component in prots:
+    for comp in prots:
         offset_side = 0
-        for outlier in prots[component]:
+        for outlier in prots[comp]:
             if outlier[3]:
                 if offset_side == 0:
                     ax.text(outlier[0] + .05, outlier[1] - .005, outlier[2], horizontalalignment='left', size='large', color='black', weight=100)

@@ -106,3 +106,19 @@ def MRSA_decomposition(variance, components):
 def find_R2X_partialtucker(tucker_output, orig):
     """Compute R2X for the tucker decomposition."""
     return R2X(mode_dot(tucker_output[0], tucker_output[1][0], 2), orig)
+
+
+###### To Flip Factors #########################################################################
+
+
+def flip_factors(tucker_output):
+    for component in range(tucker_output[0].shape[2]):
+        av = 0.0
+        for i in range(tucker_output[0].shape[0]):
+            av += np.mean(tucker_output[0][i][:, component] ** 5)
+
+        if av < 0 and tucker_output[1][0][:, component].mean() < 0:
+            tucker_output[1][0][:, component] *= -1
+            for j in range(tucker_output[0].shape[0]):
+                tucker_output[0][j][:, component] *= -1
+    return tucker_output

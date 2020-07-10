@@ -5,14 +5,16 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
-from ..tensor import partial_tucker_decomp, find_R2X_partialtucker
+from ..tensor import partial_tucker_decomp, find_R2X_partialtucker, flip_factors
 from ..Data_Mod import form_tensor
 from ..dataHelpers import importLINCSprotein
 
+
 component = 5
 tensor, treatment_list, times = form_tensor()
-result = partial_tucker_decomp(tensor, [2], component)
+pre_flip_result = partial_tucker_decomp(tensor, [2], component)
 
+result = flip_factors(pre_flip_result)
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """

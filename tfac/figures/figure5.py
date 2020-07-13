@@ -36,10 +36,9 @@ def makeFigure():
         b.tick_params(labelsize=15)
         b.set_title("R2X with Cytokine Variance Scaling = " + str(variance), fontsize=20)
         b.legend(loc='lower right')
-        plt.setp(ax[idx].get_legend().get_texts(), fontsize='15') # for legend text
+        plt.setp(ax[idx].get_legend().get_texts(), fontsize='15')  # for legend text
         plt.setp(ax[idx].get_legend().get_title(), fontsize='15')
         ax[idx].set_ylim(0, 1)
-
 
     # Add subplot labels
     subplotLabel(ax)

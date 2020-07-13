@@ -23,6 +23,7 @@ fpr, tpr, thresholds = roc_curve(true_y, score_y)
 auc = roc_auc_score(true_y, score_y)
 auc = np.round(auc, 3)
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects

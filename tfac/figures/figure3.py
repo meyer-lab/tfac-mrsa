@@ -16,7 +16,7 @@ def makeFigure():
     # Get list of axis objects
     ax, f = getSetup((15, 20), (3, 1))
     for idx, var in enumerate([.0007, .007, .07]):
-        b = sns.pointplot(data=all_vars[idx], x='Components', y='AUC', ax=ax[idx], s=70, join=False) # blue
+        b = sns.pointplot(data=all_vars[idx], x='Components', y='AUC', ax=ax[idx], s=70, join=False)  # blue
         b.set_xlabel("Components", fontsize=20)
         b.set_ylabel("AUC", fontsize=20)
         b.set_title("AUC with Cytokine Variance Scaling = " + str(var), fontsize=20)

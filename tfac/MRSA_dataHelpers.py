@@ -14,26 +14,28 @@ path_here = dirname(dirname(__file__))
 
 def find_SVC_proba(patient_matrix, outcomes):
     """Given a particular patient matrix and outcomes list, performs cross validation of SVC and returns the decision function to be used for AUC"""
-    proba = cross_val_predict(SVC(kernel='rbf'), patient_matrix, outcomes, cv=30, method="decision_function")
+    proba = cross_val_predict(SVC(kernel="rbf"), patient_matrix, outcomes, cv=30, method="decision_function")
     return proba
 
 
 def find_regularization(patient_matrix, outcomes, random_state=None):
     """Determines optimal regularization constant for Logistic Regression"""
-    clf = LogisticRegressionCV(Cs=20, cv=10, random_state=random_state, fit_intercept=False, penalty='l1', solver='saga', max_iter=100000).fit(patient_matrix, outcomes)
+    clf = LogisticRegressionCV(Cs=20, cv=10, random_state=random_state, fit_intercept=False, penalty="l1", solver="saga", max_iter=100000).fit(patient_matrix, outcomes)
     reg = clf.C_
     return reg[0]
 
 
 def find_CV_proba(patient_matrix, outcomes, random_state=None, C=1):
     """Given a particular patient matrix and outcomes list, performs cross validation of logistic regression and returns the decision function to be used for AUC"""
-    proba = cross_val_predict(LogisticRegression(penalty='l1', solver='saga', C=C, random_state=random_state, max_iter=10000, fit_intercept=False), patient_matrix, outcomes, cv=30, method="decision_function")
+    proba = cross_val_predict(
+        LogisticRegression(penalty="l1", solver="saga", C=C, random_state=random_state, max_iter=10000, fit_intercept=False), patient_matrix, outcomes, cv=30, method="decision_function"
+    )
     return proba
 
 
 def find_coefs(patient_matrix, outcomes, random_state=None, C=1):
     """Returns coefficients used for logistic regression model"""
-    clf = LogisticRegression(penalty='l1', solver='saga', C=C, random_state=random_state, max_iter=10000, fit_intercept=False).fit(patient_matrix, outcomes)
+    clf = LogisticRegression(penalty="l1", solver="saga", C=C, random_state=random_state, max_iter=10000, fit_intercept=False).fit(patient_matrix, outcomes)
     coef = clf.coef_
     return coef
 
@@ -42,7 +44,7 @@ def produce_outcome_bools(statusID):
     """Returns a list of booleans for progressor/resolver status ready to use for logistic regression"""
     outcome_bools = []
     for outcome in statusID:
-        if outcome == 'APMB':
+        if outcome == "APMB":
             outcome_bools.append(0)
         else:
             outcome_bools.append(1)
@@ -59,9 +61,9 @@ def get_patient_info(paired=False):
         cohortID = list(dataCohort["sample"])
         statusID = list(dataCohort["outcome_txt"])
         return cohortID, statusID
-    
+
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
-    singles = ['SA04233']
+    singles = ["SA04233"]
     dataCohort = dataCohort[~dataCohort["sample"].isin(singles)]
     cohortID = list(dataCohort["sample"])
     statusID = list(dataCohort["outcome_txt"])
@@ -72,8 +74,8 @@ def form_paired_tensor(variance1=1, variance2=1):
     """Create list of data matrices of paired data for parafac2"""
     dfClin, dfCoh = importClinicalMRSA()
     singles = [4, 7, 14, 19, 24, 25, 29, 31]
-    remove = dfCoh[dfCoh['pair'].isin(singles)]["sample"].to_list()
-    dfCoh = dfCoh[~dfCoh['pair'].isin(singles)]
+    remove = dfCoh[dfCoh["pair"].isin(singles)]["sample"].to_list()
+    dfCoh = dfCoh[~dfCoh["pair"].isin(singles)]
     pairs = dfCoh["pair"]
     dfCyto = clinicalCyto(dfClin, dfCoh)
     dfCyto = dfCyto.sort_values(by="sid")
@@ -96,23 +98,24 @@ def form_paired_tensor(variance1=1, variance2=1):
     dfExp = (dfExp - dfExp.apply(np.mean)) / dfExp.apply(np.std)
     dfExp = (dfExp.sub(dfExp.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp.apply(np.std, axis=1).to_list(), axis=0)
 
-    #dataMeth, m_locations = import_methylation()
-    #remove = ["4158", "4255", "4378", "4469", "4329", "5300", "4547", "5030"]
-    #dataMeth = dataMeth.drop(remove, axis=1)
+    # dataMeth, m_locations = import_methylation()
+    # remove = ["4158", "4255", "4378", "4469", "4329", "5300", "4547", "5030"]
+    # dataMeth = dataMeth.drop(remove, axis=1)
 
     cytoNumpy = dfCyto.to_numpy().T
     expNumpy = dfExp.to_numpy()
-    #methNumpy = dataMeth.iloc[:, 1:].values
+    # methNumpy = dataMeth.iloc[:, 1:].values
 
-    #methNumpy = methNumpy.astype(float)
+    # methNumpy = methNumpy.astype(float)
     expNumpy = expNumpy.astype(float)
-    cytoNumpy = cytoNumpy * ((1 / tl_var(cytoNumpy)) ** .5) * variance1
+    cytoNumpy = cytoNumpy * ((1 / tl_var(cytoNumpy)) ** 0.5) * variance1
     expNumpy = expNumpy * variance2
-    #methNumpy = methNumpy * ((1 / tl_var(methNumpy)) ** .5) * variance3
+    # methNumpy = methNumpy * ((1 / tl_var(methNumpy)) ** .5) * variance3
 
-    tensor_slices = [cytoNumpy, expNumpy]#, methNumpy]
+    tensor_slices = [cytoNumpy, expNumpy]  # , methNumpy]
 
     return tensor_slices, cytokines, geneIDs, pairs
+
 
 def form_MRSA_tensor(variance1=1, variance2=1):
     """Create list of data matrices for parafac2"""
@@ -127,7 +130,7 @@ def form_MRSA_tensor(variance1=1, variance2=1):
     cytokines = dfCyto.columns
 
     dfExp = importExpressionData()
-    dfExp = dfExp.drop(['SA04233'], axis=1)
+    dfExp = dfExp.drop(["SA04233"], axis=1)
     ser = dfExp.var(axis=1)
     drops = []
     for idx, element in enumerate(ser):
@@ -139,21 +142,21 @@ def form_MRSA_tensor(variance1=1, variance2=1):
     dfExp = (dfExp - dfExp.apply(np.mean)) / dfExp.apply(np.std)
     dfExp = (dfExp.sub(dfExp.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp.apply(np.std, axis=1).to_list(), axis=0)
 
-    #dataMeth, m_locations = import_methylation()
+    # dataMeth, m_locations = import_methylation()
 
     cytoNumpy = dfCyto.to_numpy().T
     expNumpy = dfExp.to_numpy()
-    #methNumpy = dataMeth.iloc[:, 1:].values
+    # methNumpy = dataMeth.iloc[:, 1:].values
 
-    #methNumpy = methNumpy.astype(float)
+    # methNumpy = methNumpy.astype(float)
     expNumpy = expNumpy.astype(float)
-    cytoNumpy = cytoNumpy * ((1 / tl_var(cytoNumpy)) ** .5) * variance1
+    cytoNumpy = cytoNumpy * ((1 / tl_var(cytoNumpy)) ** 0.5) * variance1
     expNumpy = expNumpy * variance2
-    #methNumpy = methNumpy * ((1 / tl_var(methNumpy)) ** .5) * variance3
+    # methNumpy = methNumpy * ((1 / tl_var(methNumpy)) ** .5) * variance3
 
-    tensor_slices = [cytoNumpy, expNumpy]#, methNumpy]
+    tensor_slices = [cytoNumpy, expNumpy]  # , methNumpy]
 
-    return tensor_slices, cytokines, geneIDs#, m_locations
+    return tensor_slices, cytokines, geneIDs  # , m_locations
 
 
 def import_methylation():

@@ -26,7 +26,7 @@ def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
     ax, f = getSetup((15, 8), (1, 1))
-    b = sns.scatterplot(data=cyto_df, x='Component A', y='Component B', hue="Outcomes", ax=ax[0]) # blue
+    b = sns.scatterplot(data=cyto_df, x="Component A", y="Component B", hue="Outcomes", ax=ax[0])  # blue
     b.set_xlabel("Component A", fontsize=20)
     b.set_ylabel("Component B", fontsize=20)
     b.tick_params(labelsize=14)
@@ -37,6 +37,7 @@ def makeFigure():
     subplotLabel(ax)
 
     return f
+
 
 def plot_svc_decision_function(model, ax=None, plot_support=True):
     """Plot the decision function for a 2D SVC"""
@@ -53,14 +54,10 @@ def plot_svc_decision_function(model, ax=None, plot_support=True):
     P = model.decision_function(xy).reshape(X.shape)
 
     # plot decision boundary and margins
-    ax.contour(X, Y, P, colors='k',
-               levels=[-1, 0, 1], alpha=0.5,
-               linestyles=['--', '-', '--'])
+    ax.contour(X, Y, P, colors="k", levels=[-1, 0, 1], alpha=0.5, linestyles=["--", "-", "--"])
 
     # plot support vectors
     if plot_support:
-        ax.scatter(model.support_vectors_[:, 0],
-                   model.support_vectors_[:, 1],
-                   s=300, linewidth=1, facecolors='none')
+        ax.scatter(model.support_vectors_[:, 0], model.support_vectors_[:, 1], s=300, linewidth=1, facecolors="none")
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)

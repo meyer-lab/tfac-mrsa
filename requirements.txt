@@ -1,8 +1,8 @@
-numpy==1.18.5
-scipy==1.4.1
-pytest==5.4.3
-pytest-cov==2.9.0
-pylint==2.5.2
+numpy==1.19.1
+scipy==1.5.2
+pytest==6.0.0
+pytest-cov==2.10.0
+pylint==2.5.3
 manubot==0.4.0
 pylogit==0.2.2
 statsmodels==0.11.1
@@ -10,7 +10,7 @@ pandoc-fignos
 pandoc-eqnos
 pandoc-tablenos
 synapseclient
-matplotlib==3.2.1
+matplotlib==3.3.0
 seaborn==0.10.1
 svgutils==0.3.1
 git+git://github.com/aarmey/tensorly.git@parafac2-ls

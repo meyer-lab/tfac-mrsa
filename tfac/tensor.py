@@ -50,13 +50,14 @@ def reorient_factors(factors):
 
 #### Decomposition Methods ###################################################################
 
+
 def MRSA_decomposition(tensor_slices, components, random_state=None):
-    '''Perform tensor formation and decomposition for particular variance and component number
+    """Perform tensor formation and decomposition for particular variance and component number
     ---------------------------------------------
     Returns
         parafac2tensor object
         tensor_slices list
-    '''
+    """
     parafac2tensor = parafac2(tensor_slices, components, random_state=random_state, verbose=False)
     return parafac2tensor
 

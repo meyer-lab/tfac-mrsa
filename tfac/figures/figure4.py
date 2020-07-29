@@ -16,11 +16,12 @@ cyto_df = pd.DataFrame([cytoA, cytoB, cytos]).T
 cyto_df.index = cytos
 cyto_df.columns = ["Component A", "Component B", "Cytokines"]
 
+
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
     ax, f = getSetup((15, 8), (1, 1))
-    b = sns.scatterplot(data=cyto_df, x='Component A', y='Component B', ax=ax[0]) # blue
+    b = sns.scatterplot(data=cyto_df, x="Component A", y="Component B", ax=ax[0])  # blue
     b.set_xlabel("Component A", fontsize=20)
     b.set_ylabel("Component B", fontsize=20)
     b.tick_params(labelsize=14)
@@ -31,7 +32,8 @@ def makeFigure():
 
     return f
 
+
 def label_point(df, ax):
     """Labels cytokines on plot"""
     for _, point in df.iterrows():
-        ax.text(point['Component A']+.002, point['Component B'], str(point['Cytokines']), fontsize=15)
+        ax.text(point["Component A"] + 0.002, point["Component B"], str(point["Cytokines"]), fontsize=15)

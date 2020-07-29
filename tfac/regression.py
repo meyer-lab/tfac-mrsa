@@ -42,7 +42,7 @@ def ElasticNetPred(xTrain, yTrain, xTest):
 
 def KFoldCV(X, y, n_splits=5):
     """Performs KFold Cross Validation on data"""
-    kfold = KFold(n_splits, shuffle-True, random_state=19)
+    kfold = KFold(n_splits, shuffle=True, random_state=19)
     y_pred = 0
     yPredicted = 0
     yActual = 0

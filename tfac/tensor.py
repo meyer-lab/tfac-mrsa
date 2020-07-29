@@ -3,10 +3,9 @@ Tensor decomposition methods
 """
 import numpy as np
 import tensorly as tl
-from tensorly.decomposition import partial_tucker, parafac2
+from tensorly.decomposition import parafac2
 from tensorly.metrics.regression import variance as tl_var
 from tensorly.parafac2_tensor import parafac2_to_slice
-from tensorly.tenalg import mode_dot
 
 
 tl.set_backend("numpy")  # Set the backend
@@ -51,36 +50,6 @@ def reorient_factors(factors):
 
 #### Decomposition Methods ###################################################################
 
-
-def partial_tucker_decomp(tensor, mode_list, rank):
-    """Perform Partial Tucker decomposition.
-    -----------------------------------------------
-    Input:
-        tensor: 3D data tensor
-        mode_list: which mode(s) to apply tucker decomposition to
-        rank: rank of decomposition
-    Returns
-        output[0]: core tensor
-        output[1]: list of factor matrices
-    """
-    return partial_tucker(tensor, mode_list, rank, tol=1.0e-12)
-
-
-
-def OHSU_parafac2_decomp(tensorSlice, rank):
-    """Perform PARAFAC2 decomposition.
-    -----------------------------------------------
-    Input:
-        tensor: 3D data tensor
-        rank: rank of decomposition
-    Returns
-        output[0]: PARAFAC2 tensor, decomp[0] = weights, decomp[1] = factors, decomp[2] = projection matricies
-        output[1]: reconstruction error
-    """
-    decomp, error = parafac2(tensorSlice, rank, n_iter_max=1000, return_errors=True, random_state=1)
-    return decomp, error
-
-
 def MRSA_decomposition(tensor_slices, components, random_state=None):
     '''Perform tensor formation and decomposition for particular variance and component number
     ---------------------------------------------
@@ -90,14 +59,6 @@ def MRSA_decomposition(tensor_slices, components, random_state=None):
     '''
     parafac2tensor = parafac2(tensor_slices, components, random_state=random_state, verbose=False)
     return parafac2tensor
-
-
-#### For R2X Plots ###########################################################################
-
-
-def find_R2X_partialtucker(tucker_output, orig):
-    """Compute R2X for the tucker decomposition."""
-    return R2X(mode_dot(tucker_output[0], tucker_output[1][0], 2), orig)
 
 
 ###### To Flip Factors #########################################################################

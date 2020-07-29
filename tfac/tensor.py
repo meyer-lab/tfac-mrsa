@@ -29,11 +29,11 @@ def R2X(reconstructed, original):
 
 def R2Xparafac2(tensor_slices, decomposition):
     """Calculate the R2X of parafac2 decomposition"""
-    R2X = np.zeros(len(tensor_slices))
+    R2XX = np.zeros(len(tensor_slices))
     for idx, tensor_slice in enumerate(tensor_slices):
         reconstruction = parafac2_to_slice(decomposition, idx, validate=False)
-        R2X[idx] = 1.0 - tl_var(reconstruction - tensor_slice) / tl_var(tensor_slice)
-    return R2X
+        R2XX[idx] = 1.0 - tl_var(reconstruction - tensor_slice) / tl_var(tensor_slice)
+    return R2XX
 
 
 def reorient_factors(factors):

@@ -21,12 +21,6 @@ def z_score_values(A, cell_dim):
     sigma = tl.tensor(np.std(tl.to_numpy(A), axis=convAxes))
     return A / sigma[tuple(convIDX)]
 
-
-def R2X(reconstructed, original):
-    """ Calculates R2X of two tensors. """
-    return 1.0 - tl_var(reconstructed - original) / tl_var(original)
-
-
 def R2Xparafac2(tensor_slices, decomposition):
     """Calculate the R2X of parafac2 decomposition"""
     R2XX = np.zeros(len(tensor_slices))
@@ -35,21 +29,7 @@ def R2Xparafac2(tensor_slices, decomposition):
         R2XX[idx] = 1.0 - tl_var(reconstruction - tensor_slice) / tl_var(tensor_slice)
     return R2XX
 
-
-def reorient_factors(factors):
-    """ Reorient factors based on the sign of the mean so that only the last factor can have negative means. """
-    for index in range(len(factors) - 1):
-        meann = np.sign(np.mean(factors[index], axis=0))
-        assert meann.size == factors[0].shape[1]
-
-        factors[index] *= meann
-        factors[index + 1] *= meann
-
-    return factors
-
-
 #### Decomposition Methods ###################################################################
-
 
 def MRSA_decomposition(tensor_slices, components, random_state=None):
     """Perform tensor formation and decomposition for particular variance and component number
@@ -60,20 +40,3 @@ def MRSA_decomposition(tensor_slices, components, random_state=None):
     """
     parafac2tensor = parafac2(tensor_slices, components, random_state=random_state, verbose=False)
     return parafac2tensor
-
-
-###### To Flip Factors #########################################################################
-
-
-def flip_factors(tucker_output):
-    """For partial tucker OHSU factorization, flips protein and treatment/time factors if both negative for important values"""
-    for component in range(tucker_output[0].shape[2]):
-        av = 0.0
-        for i in range(tucker_output[0].shape[0]):
-            av += np.mean(tucker_output[0][i][:, component] ** 5)
-
-        if av < 0 and tucker_output[1][0][:, component].mean() < 0:
-            tucker_output[1][0][:, component] *= -1
-            for j in range(tucker_output[0].shape[0]):
-                tucker_output[0][j][:, component] *= -1
-    return tucker_output

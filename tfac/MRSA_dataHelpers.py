@@ -3,7 +3,6 @@ from os.path import join, dirname
 import numpy as np
 import pandas as pd
 from scipy.stats.mstats import gmean
-from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVC
 from tensorly.metrics.regression import variance as tl_var
@@ -16,28 +15,6 @@ def find_SVC_proba(patient_matrix, outcomes):
     """Given a particular patient matrix and outcomes list, performs cross validation of SVC and returns the decision function to be used for AUC"""
     proba = cross_val_predict(SVC(kernel="rbf"), patient_matrix, outcomes, cv=30, method="decision_function")
     return proba
-
-
-def find_regularization(patient_matrix, outcomes, random_state=None):
-    """Determines optimal regularization constant for Logistic Regression"""
-    clf = LogisticRegressionCV(Cs=20, cv=10, random_state=random_state, fit_intercept=False, penalty="l1", solver="saga", max_iter=100000).fit(patient_matrix, outcomes)
-    reg = clf.C_
-    return reg[0]
-
-
-def find_CV_proba(patient_matrix, outcomes, random_state=None, C=1):
-    """Given a particular patient matrix and outcomes list, performs cross validation of logistic regression and returns the decision function to be used for AUC"""
-    proba = cross_val_predict(
-        LogisticRegression(penalty="l1", solver="saga", C=C, random_state=random_state, max_iter=10000, fit_intercept=False), patient_matrix, outcomes, cv=30, method="decision_function"
-    )
-    return proba
-
-
-def find_coefs(patient_matrix, outcomes, random_state=None, C=1):
-    """Returns coefficients used for logistic regression model"""
-    clf = LogisticRegression(penalty="l1", solver="saga", C=C, random_state=random_state, max_iter=10000, fit_intercept=False).fit(patient_matrix, outcomes)
-    coef = clf.coef_
-    return coef
 
 
 def produce_outcome_bools(statusID):

@@ -1,20 +1,11 @@
 import pickle
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy.stats.mstats import gmean
 import tensorly as tl
-from tensorly.decomposition import parafac2
-from tensorly.parafac2_tensor import parafac2_to_slice, apply_parafac2_projections
-from tensorly.metrics.regression import variance as tl_var
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, roc_auc_score
-from sklearn.model_selection import cross_val_predict, LeaveOneOut
-from sklearn.svm import SVC
-from tfac.figures.figureCommon import subplotLabel, getSetup
-from tfac.MRSA_dataHelpers import produce_outcome_bools, get_patient_info, form_MRSA_tensor, form_paired_tensor, importClinicalMRSA, clinicalCyto, importExpressionData, find_regularization, find_CV_proba, find_SVC_proba
-from tfac.tensor import R2Xparafac2, MRSA_decomposition
+from tensorly.parafac2_tensor import apply_parafac2_projections
+from sklearn.metrics import roc_auc_score
+from tfac.MRSA_dataHelpers import produce_outcome_bools, get_patient_info, form_MRSA_tensor, find_regularization, find_CV_proba
+from tfac.tensor import R2Xparafac2
 
 tl.set_backend("numpy")
 
@@ -23,7 +14,6 @@ def make_pickles():
     _, statusID = get_patient_info()
     outcomes = produce_outcome_bools(statusID)
     components = 38
-    tensors = []
     tensor_slices, _, _ = form_MRSA_tensor(1, 1)
     parafac2tensors = pickle.load(open("cyto_exp.p", "rb"))
     AllR2X = []

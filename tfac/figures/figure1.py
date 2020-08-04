@@ -1,15 +1,18 @@
 """
-This creates Figure 1 - R2X
+This creates Figure 1 - MRSA R2X
 """
 import pickle
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from ..tensor import R2Xparafac2
+from ..MRSA_dataHelpers import get_patient_info, form_MRSA_tensor
 from .figureCommon import subplotLabel, getSetup
 
 
-AllR2X = pickle.load(open("R2X_SVC.p", "rb"))
-components = 38
+
+_, AllR2X = pickle.load(open("MRSA_pickle.p", "rb"))
 df = pd.DataFrame(AllR2X)
 
 comps = []

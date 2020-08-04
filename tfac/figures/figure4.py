@@ -4,11 +4,13 @@ This creates Figure 4 - Cytokine weights.
 import pickle
 import pandas as pd
 import seaborn as sns
+from tensorly.parafac2_tensor import apply_parafac2_projections
 from .figureCommon import subplotLabel, getSetup
 from ..MRSA_dataHelpers import form_MRSA_tensor
 
 
-patient_mats_applied = pickle.load(open("Factors.p", "rb"))
+patient_matrices = pickle.load(open("MRSA_pickle.p", "rb"))
+patient_mats_applied = apply_parafac2_projections(patient_matrices)
 _, cytos, _ = form_MRSA_tensor(1, 1)
 cytoA = patient_mats_applied[1][1][0].T[8]
 cytoB = patient_mats_applied[1][1][0].T[32]

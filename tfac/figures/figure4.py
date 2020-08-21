@@ -7,9 +7,10 @@ import seaborn as sns
 from tensorly.parafac2_tensor import apply_parafac2_projections
 from .figureCommon import subplotLabel, getSetup
 from ..MRSA_dataHelpers import form_MRSA_tensor
+from ..explore_factors import label_points
 
 
-patient_matrices = pickle.load(open("MRSA_pickle.p", "rb"))
+patient_matrices, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
 patient_mats_applied = apply_parafac2_projections(patient_matrices)
 _, cytos, _ = form_MRSA_tensor(1, 1)
 cytoA = patient_mats_applied[1][1][0].T[8]
@@ -27,15 +28,9 @@ def makeFigure():
     b.set_xlabel("Component A", fontsize=20)
     b.set_ylabel("Component B", fontsize=20)
     b.tick_params(labelsize=14)
-    label_point(cyto_df, ax[0])
+    label_points(cyto_df, "Cytokines" ax[0])
 
     # Add subplot labels
     subplotLabel(ax)
 
     return f
-
-
-def label_point(df, ax):
-    """Labels cytokines on plot"""
-    for _, point in df.iterrows():
-        ax.text(point["Component A"] + 0.002, point["Component B"], str(point["Cytokines"]), fontsize=15)

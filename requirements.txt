@@ -13,5 +13,5 @@ svgutils==0.3.1
 git+git://github.com/aarmey/tensorly.git@parafac2-ls
 scikit-learn==0.23.1
 pybiomart==0.2.0
-gseapy==0.9.19
+gseapy==0.10.0
 h5py

@@ -12,7 +12,7 @@ from .figureCommon import subplotLabel, getSetup
 
 
 
-_, AllR2X = pickle.load(open("MRSA_pickle.p", "rb"))
+_, AllR2X, _ = pickle.load(open("MRSA_pickle.p", "rb"))
 df = pd.DataFrame(AllR2X)
 
 comps = []

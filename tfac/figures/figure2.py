@@ -17,12 +17,12 @@ df = patient_mats_applied[1][1][1]
 newtens = ensembl_convert(df, geneids, True)
 newtenspair = pd.concat((newtens[8], newtens[32], newtens["Gene ID"]), axis=1)
 
-genes8tlymph = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[8].loc['TLYMPHOCYTE'][6].split(";"))].sort_values(by=8, ascending=False)
-genes8plascell = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[8].loc['PLASMA CELL'][6].split(";"))].sort_values(by=8, ascending=False)
-genes8CD19B = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[8].loc['CD19+ B CELLS'][6].split(";"))].sort_values(by=8, ascending=False)
-genes32macro = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[32].loc['MACROPHAGE'][6].split(";"))].sort_values(by=32, ascending=False)
-genes32alvmac = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[32].loc['ALVEOLAR MACROPHAGE'][6].split(";"))].sort_values(by=32, ascending=False)
-genes32plasdend = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[32].loc['PLASMACYTOID DENDRITIC CELL'][6].split(";"))].sort_values(by=32, ascending=False)
+genes8tlymph = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[0].loc['TLYMPHOCYTE'][6].split(";"))]
+genes8plascell = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[0].loc['PLASMA CELL'][6].split(";"))]
+genes8CD19B = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[0].loc['CD19+ B CELLS'][6].split(";"))]
+genes32macro = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[1].loc['MACROPHAGE'][6].split(";"))]
+genes32alvmac = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[1].loc['ALVEOLAR MACROPHAGE'][6].split(";"))]
+genes32plasdend = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[1].loc['PLASMACYTOID DENDRITIC CELL'][6].split(";"))]
 
 gene_df = pd.concat((newtens[8], newtens[32], newtens["Gene ID"]), axis=1)
 

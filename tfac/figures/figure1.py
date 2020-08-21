@@ -2,12 +2,9 @@
 This creates Figure 1 - MRSA R2X
 """
 import pickle
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from ..tensor import R2Xparafac2
-from ..MRSA_dataHelpers import get_patient_info, form_MRSA_tensor
 from .figureCommon import subplotLabel, getSetup
 
 

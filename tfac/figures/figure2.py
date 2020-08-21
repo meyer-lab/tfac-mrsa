@@ -5,7 +5,6 @@ import pickle
 import pandas as pd
 import seaborn as sns
 from tensorly.parafac2_tensor import apply_parafac2_projections
-from .figureCommon import subplotLabel, getSetup
 from ..MRSA_dataHelpers import form_MRSA_tensor
 from ..explore_factors import label_points, ensembl_convert
 from .figureCommon import subplotLabel, getSetup
@@ -41,8 +40,8 @@ def makeFigure():
     for i in range(6):
         b = sns.scatterplot(data=gene_df, x='Component A', y='Component B', ax=ax[i], color='cornflowerblue', s=50)
         sns.scatterplot(data=types[i], x='a', y='b', ax=ax[i], color='lightcoral', s=50)
-        b.set_xlabel("Component A",fontsize=25)
-        b.set_ylabel("Component B",fontsize=25)
+        b.set_xlabel("Component A", fontsize=25)
+        b.set_ylabel("Component B", fontsize=25)
         b.tick_params(labelsize=20)
         b.set_title(names[i], fontsize=25)
         label_points(topgenes[i], "Gene ID", ax[i])

@@ -28,7 +28,7 @@ def makeFigure():
     b.set_xlabel("Component A", fontsize=20)
     b.set_ylabel("Component B", fontsize=20)
     b.tick_params(labelsize=14)
-    label_points(cyto_df, "Cytokines" ax[0])
+    label_points(cyto_df, "Cytokines", ax[0])
 
     # Add subplot labels
     subplotLabel(ax)

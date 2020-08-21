@@ -35,7 +35,7 @@ for cell in types:
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    ax, f = getSetup((45, 27), (2, 3))
+    ax, f = getSetup((35, 22), (2, 3))
     gene_df.columns = ["Component A", "Component B", "Gene ID"]
     for i in range(6):
         b = sns.scatterplot(data=gene_df, x='Component A', y='Component B', ax=ax[i], color='cornflowerblue', s=50)

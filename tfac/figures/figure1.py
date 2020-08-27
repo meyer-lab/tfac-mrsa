@@ -1,5 +1,5 @@
 """
-This creates Figure 1 - R2X
+This creates Figure 1 - MRSA R2X
 """
 import pickle
 import pandas as pd
@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 from .figureCommon import subplotLabel, getSetup
 
 
-AllR2X = pickle.load(open("R2X_SVC.p", "rb"))
-components = 38
-df = pd.DataFrame(AllR2X)
 
+_, AllR2X, _ = pickle.load(open("MRSA_pickle.p", "rb"))
+df = pd.DataFrame(AllR2X)
+components = 38
 comps = []
 for i in range(1, components + 1):
     comps.append(i)

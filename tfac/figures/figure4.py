@@ -10,7 +10,7 @@ from ..MRSA_dataHelpers import form_MRSA_tensor
 from ..explore_factors import label_points
 
 
-patient_matrices, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
+patient_matrices, _, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
 patient_mats_applied = apply_parafac2_projections(patient_matrices)
 _, cytos, _ = form_MRSA_tensor(1, 1)
 cytoA = patient_mats_applied[1][1][0].T[8]

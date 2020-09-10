@@ -9,7 +9,7 @@ from ..MRSA_dataHelpers import form_MRSA_tensor
 from ..explore_factors import label_points, ensembl_convert
 from .figureCommon import subplotLabel, getSetup
 
-cells, name, topgene = fig_3_setup()
+cells, name, topgene = fig_2_setup()
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
@@ -33,7 +33,7 @@ def makeFigure():
     return f
 
 
-def fig_3_setup():
+def fig_2_setup():
     patient_matrices, _, preranked_tissues, _ = pickle.load(open("MRSA_pickle.p", "rb"))
     patient_mats_applied = apply_parafac2_projections(patient_matrices)
     _, _, geneids = form_MRSA_tensor(1, 1)

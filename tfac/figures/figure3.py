@@ -7,7 +7,7 @@ import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
 from ..MRSA_dataHelpers import get_patient_info, produce_outcome_bools
 
-cell_df = fig_4_setup()
+cell_df = fig_3_setup()
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
@@ -29,7 +29,7 @@ def makeFigure():
     return f
 
 
-def fig_4_setup():
+def fig_3_setup():
     patient_matrices, _, _, deconv = pickle.load(open("MRSA_pickle.p", "rb"))
     cohort_ID, statusID = get_patient_info()
     outcomes = produce_outcome_bools(statusID)

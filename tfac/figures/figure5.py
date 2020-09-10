@@ -10,28 +10,18 @@ from sklearn.svm import SVC
 from .figureCommon import subplotLabel, getSetup
 from ..MRSA_dataHelpers import get_patient_info, produce_outcome_bools
 
-patient_matrices, _, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
-_, statusID = get_patient_info()
-outcomes = produce_outcome_bools(statusID)
-cytoA = patient_matrices[1][2].T[8]
-cytoB = patient_matrices[1][2].T[32]
-cyto_df = pd.DataFrame([cytoA, cytoB, outcomes]).T
-cyto_df.columns = ["Component A", "Component B", "Outcomes"]
-double = np.vstack((cytoA, cytoB)).T
-clf = SVC()
-clf.fit(double, outcomes)
-
+df, func = fig_5_setup()
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
     ax, f = getSetup((15, 8), (1, 1))
-    b = sns.scatterplot(data=cyto_df, x="Component A", y="Component B", hue="Outcomes", ax=ax[0])  # blue
+    b = sns.scatterplot(data=df, x="Component A", y="Component B", hue="Outcomes", ax=ax[0])  # blue
     b.set_xlabel("Component A", fontsize=20)
     b.set_ylabel("Component B", fontsize=20)
     b.tick_params(labelsize=14)
 
-    plot_svc_decision_function(clf, ax=ax[0])
+    plot_svc_decision_function(func, ax=ax[0])
 
     # Add subplot labels
     subplotLabel(ax)
@@ -63,3 +53,16 @@ def plot_svc_decision_function(model, ax=None, plot_support=True):
     ax.set_ylim(ylim)
 
 
+def fig_5_setup():
+    patient_matrices, _, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
+    _, statusID = get_patient_info()
+    outcomes = produce_outcome_bools(statusID)
+    cytoA = patient_matrices[1][2].T[8]
+    cytoB = patient_matrices[1][2].T[32]
+    cyto_df = pd.DataFrame([cytoA, cytoB, outcomes]).T
+    cyto_df.columns = ["Component A", "Component B", "Outcomes"]
+    double = np.vstack((cytoA, cytoB)).T
+    clf = SVC()
+    clf.fit(double, outcomes)
+    
+    return cyto_df, clf

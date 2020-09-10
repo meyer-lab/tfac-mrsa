@@ -8,6 +8,19 @@ import matplotlib.pyplot as plt
 from .figureCommon import subplotLabel, getSetup
 
 
+def fig_1_setup():
+    _, AllR2X, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
+    df = pd.DataFrame(AllR2X)
+    components = 38
+    comps = []
+    for i in range(1, components + 1):
+        comps.append(i)
+    df["Component"] = comps
+
+    df.columns = ["Cytokines", "GeneIDs", "Component"]
+    test = pd.melt(df, id_vars=["Component"])
+    return test
+
 plot = fig_1_setup()
 
 
@@ -26,17 +39,3 @@ def makeFigure():
     subplotLabel(ax)
 
     return f
-
-
-def fig_1_setup():
-    _, AllR2X, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
-    df = pd.DataFrame(AllR2X)
-    components = 38
-    comps = []
-    for i in range(1, components + 1):
-        comps.append(i)
-    df["Component"] = comps
-
-    df.columns = ["Cytokines", "GeneIDs", "Component"]
-    test = pd.melt(df, id_vars=["Component"])
-    return test

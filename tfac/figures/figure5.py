@@ -10,6 +10,21 @@ from sklearn.svm import SVC
 from .figureCommon import subplotLabel, getSetup
 from ..MRSA_dataHelpers import get_patient_info, produce_outcome_bools
 
+
+def fig_5_setup():
+    patient_matrices, _, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
+    _, statusID = get_patient_info()
+    outcomes = produce_outcome_bools(statusID)
+    cytoA = patient_matrices[1][2].T[8]
+    cytoB = patient_matrices[1][2].T[32]
+    cyto_df = pd.DataFrame([cytoA, cytoB, outcomes]).T
+    cyto_df.columns = ["Component A", "Component B", "Outcomes"]
+    double = np.vstack((cytoA, cytoB)).T
+    clf = SVC()
+    clf.fit(double, outcomes)
+    
+    return cyto_df, clf
+
 df, func = fig_5_setup()
 
 def makeFigure():
@@ -51,18 +66,3 @@ def plot_svc_decision_function(model, ax=None, plot_support=True):
         ax.scatter(model.support_vectors_[:, 0], model.support_vectors_[:, 1], s=300, linewidth=1, facecolors="none")
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
-
-
-def fig_5_setup():
-    patient_matrices, _, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
-    _, statusID = get_patient_info()
-    outcomes = produce_outcome_bools(statusID)
-    cytoA = patient_matrices[1][2].T[8]
-    cytoB = patient_matrices[1][2].T[32]
-    cyto_df = pd.DataFrame([cytoA, cytoB, outcomes]).T
-    cyto_df.columns = ["Component A", "Component B", "Outcomes"]
-    double = np.vstack((cytoA, cytoB)).T
-    clf = SVC()
-    clf.fit(double, outcomes)
-    
-    return cyto_df, clf

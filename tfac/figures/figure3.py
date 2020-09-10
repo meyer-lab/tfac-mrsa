@@ -7,27 +7,6 @@ import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
 from ..MRSA_dataHelpers import get_patient_info, produce_outcome_bools
 
-cell_df = fig_3_setup()
-
-def makeFigure():
-    """ Get a list of the axis objects and create a figure. """
-    # Get list of axis objects
-    ax, f = getSetup((18, 9), (1, 2))
-    b = sns.scatterplot(data=cell_df, x='Component A', y='A', hue="Outcomes", ax=ax[0], s=70)
-    b.set_xlabel("Component A", fontsize=25)
-    b.set_ylabel("Active CD4+ Ts and M2 Macrophage minus T regs", fontsize=25)
-    b.tick_params(labelsize=20)
-    ax[0].legend(fontsize=25, loc='lower left')
-    b = sns.scatterplot(data=cell_df, x='Component B', y='B', hue="Outcomes", ax=ax[1], s=70)
-    b.set_xlabel("Component B", fontsize=25)
-    b.set_ylabel("Active Mast Cells, Plasma Cells, and M1 Macrophages", fontsize=25)
-    b.tick_params(labelsize=20)
-    ax[1].legend(fontsize=25, loc='upper left')
-    # Add subplot labels
-    subplotLabel(ax)
-
-    return f
-
 
 def fig_3_setup():
     patient_matrices, _, _, deconv = pickle.load(open("MRSA_pickle.p", "rb"))
@@ -57,3 +36,24 @@ def fig_3_setup():
     cyto_df["B"] = Mast_active + B_plasma + Mac_1
     
     return cyto_df
+
+cell_df = fig_3_setup()
+
+def makeFigure():
+    """ Get a list of the axis objects and create a figure. """
+    # Get list of axis objects
+    ax, f = getSetup((18, 9), (1, 2))
+    b = sns.scatterplot(data=cell_df, x='Component A', y='A', hue="Outcomes", ax=ax[0], s=70)
+    b.set_xlabel("Component A", fontsize=25)
+    b.set_ylabel("Active CD4+ Ts and M2 Macrophage minus T regs", fontsize=25)
+    b.tick_params(labelsize=20)
+    ax[0].legend(fontsize=25, loc='lower left')
+    b = sns.scatterplot(data=cell_df, x='Component B', y='B', hue="Outcomes", ax=ax[1], s=70)
+    b.set_xlabel("Component B", fontsize=25)
+    b.set_ylabel("Active Mast Cells, Plasma Cells, and M1 Macrophages", fontsize=25)
+    b.tick_params(labelsize=20)
+    ax[1].legend(fontsize=25, loc='upper left')
+    # Add subplot labels
+    subplotLabel(ax)
+
+    return f

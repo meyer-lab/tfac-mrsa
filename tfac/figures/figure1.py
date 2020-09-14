@@ -21,11 +21,11 @@ def fig_1_setup():
     test = pd.melt(df, id_vars=["Component"])
     return test
 
-plot = fig_1_setup()
 
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
+    plot = fig_1_setup()
     # Get list of axis objects
     ax, f = getSetup((10, 10), (1, 1))
     b = sns.scatterplot(data=plot, x="Component", y="value", hue="variable", style="variable", ax=ax[0], s=100)

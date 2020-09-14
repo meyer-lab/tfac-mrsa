@@ -22,7 +22,7 @@ def fig_2_setup():
     genes32macro = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[1].loc['MACROPHAGE'][6].split(";"))]
     genes32mac_small = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[2].loc['Macrophage'][6].split(";"))]
     genes32mast = newtenspair[newtenspair['Gene ID'].isin(preranked_tissues[2].loc['Mast cell'][6].split(";"))]
-    gene_df = pd.concat((newtens[8], newtens[32], newtens["Gene ID"]), axis=1)
+    #gene_df = pd.concat((newtens[8], newtens[32], newtens["Gene ID"]), axis=1)
 
     types = [genes8tlymph, genes32macro, genes32mac_small, genes32mast]
     names = ["Comp A - T lymphocyte", "Comp B - Macrophage", "Comp B - Macrophage - Small set", "Comp B - Mast cell"]
@@ -32,10 +32,10 @@ def fig_2_setup():
         topgenes.append(pd.concat((cell.reindex(cell.b.abs().sort_values(ascending=False).index).iloc[:40], cell.reindex(cell.a.abs().sort_values(ascending=False).index).iloc[:40])))
     return types, names, topgenes
 
-cells, name, topgene = fig_2_setup()
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
+    cells, name, topgene = fig_2_setup()
     # Get list of axis objects
     ax, f = getSetup((35, 22), (2, 2))
     #gene_df.columns = ["Component A", "Component B", "Gene ID"]

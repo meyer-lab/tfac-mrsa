@@ -37,10 +37,10 @@ def fig_3_setup():
     
     return cyto_df
 
-cell_df = fig_3_setup()
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
+    cell_df = fig_3_setup()
     # Get list of axis objects
     ax, f = getSetup((18, 9), (1, 2))
     b = sns.scatterplot(data=cell_df, x='Component A', y='A', hue="Outcomes", ax=ax[0], s=70)

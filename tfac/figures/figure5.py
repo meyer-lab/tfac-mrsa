@@ -25,10 +25,10 @@ def fig_5_setup():
     
     return cyto_df, clf
 
-df, func = fig_5_setup()
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
+    df, func = fig_5_setup()
     # Get list of axis objects
     ax, f = getSetup((15, 8), (1, 1))
     b = sns.scatterplot(data=df, x="Component A", y="Component B", hue="Outcomes", ax=ax[0])  # blue

@@ -21,11 +21,11 @@ def fig_4_setup():
     cyto_df.columns = ["Component A", "Component B", "Cytokines"]
     return cyto_df
 
-df = fig_4_setup()
 
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
+    df = fig_4_setup()
     # Get list of axis objects
     ax, f = getSetup((15, 8), (1, 1))
     b = sns.scatterplot(data=df, x="Component A", y="Component B", ax=ax[0])  # blue

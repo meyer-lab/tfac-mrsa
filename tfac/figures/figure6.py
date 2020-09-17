@@ -70,6 +70,7 @@ def makeFigure():
     b.set_xlabel("Data/Analysis", fontsize=25)
     b.set_ylabel("AUC", fontsize=25)
     b.tick_params(labelsize=20)
+    b.set_xticklabels(b.get_xticklabels(), rotation=15)
     # Add subplot labels
     subplotLabel(ax)
 

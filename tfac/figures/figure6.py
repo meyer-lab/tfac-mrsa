@@ -44,8 +44,8 @@ def fig_6_setup():
     df_cyto.columns = ["First", "Second", "AUC"]
     svc_cyto = df_cyto.sort_values(by='AUC', ascending=False).iloc[0, 2]
 
-    patient_matrices = pickle.load( open( "cyto_exp.p", "rb" ) )
-    test = patient_matrices[37][1][2]
+    patient_matrices, _, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
+    test = patient_matrices[1][2]
     values_comps = []
     for i in range(0, 37):
         for j in range(i + 1, 38):

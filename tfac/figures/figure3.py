@@ -50,7 +50,7 @@ def makeFigure():
     b.set_xlabel("Component A", fontsize=25)
     b.set_ylabel("Active T Cells minus T regs/Inactive T cells", fontsize=25)
     b.tick_params(labelsize=20)
-    ax[0].legend(fontsize=25, loc='lower left')
+    ax[0].legend(fontsize=25, loc='upper left')
     b = sns.scatterplot(data=cell_df, x='Component B', y='B', hue="Outcomes", ax=ax[1], s=70)
     b.set_xlabel("Component B", fontsize=25)
     b.set_ylabel("Active Mast Cells, M0, and M1 Macrophages", fontsize=25)

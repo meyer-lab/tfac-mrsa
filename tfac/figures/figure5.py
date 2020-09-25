@@ -22,7 +22,7 @@ def fig_5_setup():
     double = np.vstack((cytoA, cytoB)).T
     clf = SVC()
     clf.fit(double, outcomes)
-    
+
     return cyto_df, clf
 
 

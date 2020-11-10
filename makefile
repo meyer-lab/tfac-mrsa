@@ -12,7 +12,7 @@ download: tfac/data/mrsa/MRSA.Methylation.txt.xz
 
 venv/bin/activate: requirements.txt tfac/data/mrsa/MRSA.Methylation.txt.xz
 	test -d venv || virtualenv venv
-	. venv/bin/activate && pip install -Uqr requirements.txt
+	. venv/bin/activate && pip install --prefer-binary -Uqr requirements.txt
 	touch venv/bin/activate
 
 output/figure%.svg: genFigures.py tfac/figures/figure%.py venv

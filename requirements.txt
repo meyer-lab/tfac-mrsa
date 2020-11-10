@@ -4,9 +4,10 @@ pytest==6.1.2
 pytest-cov==2.10.1
 pylint==2.6.0
 manubot==0.4.1
-pandoc-fignos
-pandoc-eqnos
-pandoc-tablenos
+pandoc-fignos==2.3.1
+pandoc-eqnos==2.3.0
+pandoc-tablenos==2.2.2
+panflute==1.12
 matplotlib==3.3.2
 seaborn==0.11.0
 svgutils==0.3.1
@@ -14,4 +15,3 @@ git+git://github.com/aarmey/tensorly.git@parafac2-ls
 scikit-learn==0.23.2
 pybiomart==0.2.0
 gseapy==0.10.1
-h5py

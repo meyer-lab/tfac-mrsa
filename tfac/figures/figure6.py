@@ -11,13 +11,29 @@ from sklearn.metrics import roc_auc_score
 from ..MRSA_dataHelpers import produce_outcome_bools, get_patient_info, form_MRSA_tensor, find_SVC_proba
 from .figureCommon import subplotLabel, getSetup
 
+
 def find_CV_proba(patient_matrix, outcomes, random_state=None, C=1):
-    proba = cross_val_predict(LogisticRegression(penalty='l2', solver='lbfgs', C=C, random_state=random_state, max_iter=10000, fit_intercept=False), patient_matrix, outcomes, cv=30, method="predict_proba")
+    proba = cross_val_predict(
+        LogisticRegression(
+            penalty='l2',
+            solver='lbfgs',
+            C=C,
+            random_state=random_state,
+            max_iter=10000,
+            fit_intercept=False),
+        patient_matrix,
+        outcomes,
+        cv=30,
+        method="predict_proba")
     return proba[:, 1]
+
+
 def find_regularization(patient_matrix, outcomes, random_state=None):
     clf = LogisticRegressionCV(Cs=20, cv=10, random_state=random_state, fit_intercept=False, penalty='l2', solver='lbfgs', max_iter=100000).fit(patient_matrix, outcomes)
     reg = clf.C_
     return reg[0]
+
+
 def fig_6_setup():
 
     tensor_slices, _, _ = form_MRSA_tensor()
@@ -37,7 +53,7 @@ def fig_6_setup():
     for i in range(0, cytokines.shape[1] - 1):
         for j in range(i + 1, cytokines.shape[1]):
             double = np.vstack((cytokines[:, i], cytokines[:, j])).T
-            decisions = find_SVC_proba(double, outcomes)        
+            decisions = find_SVC_proba(double, outcomes)
             auc = roc_auc_score(outcomes, decisions)
             values_cyto.append([i, j, auc])
     df_cyto = pd.DataFrame(values_cyto)
@@ -50,7 +66,7 @@ def fig_6_setup():
     for i in range(0, 37):
         for j in range(i + 1, 38):
             double = np.vstack((test[:, i], test[:, j])).T
-            decisions = find_SVC_proba(double, outcomes)        
+            decisions = find_SVC_proba(double, outcomes)
             auc = roc_auc_score(outcomes, decisions)
             values_comps.append([i, j, auc])
     df_comp = pd.DataFrame(values_comps)
@@ -59,6 +75,7 @@ def fig_6_setup():
     svc_both = df_comp.sort_values(by='AUC', ascending=False).iloc[0, 2]
 
     return auc_cyto, auc_genes, svc_cyto, svc_both
+
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """

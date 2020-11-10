@@ -26,15 +26,15 @@ def fig_3_setup():
             outs.append("Resolver")
     cyto_df["Outcomes"] = outs
     cyto_df = cyto_df.drop([25, 43, 46])
-    T_mem_active = (deconv["T cell CD4+ memory activated"].values - deconv["T cell CD4+ memory activated"].mean())/deconv["T cell CD4+ memory activated"].std()
-    T_regs = (deconv["T cell regulatory (Tregs)"].values - deconv["T cell regulatory (Tregs)"].mean())/deconv["T cell regulatory (Tregs)"].std()
-    Mast_active = (deconv["Mast cell activated"].values - deconv["Mast cell activated"].mean())/deconv["Mast cell activated"].std()
-    B_plasma = (deconv["B cell plasma"].values - deconv["B cell plasma"].mean())/deconv["B cell plasma"].std()
-    Mac_1 = (deconv["Macrophage M1"].values - deconv["Macrophage M1"].mean())/deconv["Macrophage M1"].std()
-    Mac_2 = (deconv["Macrophage M2"].values - deconv["Macrophage M2"].mean())/deconv["Macrophage M2"].std()
+    T_mem_active = (deconv["T cell CD4+ memory activated"].values - deconv["T cell CD4+ memory activated"].mean()) / deconv["T cell CD4+ memory activated"].std()
+    T_regs = (deconv["T cell regulatory (Tregs)"].values - deconv["T cell regulatory (Tregs)"].mean()) / deconv["T cell regulatory (Tregs)"].std()
+    Mast_active = (deconv["Mast cell activated"].values - deconv["Mast cell activated"].mean()) / deconv["Mast cell activated"].std()
+    B_plasma = (deconv["B cell plasma"].values - deconv["B cell plasma"].mean()) / deconv["B cell plasma"].std()
+    Mac_1 = (deconv["Macrophage M1"].values - deconv["Macrophage M1"].mean()) / deconv["Macrophage M1"].std()
+    Mac_2 = (deconv["Macrophage M2"].values - deconv["Macrophage M2"].mean()) / deconv["Macrophage M2"].std()
     cyto_df["A"] = T_mem_active - T_regs + Mac_2
     cyto_df["B"] = Mast_active + B_plasma + Mac_1
-    
+
     return cyto_df
 
 

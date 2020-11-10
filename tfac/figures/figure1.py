@@ -22,7 +22,6 @@ def fig_1_setup():
     return test
 
 
-
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     plot = fig_1_setup()

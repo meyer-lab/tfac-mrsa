@@ -22,7 +22,6 @@ def fig_4_setup():
     return cyto_df
 
 
-
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     df = fig_4_setup()

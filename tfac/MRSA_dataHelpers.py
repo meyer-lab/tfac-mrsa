@@ -29,6 +29,24 @@ def produce_outcome_bools(statusID):
     return np.asarray(outcome_bools)
 
 
+def get_all_patient_info(sample_type):
+    dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
+    cohort_1_ID = list(dataCohort["sample"])
+    statusID = list(dataCohort["outcome_txt"])
+    type_ID = list(dataCohort["sampletype"])
+    dfExp_c3 = pd.read_csv("tfac/data/mrsa/Genes_cohort3.csv")
+    dfExp_c3 = dfExp_c3.set_index("Geneid")
+    dfExp_c3 = dfExp_c3.drop([patient for patient in dfExp_c3.columns if len(patient) > 4], axis=1)
+    dfExp_c3 = dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
+    cohort_3_ID = list(dfExp_c3.columns)
+    if sample_type == 'serum':
+        return cohort_1_ID, statusID, type_ID, cohort_3_ID
+    elif sample_type == 'plasma':
+        cohort_3_ID.remove('7008')
+        return cohort_1_ID, statusID, type_ID, cohort_3_ID
+    else:
+        raise ValueError("Bad sample type selection.")
+
 def get_C1_patient_info(paired=False):
     """Return specific patient ID information"""
     if paired:
@@ -69,6 +87,7 @@ def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
     dfCyto_c1 = dfCyto_c1.set_index("sid")
     dfCyto_c3_serum, dfCyto_c3_plasma = import_C3_cyto()
     dfCyto_c1.columns = dfCyto_c3_serum.columns
+    dfCyto_c1["IL-12(p70)"] = [val * 16000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
     #normalize separately and extract cytokines
     cyto_list = [dfCyto_c1, dfCyto_c3_serum, dfCyto_c3_plasma]
     for idx, df in enumerate(cyto_list):

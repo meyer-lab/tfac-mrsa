@@ -17,6 +17,7 @@ def R2Xparafac2(tensor_slices, decomposition):
 
 #### Decomposition Methods ###################################################################
 
+
 def MRSA_decomposition(tensor_slices, components, random_state=None):
     """Perform tensor formation and decomposition for particular variance and component number
     ---------------------------------------------

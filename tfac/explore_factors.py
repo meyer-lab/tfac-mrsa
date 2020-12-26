@@ -11,7 +11,7 @@ from pybiomart import Server
 def label_points(df, names, ax):
     """Label given points given df of coordinates and names"""
     for _, point in df.iterrows():
-        ax.text(point[df.columns[0]]+.002, point[df.columns[1]], str(point[names]), fontsize=13, fontweight="semibold", color='k')
+        ax.text(point[df.columns[0]] + .002, point[df.columns[1]], str(point[names]), fontsize=13, fontweight="semibold", color='k')
 
 
 def ensembl_convert(factors, geneids, decimals):

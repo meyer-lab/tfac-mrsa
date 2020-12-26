@@ -26,6 +26,7 @@ def fig_3_setup():
             outs.append("Resolver")
     cyto_df["Outcomes"] = outs
     cyto_df = cyto_df.drop([25, 43, 46])
+
     Cytotoxic_T = (deconv["T cell CD8+"].values - deconv["T cell CD8+"].mean())/deconv["T cell CD8+"].std()
     T_mem_active = (deconv["T cell CD4+ memory activated"].values - deconv["T cell CD4+ memory activated"].mean())/deconv["T cell CD4+ memory activated"].std()
     T_regs = (deconv["T cell regulatory (Tregs)"].values - deconv["T cell regulatory (Tregs)"].mean())/deconv["T cell regulatory (Tregs)"].std()
@@ -37,7 +38,7 @@ def fig_3_setup():
     Mac_1 = (deconv["Macrophage M1"].values - deconv["Macrophage M1"].mean())/deconv["Macrophage M1"].std()
     cyto_df["A"] = T_mem_active + Cytotoxic_T + T_follicular - T_naive - T_mem_resting - T_regs
     cyto_df["B"] = Mast_active + Mac_0 + Mac_1
-    
+
     return cyto_df
 
 

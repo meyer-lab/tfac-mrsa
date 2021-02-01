@@ -25,5 +25,5 @@ def MRSA_decomposition(tensor_slices, components, random_state=None):
         parafac2tensor object
         tensor_slices list
     """
-    parafac2tensor = parafac2(tensor_slices, components, random_state=random_state, verbose=True, n_iter_parafac=10)
+    parafac2tensor = parafac2(tensor_slices, components, random_state=random_state, verbose=False, n_iter_parafac=10, n_iter_max=500)
     return parafac2tensor

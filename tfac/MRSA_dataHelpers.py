@@ -105,15 +105,19 @@ def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
     #Filter out duplicate genes from c1 - choosing to keep those most similar to c3
     dfExp_c1 = removeC1_dupes(dfExp_c1)
     #Extract Gene IDs and normalize
-    geneIDs = dfExp_c1["Geneid"].to_list()
     dfExp_c1 = dfExp_c1.set_index("Geneid")
     dfExp_c1.sort_values("Geneid", inplace=True)
     dfExp_c3.sort_values("Geneid", inplace=True)
+    dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1)
+    dfExp["Mean"] = dfExp.apply(np.mean, axis=1)
+    mean_drop = dfExp[dfExp['Mean'] < 2].index
     dfExp_c1 = (dfExp_c1 - dfExp_c1.apply(np.mean)) / dfExp_c1.apply(np.std)
     dfExp_c1 = (dfExp_c1.sub(dfExp_c1.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp_c1.apply(np.std, axis=1).to_list(), axis=0)
     dfExp_c3 = (dfExp_c3 - dfExp_c3.apply(np.mean)) / dfExp_c3.apply(np.std)
     dfExp_c3 = (dfExp_c3.sub(dfExp_c3.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp_c3.apply(np.std, axis=1).to_list(), axis=0)
     dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1)
+    dfExp = dfExp.drop(mean_drop)
+    geneIDs = dfExp_c1["Geneid"].to_list()
 
     if sample_type == 'serum':
         dfCyto_serum = pd.concat([cyto_list[0], cyto_list[1]])

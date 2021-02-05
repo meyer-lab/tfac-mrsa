@@ -1,27 +1,30 @@
 ---
-title: "Manuscript Title"
+title: "Multi-omic patterns improve prediction of MRSA infection outcome"
 keywords:
-  - markdown
-  - publishing
-  - manubot
+  - MRSA
 lang: en-US
 authors:
   -
-    github: johndoe
-    name: John Doe
-    initials: JD
-    orcid: XXXX-XXXX-XXXX-XXXX
-    twitter: johndoe
-    email: john.doe@something.com
+    name: Scott D. Taylor
+    github: scottdtaylor95
+    initials: SDT
     affiliations:
-      - Department of Something, University of Whatever
-    funders: Grant XXXXXXXX
+      - Department of Bioengineering, University of California, Los Angeles
   -
-    github: janeroe
-    name: Jane Roe
-    initials: JR
-    orcid: XXXX-XXXX-XXXX-XXXX
-    email: jane.roe@whatever.edu
+    name: Elaine F. Reed
+    initials: EFR
+    email: ereed@mednet.ucla.edu
     affiliations:
-      - Department of Something, University of Whatever
-      - Department of Whatever, University of Something
+      - UCLA Immunogenetics Center, Department of Pathology and Laboratory Medicine, University of California Los Angeles, Los Angeles, CA, USA
+  -
+    github: aarmey
+    name: Aaron S. Meyer
+    initials: ASM
+    orcid: 0000-0003-4513-1840
+    twitter: aarmey
+    email: ameyer@asmlab.org
+    affiliations:
+      - Department of Bioengineering, University of California, Los Angeles
+      - Department of Bioinformatics, University of California, Los Angeles
+      - Jonsson Comprehensive Cancer Center, University of California, Los Angeles
+      - Eli and Edythe Broad Center of Regenerative Medicine and Stem Cell Research, University of California, Los Angeles

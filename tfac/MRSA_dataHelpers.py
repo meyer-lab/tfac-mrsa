@@ -47,16 +47,8 @@ def get_all_patient_info(sample_type):
     else:
         raise ValueError("Bad sample type selection.")
 
-def get_C1_patient_info(paired=False):
+def get_C1_patient_info():
     """Return specific patient ID information"""
-    if paired:
-        dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
-        singles = ["SA04233", "SA04158", "SA04255", "SA04378", "SA04469", "SA04329", "SA05300", "SA04547", "SA05030"]
-        dataCohort = dataCohort[~dataCohort["sample"].isin(singles)]
-        cohortID = list(dataCohort["sample"])
-        statusID = list(dataCohort["outcome_txt"])
-        return cohortID, statusID
-
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
     cohortID = list(dataCohort["sample"])
     statusID = list(dataCohort["outcome_txt"])
@@ -64,29 +56,73 @@ def get_C1_patient_info(paired=False):
     return cohortID, statusID, type_ID
 
 
-def get_C3_patient_info(sample_type):
+def get_C3_patient_info(matched):
     dfExp_c3 = pd.read_csv("tfac/data/mrsa/Genes_cohort3.csv")
     dfExp_c3 = dfExp_c3.set_index("Geneid")
-    dfExp_c3 = dfExp_c3.drop([patient for patient in dfExp_c3.columns if len(patient) > 4], axis=1)
-    dfExp_c3 = dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
-    cohortID = list(dfExp_c3.columns)
+    if matched:
+        dfExp_c3 = pd.concat((dfExp_c3.iloc[:, :27], dfExp_c3.iloc[:, 33]), axis=1)
+        dfExp_c3 = dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
+        cohortID = list(dfExp_c3.columns)
+        return cohortID
+    
+    
+
+
+def form_MRSA_tensor(sample_type, matched, variance1=1, variance2=1):
+    """Create list of data matrices for parafac2"""
+    
+    cyto_list, cytokines, dfExp, geneIDs = full_import()
+
+    if matched:
+        for cyto_idx in range(1, 3):
+            cyto_list[cyto_idx].drop([patient for patient in cyto_list[cyto_idx].columns if patient not in dfExp.columns], axis=1, inplace=True)
+        dfExp.drop([patient for patient in dfExp.columns if patient not in cyto_list[0].columns.to_list() + cyto_list[1].columns.to_list()], axis=1, inplace=True)
+
     if sample_type == 'serum':
-        return cohortID
+        dfCyto_serum = pd.concat([cyto_list[0], cyto_list[1]], axis=1)
+        dfCyto_serum = dfCyto_serum * ((1 / tl_var(dfCyto_serum)) ** 0.5) * variance1
+        if not matched:
+            temp = pd.concat([dfCyto_serum, dfExp])
+            dfCyto_serum = temp.iloc[:38, :]
+            dfExp = temp[38:, :]
+        cytoNumpy = dfCyto_serum.to_numpy()
+        expNumpy = dfExp.to_numpy()
+        expNumpy = expNumpy.astype(float)
+        expNumpy = expNumpy * variance2
+        tensor_slices = [cytoNumpy, expNumpy]
     elif sample_type == 'plasma':
-        cohortID.remove('7008')
-        return cohortID
+        dfCyto_plasma = pd.concat([cyto_list[0], cyto_list[2]], axis=1)
+        dfCyto_plasma = dfCyto_plasma * ((1 / tl_var(dfCyto_plasma)) ** 0.5) * variance1
+        if not matched:
+            temp = pd.concat([dfCyto_plasma, dfExp])
+            dfCyto_plasma = temp.iloc[:38, :]
+            dfExp = temp[38:, :]
+        cytoNumpy = dfCyto_plasma.to_numpy()
+        if matched:
+            dfExp = dfExp.drop('7008', axis=1)
+        expNumpy = dfExp.to_numpy()
+        expNumpy = expNumpy.astype(float)
+        expNumpy = expNumpy * variance2
+        tensor_slices = [cytoNumpy, expNumpy]
     else:
         raise ValueError("Bad sample type selection.")
 
+    return tensor_slices, cytokines, geneIDs
 
-def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
-    """Create list of data matrices for parafac2"""
-    #import cytokines and format
+
+def full_import():
+    #Import cytokines
     dfClin, dfCoh = importClinicalMRSA()
     dfCyto_c1 = clinicalCyto(dfClin, dfCoh)
     dfCyto_c1 = dfCyto_c1.set_index("sid")
     dfCyto_c3_serum, dfCyto_c3_plasma = import_C3_cyto()
+    #Import RNAseq
+    dfExp_c1 = importCohort1Expression()
+    dfExp_c3 = importCohort3Expression()
+
+    #Modify cytokines
     dfCyto_c1.columns = dfCyto_c3_serum.columns
+    #Fix limit of detection error - bring to next lowest value
     dfCyto_c1["IL-12(p70)"] = [val * 16000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
     #normalize separately and extract cytokines
     cyto_list = [dfCyto_c1, dfCyto_c3_serum, dfCyto_c3_plasma]
@@ -94,11 +130,10 @@ def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
         df = df.div(df.apply(gmean, axis=1).to_list(), axis=0)
         df = df.apply(np.log, axis=0)
         df = df.sub(df.apply(np.mean, axis=0).to_list(), axis=1)
-        cyto_list[idx] = df
+        cyto_list[idx] = df.T
     cytokines = dfCyto_c1.columns
 
-    dfExp_c1 = importCohort1Expression()
-    dfExp_c3 = importCohort3Expression()
+    #Modify RNAseq
     #Drop genes not shared
     dfExp_c1 = dfExp_c1.drop([gene for gene in dfExp_c1.index if gene not in dfExp_c3.index])
     dfExp_c3 = dfExp_c3.drop([gene for gene in dfExp_c3.index if gene not in dfExp_c1.index])
@@ -109,37 +144,19 @@ def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
     dfExp_c1.sort_values("Geneid", inplace=True)
     dfExp_c3.sort_values("Geneid", inplace=True)
     dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1)
+    #Remove those with very few reads ov average
     dfExp["Mean"] = dfExp.apply(np.mean, axis=1)
     mean_drop = dfExp[dfExp['Mean'] < 2].index
+    #Normalize
     dfExp_c1 = (dfExp_c1 - dfExp_c1.apply(np.mean)) / dfExp_c1.apply(np.std)
     dfExp_c1 = (dfExp_c1.sub(dfExp_c1.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp_c1.apply(np.std, axis=1).to_list(), axis=0)
     dfExp_c3 = (dfExp_c3 - dfExp_c3.apply(np.mean)) / dfExp_c3.apply(np.std)
     dfExp_c3 = (dfExp_c3.sub(dfExp_c3.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp_c3.apply(np.std, axis=1).to_list(), axis=0)
     dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1)
     dfExp = dfExp.drop(mean_drop)
-    geneIDs = dfExp_c1["Geneid"].to_list()
-
-    if sample_type == 'serum':
-        dfCyto_serum = pd.concat([cyto_list[0], cyto_list[1]])
-        cytoNumpy = dfCyto_serum.to_numpy().T
-        cytoNumpy = cytoNumpy * ((1 / tl_var(cytoNumpy)) ** 0.5) * variance1
-        expNumpy = dfExp.to_numpy()
-        expNumpy = expNumpy.astype(float)
-        expNumpy = expNumpy * variance2
-        tensor_slices = [cytoNumpy, expNumpy]
-    elif sample_type == 'plasma':
-        dfCyto_plasma = pd.concat([cyto_list[0], cyto_list[2]])
-        cytoNumpy = dfCyto_plasma.to_numpy().T
-        cytoNumpy = cytoNumpy * ((1 / tl_var(cytoNumpy)) ** 0.5) * variance1
-        dfExp = dfExp.drop('7008', axis=1)
-        expNumpy = dfExp.to_numpy()
-        expNumpy = expNumpy.astype(float)
-        expNumpy = expNumpy * variance2
-        tensor_slices = [cytoNumpy, expNumpy]
-    else:
-        raise ValueError("Bad sample type selection.")
-
-    return tensor_slices, cytokines, geneIDs
+    geneIDs = dfExp.index.to_list()
+    dfExp.columns = dfExp.columns.astype(int)
+    return cyto_list, cytokines, dfExp, geneIDs
 
 
 def import_methylation():
@@ -193,7 +210,6 @@ def importCohort1Expression():
 def importCohort3Expression():
     dfExp_c3 = pd.read_csv("tfac/data/mrsa/Genes_cohort3.csv")
     dfExp_c3 = dfExp_c3.set_index("Geneid")
-    dfExp_c3 = dfExp_c3.drop([patient for patient in dfExp_c3.columns if len(patient) > 4], axis=1)
     dfExp_c3 = dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
     return dfExp_c3
 
@@ -218,9 +234,9 @@ def removeC1_dupes(dfExp_c1):
 def import_C3_cyto():
     dfCyto_c3 = pd.read_csv("tfac/data/mrsa/CYTOKINES.csv")
     dfCyto_c3 = dfCyto_c3.set_index("sample ID")
-    patientID = get_C3_patient_info(sample_type='serum')
-    dfCyto_c3 = dfCyto_c3.drop([patient for patient in dfCyto_c3.index if str(patient) not in patientID])
     dfCyto_c3 = dfCyto_c3.rename_axis('sid')
-    dfCyto_c3_serum = dfCyto_c3[dfCyto_c3["sample type"] == "serum"].drop("sample type", axis=1)
-    dfCyto_c3_plasma = dfCyto_c3[dfCyto_c3["sample type"] == "plasma"].drop("sample type", axis=1)
+    dfCyto_c3_serum = dfCyto_c3[dfCyto_c3["sample type"] == "serum"]
+    dfCyto_c3_plasma = dfCyto_c3[dfCyto_c3["sample type"] == "plasma"]
+    dfCyto_c3_serum.drop("sample type", axis=1, inplace=True)
+    dfCyto_c3_plasma.drop("sample type", axis=1, inplace=True)
     return dfCyto_c3_serum, dfCyto_c3_plasma

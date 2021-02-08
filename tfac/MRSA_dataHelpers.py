@@ -29,111 +29,106 @@ def produce_outcome_bools(statusID):
     return np.asarray(outcome_bools)
 
 
-def get_patient_info(paired=False):
+def get_C1_patient_info():
     """Return specific patient ID information"""
-    if paired:
-        dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
-        singles = ["SA04233", "SA04158", "SA04255", "SA04378", "SA04469", "SA04329", "SA05300", "SA04547", "SA05030"]
-        dataCohort = dataCohort[~dataCohort["sample"].isin(singles)]
-        cohortID = list(dataCohort["sample"])
-        statusID = list(dataCohort["outcome_txt"])
-        return cohortID, statusID
-
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
-    singles = ["SA04233"]
-    dataCohort = dataCohort[~dataCohort["sample"].isin(singles)]
     cohortID = list(dataCohort["sample"])
     statusID = list(dataCohort["outcome_txt"])
-    return cohortID, statusID
+    type_ID = list(dataCohort["sampletype"])
+    return cohortID, statusID, type_ID
 
 
-def form_paired_tensor(variance1=1, variance2=1):
-    """Create list of data matrices of paired data for parafac2"""
-    dfClin, dfCoh = importClinicalMRSA()
-    singles = [4, 7, 14, 19, 24, 25, 29, 31]
-    remove = dfCoh[dfCoh["pair"].isin(singles)]["sample"].to_list()
-    dfCoh = dfCoh[~dfCoh["pair"].isin(singles)]
-    pairs = dfCoh["pair"]
-    dfCyto = clinicalCyto(dfClin, dfCoh)
-    dfCyto = dfCyto.sort_values(by="sid")
-    dfCyto = dfCyto.set_index("sid")
-    dfCyto = dfCyto.div(dfCyto.apply(gmean, axis=1).to_list(), axis=0)
-    dfCyto = dfCyto.apply(np.log, axis=0)
-    dfCyto = dfCyto.sub(dfCyto.apply(np.mean, axis=0).to_list(), axis=1)
-    cytokines = dfCyto.columns
-
-    dfExp = importExpressionData()
-    dfExp = dfExp.drop(remove, axis=1)
-    ser = dfExp.var(axis=1)
-    drops = []
-    for idx, element in enumerate(ser):
-        if not element:
-            drops.append(idx)
-    dfExp = dfExp.drop(drops)
-    geneIDs = dfExp["Geneid"].to_list()
-    dfExp = dfExp.drop(["Geneid"], axis=1)
-    dfExp = (dfExp - dfExp.apply(np.mean)) / dfExp.apply(np.std)
-    dfExp = (dfExp.sub(dfExp.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp.apply(np.std, axis=1).to_list(), axis=0)
-
-    # dataMeth, m_locations = import_methylation()
-    # remove = ["4158", "4255", "4378", "4469", "4329", "5300", "4547", "5030"]
-    # dataMeth = dataMeth.drop(remove, axis=1)
-
-    cytoNumpy = dfCyto.to_numpy().T
-    expNumpy = dfExp.to_numpy()
-    # methNumpy = dataMeth.iloc[:, 1:].values
-
-    # methNumpy = methNumpy.astype(float)
-    expNumpy = expNumpy.astype(float)
-    cytoNumpy = cytoNumpy * ((1 / tl_var(cytoNumpy)) ** 0.5) * variance1
-    expNumpy = expNumpy * variance2
-    # methNumpy = methNumpy * ((1 / tl_var(methNumpy)) ** .5) * variance3
-
-    tensor_slices = [cytoNumpy, expNumpy]  # , methNumpy]
-
-    return tensor_slices, cytokines, geneIDs, pairs
-
-
-def form_MRSA_tensor(variance1=1, variance2=1):
+def form_MRSA_tensor(sample_type, matched, variance1=1, variance2=1):
     """Create list of data matrices for parafac2"""
+    
+    cyto_list, cytokines, dfExp, geneIDs = full_import()
+
+    if matched:
+        for cyto_idx in range(1, 3):
+            cyto_list[cyto_idx].drop([patient for patient in cyto_list[cyto_idx].columns if patient not in dfExp.columns], axis=1, inplace=True)
+        dfExp.drop([patient for patient in dfExp.columns if patient not in cyto_list[0].columns.to_list() + cyto_list[1].columns.to_list()], axis=1, inplace=True)
+
+    if sample_type == 'serum':
+        dfCyto_serum = pd.concat([cyto_list[0], cyto_list[1]], axis=1)
+        dfCyto_serum = dfCyto_serum * ((1 / tl_var(dfCyto_serum)) ** 0.5) * variance1
+        if not matched:
+            temp = pd.concat([dfCyto_serum, dfExp])
+            dfCyto_serum = temp.iloc[:38, :]
+            dfExp = temp[38:, :]
+        cohortID = dfExp.columns.to_list()
+        cytoNumpy = dfCyto_serum.to_numpy()
+        expNumpy = dfExp.to_numpy()
+        expNumpy = expNumpy.astype(float)
+        expNumpy = expNumpy * variance2
+        tensor_slices = [cytoNumpy, expNumpy]
+    elif sample_type == 'plasma':
+        dfCyto_plasma = pd.concat([cyto_list[0], cyto_list[2]], axis=1)
+        dfCyto_plasma = dfCyto_plasma * ((1 / tl_var(dfCyto_plasma)) ** 0.5) * variance1
+        if not matched:
+            temp = pd.concat([dfCyto_plasma, dfExp])
+            dfCyto_plasma = temp.iloc[:38, :]
+            dfExp = temp[38:, :]
+        cytoNumpy = dfCyto_plasma.to_numpy()
+        if matched:
+            dfExp = dfExp.drop(7008, axis=1)
+        cohortID = dfExp.columns.to_list()
+        expNumpy = dfExp.to_numpy()
+        expNumpy = expNumpy.astype(float)
+        expNumpy = expNumpy * variance2
+        tensor_slices = [cytoNumpy, expNumpy]
+    else:
+        raise ValueError("Bad sample type selection.")
+
+    return tensor_slices, cytokines, geneIDs, cohortID
+
+
+def full_import():
+    #Import cytokines
     dfClin, dfCoh = importClinicalMRSA()
-    dfCyto = clinicalCyto(dfClin, dfCoh)
-    dfCyto = dfCyto.sort_values(by="sid")
-    dfCyto = dfCyto.set_index("sid")
-    dfCyto = dfCyto.drop(4233)
-    dfCyto = dfCyto.div(dfCyto.apply(gmean, axis=1).to_list(), axis=0)
-    dfCyto = dfCyto.apply(np.log, axis=0)
-    dfCyto = dfCyto.sub(dfCyto.apply(np.mean, axis=0).to_list(), axis=1)
-    cytokines = dfCyto.columns
+    dfCyto_c1 = clinicalCyto(dfClin, dfCoh)
+    dfCyto_c1 = dfCyto_c1.set_index("sid")
+    dfCyto_c3_serum, dfCyto_c3_plasma = import_C3_cyto()
+    #Import RNAseq
+    dfExp_c1 = importCohort1Expression()
+    dfExp_c3 = importCohort3Expression()
 
-    dfExp = importExpressionData()
-    dfExp = dfExp.drop(["SA04233"], axis=1)
-    ser = dfExp.var(axis=1)
-    drops = []
-    for idx, element in enumerate(ser):
-        if not element:
-            drops.append(idx)
-    dfExp = dfExp.drop(drops)
-    geneIDs = dfExp["Geneid"].to_list()
-    dfExp = dfExp.drop(["Geneid"], axis=1)
-    dfExp = (dfExp - dfExp.apply(np.mean)) / dfExp.apply(np.std)
-    dfExp = (dfExp.sub(dfExp.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp.apply(np.std, axis=1).to_list(), axis=0)
+    #Modify cytokines
+    dfCyto_c1.columns = dfCyto_c3_serum.columns
+    #Fix limit of detection error - bring to next lowest value
+    dfCyto_c1["IL-12(p70)"] = [val * 16000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
+    #normalize separately and extract cytokines
+    cyto_list = [dfCyto_c1, dfCyto_c3_serum, dfCyto_c3_plasma]
+    for idx, df in enumerate(cyto_list):
+        df = df.div(df.apply(gmean, axis=1).to_list(), axis=0)
+        df = df.apply(np.log, axis=0)
+        df = df.sub(df.apply(np.mean, axis=0).to_list(), axis=1)
+        cyto_list[idx] = df.T
+    cytokines = dfCyto_c1.columns
 
-    # dataMeth, m_locations = import_methylation()
-
-    cytoNumpy = dfCyto.to_numpy().T
-    expNumpy = dfExp.to_numpy()
-    # methNumpy = dataMeth.iloc[:, 1:].values
-
-    # methNumpy = methNumpy.astype(float)
-    expNumpy = expNumpy.astype(float)
-    cytoNumpy = cytoNumpy * ((1 / tl_var(cytoNumpy)) ** 0.5) * variance1
-    expNumpy = expNumpy * variance2
-    # methNumpy = methNumpy * ((1 / tl_var(methNumpy)) ** .5) * variance3
-
-    tensor_slices = [cytoNumpy, expNumpy]  # , methNumpy]
-
-    return tensor_slices, cytokines, geneIDs  # , m_locations
+    #Modify RNAseq
+    #Drop genes not shared
+    dfExp_c1 = dfExp_c1.drop([gene for gene in dfExp_c1.index if gene not in dfExp_c3.index])
+    dfExp_c3 = dfExp_c3.drop([gene for gene in dfExp_c3.index if gene not in dfExp_c1.index])
+    #Filter out duplicate genes from c1 - choosing to keep those most similar to c3
+    dfExp_c1 = removeC1_dupes(dfExp_c1)
+    #Extract Gene IDs and normalize
+    dfExp_c1 = dfExp_c1.set_index("Geneid")
+    dfExp_c1.sort_values("Geneid", inplace=True)
+    dfExp_c3.sort_values("Geneid", inplace=True)
+    dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1)
+    #Remove those with very few reads ov average
+    dfExp["Mean"] = dfExp.apply(np.mean, axis=1)
+    mean_drop = dfExp[dfExp['Mean'] < 2].index
+    #Normalize
+    dfExp_c1 = (dfExp_c1 - dfExp_c1.apply(np.mean)) / dfExp_c1.apply(np.std)
+    dfExp_c1 = (dfExp_c1.sub(dfExp_c1.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp_c1.apply(np.std, axis=1).to_list(), axis=0)
+    dfExp_c3 = (dfExp_c3 - dfExp_c3.apply(np.mean)) / dfExp_c3.apply(np.std)
+    dfExp_c3 = (dfExp_c3.sub(dfExp_c3.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp_c3.apply(np.std, axis=1).to_list(), axis=0)
+    dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1)
+    dfExp = dfExp.drop(mean_drop)
+    geneIDs = dfExp.index.to_list()
+    dfExp.columns = dfExp.columns.astype(int)
+    return cyto_list, cytokines, dfExp, geneIDs
 
 
 def import_methylation():
@@ -170,12 +165,50 @@ def clinicalCyto(dataClinical, dataCohort):
             if (cohortID[z]).find(str(patientID[y])) != -1:
                 temp = dataClinical.loc[dataClinical["sid"] == patientID[y]]
                 cytokineData = pd.concat([temp, cytokineData])
-    cytokineData.sort_values(by=["sid"])
+    cytokineData.sort_values(by=["sid"], inplace=True)
     return cytokineData
 
 
-def importExpressionData():
+def importCohort1Expression():
     """import expression data"""
     df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt"))
     df.drop(["Chr", "Start", "End", "Strand", "Length"], inplace=True, axis=1)
+    nodecimals = [val[:val.index(".")] for val in df["Geneid"]]
+    df["Geneid"] = nodecimals
+    df = df.set_index("Geneid")
     return df
+
+
+def importCohort3Expression():
+    dfExp_c3 = pd.read_csv("tfac/data/mrsa/Genes_cohort3.csv")
+    dfExp_c3 = dfExp_c3.set_index("Geneid")
+    dfExp_c3 = dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
+    return dfExp_c3
+
+
+def removeC1_dupes(dfExp_c1):
+    dic = {}
+    for id in dfExp_c1.index:
+        if id in dic:
+            dic[id] += 1
+        else:
+            dic[id] = 1
+    mults = []
+    for key, item in dic.items():
+        if item > 1:
+            mults.append(key)
+    dfExp_c1 = dfExp_c1.reset_index()
+    drop_dupes = [dfExp_c1[dfExp_c1["Geneid"] == mult].index[1] for mult in mults]
+    dfExp_c1 = dfExp_c1.drop(drop_dupes)
+    return dfExp_c1
+
+
+def import_C3_cyto():
+    dfCyto_c3 = pd.read_csv("tfac/data/mrsa/CYTOKINES.csv")
+    dfCyto_c3 = dfCyto_c3.set_index("sample ID")
+    dfCyto_c3 = dfCyto_c3.rename_axis('sid')
+    dfCyto_c3_serum = dfCyto_c3[dfCyto_c3["sample type"] == "serum"]
+    dfCyto_c3_plasma = dfCyto_c3[dfCyto_c3["sample type"] == "plasma"]
+    dfCyto_c3_serum.drop("sample type", axis=1, inplace=True)
+    dfCyto_c3_plasma.drop("sample type", axis=1, inplace=True)
+    return dfCyto_c3_serum, dfCyto_c3_plasma

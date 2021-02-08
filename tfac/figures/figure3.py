@@ -27,15 +27,15 @@ def fig_3_setup():
     cyto_df["Outcomes"] = outs
     cyto_df = cyto_df.drop([25, 43, 46])
 
-    Cytotoxic_T = (deconv["T cell CD8+"].values - deconv["T cell CD8+"].mean())/deconv["T cell CD8+"].std()
-    T_mem_active = (deconv["T cell CD4+ memory activated"].values - deconv["T cell CD4+ memory activated"].mean())/deconv["T cell CD4+ memory activated"].std()
-    T_regs = (deconv["T cell regulatory (Tregs)"].values - deconv["T cell regulatory (Tregs)"].mean())/deconv["T cell regulatory (Tregs)"].std()
-    T_naive = (deconv["T cell CD4+ naive"].values - deconv["T cell CD4+ naive"].mean())/deconv["T cell CD4+ naive"].std()
-    T_mem_resting = (deconv["T cell CD4+ memory resting"].values - deconv["T cell CD4+ memory resting"].mean())/deconv["T cell CD4+ memory resting"].std()
-    T_follicular = (deconv["T cell follicular helper"].values - deconv["T cell follicular helper"].mean())/deconv["T cell follicular helper"].std()
-    Mast_active = (deconv["Mast cell activated"].values - deconv["Mast cell activated"].mean())/deconv["Mast cell activated"].std()
-    Mac_0 = (deconv["Macrophage M0"].values - deconv["Macrophage M0"].mean())/deconv["Macrophage M0"].std()
-    Mac_1 = (deconv["Macrophage M1"].values - deconv["Macrophage M1"].mean())/deconv["Macrophage M1"].std()
+    Cytotoxic_T = (deconv["T cell CD8+"].values - deconv["T cell CD8+"].mean()) / deconv["T cell CD8+"].std()
+    T_mem_active = (deconv["T cell CD4+ memory activated"].values - deconv["T cell CD4+ memory activated"].mean()) / deconv["T cell CD4+ memory activated"].std()
+    T_regs = (deconv["T cell regulatory (Tregs)"].values - deconv["T cell regulatory (Tregs)"].mean()) / deconv["T cell regulatory (Tregs)"].std()
+    T_naive = (deconv["T cell CD4+ naive"].values - deconv["T cell CD4+ naive"].mean()) / deconv["T cell CD4+ naive"].std()
+    T_mem_resting = (deconv["T cell CD4+ memory resting"].values - deconv["T cell CD4+ memory resting"].mean()) / deconv["T cell CD4+ memory resting"].std()
+    T_follicular = (deconv["T cell follicular helper"].values - deconv["T cell follicular helper"].mean()) / deconv["T cell follicular helper"].std()
+    Mast_active = (deconv["Mast cell activated"].values - deconv["Mast cell activated"].mean()) / deconv["Mast cell activated"].std()
+    Mac_0 = (deconv["Macrophage M0"].values - deconv["Macrophage M0"].mean()) / deconv["Macrophage M0"].std()
+    Mac_1 = (deconv["Macrophage M1"].values - deconv["Macrophage M1"].mean()) / deconv["Macrophage M1"].std()
     cyto_df["A"] = T_mem_active + Cytotoxic_T + T_follicular - T_naive - T_mem_resting - T_regs
     cyto_df["B"] = Mast_active + Mac_0 + Mac_1
 

@@ -38,42 +38,58 @@ def get_C1_patient_info():
     return cohortID, statusID, type_ID
 
 
-def form_MRSA_tensor(sample_type, matched, variance1=1, variance2=1):
+def form_missing_tensor(variance1=1, variance2=1, variance3=1):
+    '''Create list of normalized data matrices for parafac2: cytokines from serum, cytokines from plasma, RNAseq'''
+
+    cyto_list, cytokines, dfExp, geneIDs = full_import()
+    #Make initial data slices
+    _, _, type_ID = get_C1_patient_info()
+    cyto1 = cyto_list[0].copy().T
+    cyto1["type"] = type_ID
+    dfCyto_serum = pd.concat([cyto1[cyto1["type"] == 'Serum'].T.drop("type"), cyto_list[1]], axis=1)
+    dfCyto_plasma = pd.concat([cyto1[cyto1["type"] == 'Plasma'].T.drop("type"), cyto_list[2]], axis=1)
+    #Eliminate normalization bias
+    dfCyto_serum = dfCyto_serum * ((1 / tl_var(dfCyto_serum)) ** 0.5) * variance1
+    dfCyto_plasma = dfCyto_plasma * ((1 / tl_var(dfCyto_plasma)) ** 0.5) * variance2
+    dfExp = dfExp * variance3
+    #Add in NaNs
+    temp = pd.concat([dfCyto_serum, dfCyto_plasma, dfExp])
+    dfCyto_serum = temp.iloc[:38, :]
+    dfCyto_plasma = temp.iloc[38:76, :]
+    dfExp = temp.iloc[76:, :]
+
+    cohortID = dfExp.columns.to_list()
+    serumNumpy = dfCyto_serum.to_numpy()
+    plasmaNumpy = dfCyto_plasma.to_numpy()
+    expNumpy = dfExp.to_numpy()
+    tensor_slices = [serumNumpy, plasmaNumpy, expNumpy]
+    return tensor_slices, cytokines, geneIDs, cohortID
+
+
+def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
     """Create list of data matrices for parafac2"""
-    
+
     cyto_list, cytokines, dfExp, geneIDs = full_import()
 
-    if matched:
-        for cyto_idx in range(1, 3):
-            cyto_list[cyto_idx].drop([patient for patient in cyto_list[cyto_idx].columns if patient not in dfExp.columns], axis=1, inplace=True)
-        dfExp.drop([patient for patient in dfExp.columns if patient not in cyto_list[0].columns.to_list() + cyto_list[1].columns.to_list()], axis=1, inplace=True)
+    for cyto_idx in range(1, 3):
+        cyto_list[cyto_idx].drop([patient for patient in cyto_list[cyto_idx].columns if patient not in dfExp.columns], axis=1, inplace=True)
+    dfExp.drop([patient for patient in dfExp.columns if patient not in cyto_list[0].columns.to_list() + cyto_list[1].columns.to_list()], axis=1, inplace=True)
 
     if sample_type == 'serum':
         dfCyto_serum = pd.concat([cyto_list[0], cyto_list[1]], axis=1)
         dfCyto_serum = dfCyto_serum * ((1 / tl_var(dfCyto_serum)) ** 0.5) * variance1
-        if not matched:
-            temp = pd.concat([dfCyto_serum, dfExp])
-            dfCyto_serum = temp.iloc[:38, :]
-            dfExp = temp[38:, :]
         cohortID = dfExp.columns.to_list()
         cytoNumpy = dfCyto_serum.to_numpy()
         expNumpy = dfExp.to_numpy()
-        expNumpy = expNumpy.astype(float)
         expNumpy = expNumpy * variance2
         tensor_slices = [cytoNumpy, expNumpy]
     elif sample_type == 'plasma':
         dfCyto_plasma = pd.concat([cyto_list[0], cyto_list[2]], axis=1)
         dfCyto_plasma = dfCyto_plasma * ((1 / tl_var(dfCyto_plasma)) ** 0.5) * variance1
-        if not matched:
-            temp = pd.concat([dfCyto_plasma, dfExp])
-            dfCyto_plasma = temp.iloc[:38, :]
-            dfExp = temp[38:, :]
         cytoNumpy = dfCyto_plasma.to_numpy()
-        if matched:
-            dfExp = dfExp.drop(7008, axis=1)
+        dfExp = dfExp.drop(7008, axis=1)
         cohortID = dfExp.columns.to_list()
         expNumpy = dfExp.to_numpy()
-        expNumpy = expNumpy.astype(float)
         expNumpy = expNumpy * variance2
         tensor_slices = [cytoNumpy, expNumpy]
     else:
@@ -103,7 +119,7 @@ def full_import():
         df = df.apply(np.log, axis=0)
         df = df.sub(df.apply(np.mean, axis=0).to_list(), axis=1)
         cyto_list[idx] = df.T
-    cytokines = dfCyto_c1.columns
+    cytokines = dfCyto_c1.columns.to_list()
 
     #Modify RNAseq
     #Drop genes not shared

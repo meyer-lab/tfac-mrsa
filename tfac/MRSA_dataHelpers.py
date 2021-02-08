@@ -29,24 +29,6 @@ def produce_outcome_bools(statusID):
     return np.asarray(outcome_bools)
 
 
-def get_all_patient_info(sample_type):
-    dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
-    cohort_1_ID = list(dataCohort["sample"])
-    statusID = list(dataCohort["outcome_txt"])
-    type_ID = list(dataCohort["sampletype"])
-    dfExp_c3 = pd.read_csv("tfac/data/mrsa/Genes_cohort3.csv")
-    dfExp_c3 = dfExp_c3.set_index("Geneid")
-    dfExp_c3 = dfExp_c3.drop([patient for patient in dfExp_c3.columns if len(patient) > 4], axis=1)
-    dfExp_c3 = dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
-    cohort_3_ID = list(dfExp_c3.columns)
-    if sample_type == 'serum':
-        return cohort_1_ID, statusID, type_ID, cohort_3_ID
-    elif sample_type == 'plasma':
-        cohort_3_ID.remove('7008')
-        return cohort_1_ID, statusID, type_ID, cohort_3_ID
-    else:
-        raise ValueError("Bad sample type selection.")
-
 def get_C1_patient_info():
     """Return specific patient ID information"""
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
@@ -54,18 +36,6 @@ def get_C1_patient_info():
     statusID = list(dataCohort["outcome_txt"])
     type_ID = list(dataCohort["sampletype"])
     return cohortID, statusID, type_ID
-
-
-def get_C3_patient_info(matched):
-    dfExp_c3 = pd.read_csv("tfac/data/mrsa/Genes_cohort3.csv")
-    dfExp_c3 = dfExp_c3.set_index("Geneid")
-    if matched:
-        dfExp_c3 = pd.concat((dfExp_c3.iloc[:, :27], dfExp_c3.iloc[:, 33]), axis=1)
-        dfExp_c3 = dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
-        cohortID = list(dfExp_c3.columns)
-        return cohortID
-    
-    
 
 
 def form_MRSA_tensor(sample_type, matched, variance1=1, variance2=1):
@@ -85,6 +55,7 @@ def form_MRSA_tensor(sample_type, matched, variance1=1, variance2=1):
             temp = pd.concat([dfCyto_serum, dfExp])
             dfCyto_serum = temp.iloc[:38, :]
             dfExp = temp[38:, :]
+        cohortID = dfExp.columns.to_list()
         cytoNumpy = dfCyto_serum.to_numpy()
         expNumpy = dfExp.to_numpy()
         expNumpy = expNumpy.astype(float)
@@ -99,7 +70,8 @@ def form_MRSA_tensor(sample_type, matched, variance1=1, variance2=1):
             dfExp = temp[38:, :]
         cytoNumpy = dfCyto_plasma.to_numpy()
         if matched:
-            dfExp = dfExp.drop('7008', axis=1)
+            dfExp = dfExp.drop(7008, axis=1)
+        cohortID = dfExp.columns.to_list()
         expNumpy = dfExp.to_numpy()
         expNumpy = expNumpy.astype(float)
         expNumpy = expNumpy * variance2
@@ -107,7 +79,7 @@ def form_MRSA_tensor(sample_type, matched, variance1=1, variance2=1):
     else:
         raise ValueError("Bad sample type selection.")
 
-    return tensor_slices, cytokines, geneIDs
+    return tensor_slices, cytokines, geneIDs, cohortID
 
 
 def full_import():

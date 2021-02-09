@@ -8,28 +8,25 @@ import seaborn as sns
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import roc_auc_score
-from ..MRSA_dataHelpers import produce_outcome_bools, get_patient_info, form_MRSA_tensor, find_SVC_proba
+from ..dataImport import produce_outcome_bools, get_patient_info, form_MRSA_tensor, find_SVC_proba
 from .figureCommon import subplotLabel, getSetup
 
 
 def find_CV_proba(patient_matrix, outcomes, random_state=None, C=1):
     proba = cross_val_predict(
-        LogisticRegression(
-            penalty='l2',
-            solver='lbfgs',
-            C=C,
-            random_state=random_state,
-            max_iter=10000,
-            fit_intercept=False),
+        LogisticRegression(penalty="l2", solver="lbfgs", C=C, random_state=random_state, max_iter=10000, fit_intercept=False),
         patient_matrix,
         outcomes,
         cv=30,
-        method="predict_proba")
+        method="predict_proba",
+    )
     return proba[:, 1]
 
 
 def find_regularization(patient_matrix, outcomes, random_state=None):
-    clf = LogisticRegressionCV(Cs=20, cv=10, random_state=random_state, fit_intercept=False, penalty='l2', solver='lbfgs', max_iter=100000).fit(patient_matrix, outcomes)
+    clf = LogisticRegressionCV(Cs=20, cv=10, random_state=random_state, fit_intercept=False, penalty="l2", solver="lbfgs", max_iter=100000).fit(
+        patient_matrix, outcomes
+    )
     reg = clf.C_
     return reg[0]
 
@@ -58,7 +55,7 @@ def fig_6_setup():
             values_cyto.append([i, j, auc])
     df_cyto = pd.DataFrame(values_cyto)
     df_cyto.columns = ["First", "Second", "AUC"]
-    svc_cyto = df_cyto.sort_values(by='AUC', ascending=False).iloc[0, 2]
+    svc_cyto = df_cyto.sort_values(by="AUC", ascending=False).iloc[0, 2]
 
     patient_matrices, _, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
     test = patient_matrices[1][2]
@@ -71,8 +68,8 @@ def fig_6_setup():
             values_comps.append([i, j, auc])
     df_comp = pd.DataFrame(values_comps)
     df_comp.columns = ["First", "Second", "AUC"]
-    df_comp.sort_values(by='AUC', ascending=False)
-    svc_both = df_comp.sort_values(by='AUC', ascending=False).iloc[0, 2]
+    df_comp.sort_values(by="AUC", ascending=False)
+    svc_both = df_comp.sort_values(by="AUC", ascending=False).iloc[0, 2]
 
     return auc_cyto, auc_genes, svc_cyto, svc_both
 
@@ -82,8 +79,13 @@ def makeFigure():
     cyto_logit, genes_logit, cyto_svc, both_svc = fig_6_setup()
     # Get list of axis objects
     ax, f = getSetup((8, 8), (1, 1))
-    df = pd.DataFrame({'Data/Analysis': ["Log Reg - Cytokines", "Log Reg - Genes", "SVC - Cytokines", "SVC - Factorization"], 'AUC': [cyto_logit, genes_logit, cyto_svc, both_svc]})
-    b = sns.barplot(data=df, x='Data/Analysis', y='AUC', ax=ax[0])
+    df = pd.DataFrame(
+        {
+            "Data/Analysis": ["Log Reg - Cytokines", "Log Reg - Genes", "SVC - Cytokines", "SVC - Factorization"],
+            "AUC": [cyto_logit, genes_logit, cyto_svc, both_svc],
+        }
+    )
+    b = sns.barplot(data=df, x="Data/Analysis", y="AUC", ax=ax[0])
     b.set_xlabel("Data/Analysis", fontsize=25)
     b.set_ylabel("AUC", fontsize=25)
     b.tick_params(labelsize=20)

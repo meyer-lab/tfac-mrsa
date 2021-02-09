@@ -2,7 +2,6 @@
 from os.path import join, dirname
 import numpy as np
 import pandas as pd
-from scipy.stats.mstats import gmean
 from sklearn.preprocessing import scale
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVC
@@ -18,15 +17,9 @@ def find_SVC_proba(patient_matrix, outcomes):
 
 
 def produce_outcome_bools(statusID):
-    """Returns a list of booleans for progressor/resolver status ready to use for logistic regression"""
-    outcome_bools = []
-    for outcome in statusID:
-        if outcome == "APMB":
-            outcome_bools.append(0)
-        else:
-            outcome_bools.append(1)
-
-    return np.asarray(outcome_bools)
+    """ Returns a list of booleans for progressor/resolver status ready to use for logistic regression. """
+    categs = {"APMB": 0, "ARMB": 1}
+    return np.array([categs[x] for x in statusID])
 
 
 def get_C1_patient_info():
@@ -118,9 +111,9 @@ def full_import():
     # normalize separately and extract cytokines
     cyto_list = [dfCyto_c1, dfCyto_c3_serum, dfCyto_c3_plasma]
     for idx, df in enumerate(cyto_list):
-        df = df.div(df.apply(gmean, axis=1).to_list(), axis=0)
-        df = df.apply(np.log, axis=0)
-        df = df.sub(df.apply(np.mean, axis=0).to_list(), axis=1)
+        df = df.transform(np.log)
+        df = scale(df, axis=0, with_std=False)
+        df = scale(df, axis=1, with_std=False)
         cyto_list[idx] = df.T
     cytokines = dfCyto_c1.columns.to_list()
 
@@ -132,7 +125,7 @@ def full_import():
     dfExp_c3.sort_values("Geneid", inplace=True)
     drop_df = pd.concat([dfExp_c1, dfExp_c3], axis=1, join="inner")
     # Remove those with very few reads on average
-    drop_df["Mean"] = drop_df.apply(np.mean, axis=1)
+    drop_df["Mean"] = np.mean(drop_df.to_numpy(), axis=1)
     mean_drop = drop_df[drop_df["Mean"] < 2].index
     dfExp_c1 = dfExp_c1.drop(mean_drop)
     dfExp_c3 = dfExp_c3.drop(mean_drop)
@@ -152,7 +145,6 @@ def full_import():
     dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1, join="inner")
     geneIDs = dfExp.index.to_list()
     return cyto_list, cytokines, dfExp, geneIDs
-
 
 def import_methylation():
     """import methylation data"""
@@ -233,8 +225,10 @@ def import_C3_cyto():
     dfCyto_c3 = pd.read_csv("tfac/data/mrsa/CYTOKINES.csv")
     dfCyto_c3 = dfCyto_c3.set_index("sample ID")
     dfCyto_c3 = dfCyto_c3.rename_axis("sid")
-    dfCyto_c3_serum = dfCyto_c3[dfCyto_c3["sample type"] == "serum"]
-    dfCyto_c3_plasma = dfCyto_c3[dfCyto_c3["sample type"] == "plasma"]
+    dfCyto_c3_serum = dfCyto_c3[dfCyto_c3["sample type"] == "serum"].copy()
+    dfCyto_c3_plasma = dfCyto_c3[dfCyto_c3["sample type"] == "plasma"].copy()
     dfCyto_c3_serum.drop("sample type", axis=1, inplace=True)
     dfCyto_c3_plasma.drop("sample type", axis=1, inplace=True)
     return dfCyto_c3_serum, dfCyto_c3_plasma
+
+import_C3_cyto()

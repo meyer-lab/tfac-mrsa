@@ -15,16 +15,14 @@ def label_points(df, names, ax):
         ax.text(point[df.columns[0]] + .002, point[df.columns[1]], str(point[names]), fontsize=13, fontweight="semibold", color='k')
 
 
-def ensembl_convert(factors, geneids, decimals):
+def ensembl_convert(factors, geneids):
     """Converts array of gene weights and list of ensembl ids to dataframe for gsea"""
+    #Import ensembl for id conversion
     convtable = pd.DataFrame()
     server = Server(host='http://www.ensembl.org')
     dataset = (server.marts['ENSEMBL_MART_ENSEMBL'].datasets['hsapiens_gene_ensembl'])
     convtable = dataset.query(attributes=['ensembl_gene_id', 'external_gene_name'])
     ourids = copy.deepcopy(geneids)
-    if decimals:
-        for a in range(len(ourids)):
-            ourids[a] = ourids[a][:ourids[a].index(".")]
     newnames = []
     newtens = pd.DataFrame(factors)
     newtens["ensembl ids"] = ourids

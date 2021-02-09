@@ -14,8 +14,8 @@ path_here = dirname(dirname(__file__))
 
 def pickle_all():
     '''Create and pickle the best predicting decomposition, R2X, GSEA, and cell type deconvolution'''
-    tensor_slices, cytokines, geneIDs = form_MRSA_tensor('serum')
-    components = len(cytokines)
+    tensor_slices, _, _, _ = form_MRSA_tensor('serum')
+    components = tensor_slices[0].shape[0]
     AllR2X = []
     parafac2tensors = []
     #Run factorization at each component number up to limit (38 due to 38 cytokines)

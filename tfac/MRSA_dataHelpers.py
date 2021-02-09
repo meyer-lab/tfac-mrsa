@@ -30,7 +30,7 @@ def produce_outcome_bools(statusID):
 
 
 def get_C1_patient_info():
-    """Return specific patient ID information"""
+    """Return specific patient ID information for cohort 1 - used in model building"""
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
     cohortID = list(dataCohort["sample"])
     statusID = list(dataCohort["outcome_txt"])
@@ -40,7 +40,6 @@ def get_C1_patient_info():
 
 def form_missing_tensor(variance1=1, variance2=1, variance3=1):
     '''Create list of normalized data matrices for parafac2: cytokines from serum, cytokines from plasma, RNAseq'''
-
     cyto_list, cytokines, dfExp, geneIDs = full_import()
     #Make initial data slices
     _, _, type_ID = get_C1_patient_info()
@@ -69,7 +68,6 @@ def form_missing_tensor(variance1=1, variance2=1, variance3=1):
 def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
     """Create list of data matrices for parafac2. The sample type argument chosen for cohort 3 is incorporated into the tensor, the data for the other type is not used.
     Keeps both types for cohort 1."""
-
     cyto_list, cytokines, dfExp, geneIDs = full_import()
 
     for cyto_idx in range(1, 3):

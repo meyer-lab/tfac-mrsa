@@ -3,9 +3,9 @@ from os.path import join, dirname
 import numpy as np
 import pandas as pd
 from scipy.stats.mstats import gmean
+from sklearn.preprocessing import scale
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVC
-from tensorly.metrics.regression import variance as tl_var
 
 
 path_here = dirname(dirname(__file__))
@@ -30,7 +30,7 @@ def produce_outcome_bools(statusID):
 
 
 def get_C1_patient_info():
-    """Return specific patient ID information"""
+    """Return specific patient ID information for cohort 1 - used in model building"""
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
     cohortID = list(dataCohort["sample"])
     statusID = list(dataCohort["outcome_txt"])
@@ -40,18 +40,13 @@ def get_C1_patient_info():
 
 def form_missing_tensor(variance1=1, variance2=1, variance3=1):
     '''Create list of normalized data matrices for parafac2: cytokines from serum, cytokines from plasma, RNAseq'''
-
     cyto_list, cytokines, dfExp, geneIDs = full_import()
     #Make initial data slices
     _, _, type_ID = get_C1_patient_info()
-    cyto1 = cyto_list[0].copy().T
+    cyto1 = cyto_list[0].T
     cyto1["type"] = type_ID
     dfCyto_serum = pd.concat([cyto1[cyto1["type"] == 'Serum'].T.drop("type"), cyto_list[1]], axis=1)
     dfCyto_plasma = pd.concat([cyto1[cyto1["type"] == 'Plasma'].T.drop("type"), cyto_list[2]], axis=1)
-    #Eliminate normalization bias
-    dfCyto_serum = dfCyto_serum * ((1 / tl_var(dfCyto_serum)) ** 0.5) * variance1
-    dfCyto_plasma = dfCyto_plasma * ((1 / tl_var(dfCyto_plasma)) ** 0.5) * variance2
-    dfExp = dfExp * variance3
     #Add in NaNs
     temp = pd.concat([dfCyto_serum, dfCyto_plasma, dfExp])
     dfCyto_serum = temp.iloc[:38, :]
@@ -62,35 +57,40 @@ def form_missing_tensor(variance1=1, variance2=1, variance3=1):
     serumNumpy = dfCyto_serum.to_numpy()
     plasmaNumpy = dfCyto_plasma.to_numpy()
     expNumpy = dfExp.to_numpy()
+    #Eliminate normalization bias
+    serumNumpy = serumNumpy * ((1 / np.var(serumNumpy)) ** 0.5) * variance1
+    plasmaNumpy = plasmaNumpy * ((1 / np.var(plasmaNumpy)) ** 0.5) * variance2
+    expNumpy = expNumpy * ((1 / np.var(expNumpy)) ** 0.5) * variance3
     tensor_slices = [serumNumpy, plasmaNumpy, expNumpy]
     return tensor_slices, cytokines, geneIDs, cohortID
 
 
 def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
-    """Create list of data matrices for parafac2"""
-
+    """Create list of data matrices for parafac2. The sample type argument chosen for cohort 3 is incorporated into the tensor, the data for the other type is not used.
+    Keeps both types for cohort 1."""
     cyto_list, cytokines, dfExp, geneIDs = full_import()
 
     for cyto_idx in range(1, 3):
         cyto_list[cyto_idx].drop([patient for patient in cyto_list[cyto_idx].columns if patient not in dfExp.columns], axis=1, inplace=True)
     dfExp.drop([patient for patient in dfExp.columns if patient not in cyto_list[0].columns.to_list() + cyto_list[1].columns.to_list()], axis=1, inplace=True)
-
+    #Uses sample type argument to construct tensor, specifically choosing which data set for cohort 3 will be used. 
     if sample_type == 'serum':
         dfCyto_serum = pd.concat([cyto_list[0], cyto_list[1]], axis=1)
-        dfCyto_serum = dfCyto_serum * ((1 / tl_var(dfCyto_serum)) ** 0.5) * variance1
-        cohortID = dfExp.columns.to_list()
+        #Below line, as well as others in same format are to avoid the decomposition method biasing one of the slices due to its overall variance being large due to normalization changes.
         cytoNumpy = dfCyto_serum.to_numpy()
+        cytoNumpy = cytoNumpy * ((1 / np.var(cytoNumpy)) ** 0.5) * variance1
+        cohortID = dfExp.columns.to_list()
         expNumpy = dfExp.to_numpy()
-        expNumpy = expNumpy * variance2
+        expNumpy = expNumpy * ((1 / np.var(expNumpy)) ** 0.5) * variance2
         tensor_slices = [cytoNumpy, expNumpy]
     elif sample_type == 'plasma':
         dfCyto_plasma = pd.concat([cyto_list[0], cyto_list[2]], axis=1)
-        dfCyto_plasma = dfCyto_plasma * ((1 / tl_var(dfCyto_plasma)) ** 0.5) * variance1
         cytoNumpy = dfCyto_plasma.to_numpy()
+        cytoNumpy = cytoNumpy * ((1 / np.var(cytoNumpy)) ** 0.5) * variance1
         dfExp = dfExp.drop(7008, axis=1)
         cohortID = dfExp.columns.to_list()
         expNumpy = dfExp.to_numpy()
-        expNumpy = expNumpy * variance2
+        expNumpy = expNumpy * ((1 / np.var(expNumpy)) ** 0.5) * variance2
         tensor_slices = [cytoNumpy, expNumpy]
     else:
         raise ValueError("Bad sample type selection.")
@@ -99,6 +99,7 @@ def form_MRSA_tensor(sample_type, variance1=1, variance2=1):
 
 
 def full_import():
+    '''Imports raw cytokine and RNAseq data for both cohort 1 and 3. Performs normalization and fixes bad values.'''
     #Import cytokines
     dfClin, dfCoh = importClinicalMRSA()
     dfCyto_c1 = clinicalCyto(dfClin, dfCoh)
@@ -122,28 +123,32 @@ def full_import():
     cytokines = dfCyto_c1.columns.to_list()
 
     #Modify RNAseq
-    #Drop genes not shared
-    dfExp_c1 = dfExp_c1.drop([gene for gene in dfExp_c1.index if gene not in dfExp_c3.index])
-    dfExp_c3 = dfExp_c3.drop([gene for gene in dfExp_c3.index if gene not in dfExp_c1.index])
-    #Filter out duplicate genes from c1 - choosing to keep those most similar to c3
     dfExp_c1 = removeC1_dupes(dfExp_c1)
-    #Extract Gene IDs and normalize
     dfExp_c1 = dfExp_c1.set_index("Geneid")
+    #Drop genes not shared
     dfExp_c1.sort_values("Geneid", inplace=True)
     dfExp_c3.sort_values("Geneid", inplace=True)
-    dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1)
-    #Remove those with very few reads ov average
-    dfExp["Mean"] = dfExp.apply(np.mean, axis=1)
-    mean_drop = dfExp[dfExp['Mean'] < 2].index
+    drop_df = pd.concat([dfExp_c1, dfExp_c3], axis=1, join='inner')
+    #Remove those with very few reads on average
+    drop_df["Mean"] = drop_df.apply(np.mean, axis=1)
+    mean_drop = drop_df[drop_df['Mean'] < 2].index
+    dfExp_c1 = dfExp_c1.drop(mean_drop)
+    dfExp_c3 = dfExp_c3.drop(mean_drop)
+    #Store info for later
+    pats_c1 = dfExp_c1.columns.astype(int)
+    pats_c3 = dfExp_c3.columns.astype(int)
+    genes_c1 = dfExp_c1.index
+    genes_c3 = dfExp_c3.index
     #Normalize
-    dfExp_c1 = (dfExp_c1 - dfExp_c1.apply(np.mean)) / dfExp_c1.apply(np.std)
-    dfExp_c1 = (dfExp_c1.sub(dfExp_c1.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp_c1.apply(np.std, axis=1).to_list(), axis=0)
-    dfExp_c3 = (dfExp_c3 - dfExp_c3.apply(np.mean)) / dfExp_c3.apply(np.std)
-    dfExp_c3 = (dfExp_c3.sub(dfExp_c3.apply(np.mean, axis=1).to_list(), axis=0)).div(dfExp_c3.apply(np.std, axis=1).to_list(), axis=0)
-    dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1)
-    dfExp = dfExp.drop(mean_drop)
+    dfExp_c1 = scale(dfExp_c1, axis=0)
+    dfExp_c1 = scale(dfExp_c1, axis=1)
+    dfExp_c3 = scale(dfExp_c3, axis=0)
+    dfExp_c3 = scale(dfExp_c3, axis=1)
+    #Return to dataframe format after scaling
+    dfExp_c1 = pd.DataFrame(dfExp_c1, index=genes_c1, columns=pats_c1)
+    dfExp_c3 = pd.DataFrame(dfExp_c3, index=genes_c3, columns=pats_c3)
+    dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1, join='inner')
     geneIDs = dfExp.index.to_list()
-    dfExp.columns = dfExp.columns.astype(int)
     return cyto_list, cytokines, dfExp, geneIDs
 
 
@@ -196,6 +201,7 @@ def importCohort1Expression():
 
 
 def importCohort3Expression():
+    '''Imports RNAseq data for cohort 3, sorted by patient ID.'''
     dfExp_c3 = pd.read_csv("tfac/data/mrsa/Genes_cohort3.csv")
     dfExp_c3 = dfExp_c3.set_index("Geneid")
     dfExp_c3 = dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
@@ -203,6 +209,7 @@ def importCohort3Expression():
 
 
 def removeC1_dupes(dfExp_c1):
+    '''Removes duplicate genes from cohort 1 data. There are only a few (approx. 10) out of ~50,000, they are possibly different isoforms. The ones similar to cohort 3 are kept.'''
     dic = {}
     for id in dfExp_c1.index:
         if id in dic:
@@ -220,6 +227,7 @@ def removeC1_dupes(dfExp_c1):
 
 
 def import_C3_cyto():
+    '''Imports the cohort 3 cytokine data, giving separate dataframes for serum and plasma data. They overlap on many paitents.'''
     dfCyto_c3 = pd.read_csv("tfac/data/mrsa/CYTOKINES.csv")
     dfCyto_c3 = dfCyto_c3.set_index("sample ID")
     dfCyto_c3 = dfCyto_c3.rename_axis('sid')

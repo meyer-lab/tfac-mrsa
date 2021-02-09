@@ -5,7 +5,7 @@ import pickle
 import pandas as pd
 import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
-from ..MRSA_dataHelpers import get_patient_info, produce_outcome_bools
+from ..dataImport import get_patient_info, produce_outcome_bools
 
 
 def fig_3_setup():

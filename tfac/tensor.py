@@ -10,7 +10,7 @@ def R2Xparafac2(tensor_slices, decomposition):
     """Calculate the R2X of parafac2 decomposition"""
     R2XX = np.zeros(len(tensor_slices))
     for idx, tensor_slice in enumerate(tensor_slices):
-        reconstruction = parafac2_to_slice(decomposition, idx, validate=False)
+        reconstruction = parafac2_to_slice(decomposition, idx)
         R2XX[idx] = 1.0 - np.var(reconstruction - tensor_slice) / np.var(tensor_slice)
     return R2XX
 

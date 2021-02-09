@@ -6,7 +6,6 @@ from scipy.stats.mstats import gmean
 from sklearn.preprocessing import scale
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVC
-from tensorly.metrics.regression import variance as tl_var
 
 
 path_here = dirname(dirname(__file__))
@@ -49,10 +48,6 @@ def form_missing_tensor(variance1=1, variance2=1, variance3=1):
     cyto1["type"] = type_ID
     dfCyto_serum = pd.concat([cyto1[cyto1["type"] == 'Serum'].T.drop("type"), cyto_list[1]], axis=1)
     dfCyto_plasma = pd.concat([cyto1[cyto1["type"] == 'Plasma'].T.drop("type"), cyto_list[2]], axis=1)
-    #Eliminate normalization bias
-    dfCyto_serum = dfCyto_serum * ((1 / tl_var(dfCyto_serum)) ** 0.5) * variance1
-    dfCyto_plasma = dfCyto_plasma * ((1 / tl_var(dfCyto_plasma)) ** 0.5) * variance2
-    dfExp = dfExp * ((1 / tl_var(dfExp)) ** 0.5) * variance3
     #Add in NaNs
     temp = pd.concat([dfCyto_serum, dfCyto_plasma, dfExp])
     dfCyto_serum = temp.iloc[:38, :]
@@ -63,6 +58,10 @@ def form_missing_tensor(variance1=1, variance2=1, variance3=1):
     serumNumpy = dfCyto_serum.to_numpy()
     plasmaNumpy = dfCyto_plasma.to_numpy()
     expNumpy = dfExp.to_numpy()
+    #Eliminate normalization bias
+    serumNumpy = serumNumpy * ((1 / np.var(serumNumpy)) ** 0.5) * variance1
+    plasmaNumpy = plasmaNumpy * ((1 / np.var(plasmaNumpy)) ** 0.5) * variance2
+    expNumpy = expNumpy * ((1 / np.var(expNumpy)) ** 0.5) * variance3
     tensor_slices = [serumNumpy, plasmaNumpy, expNumpy]
     return tensor_slices, cytokines, geneIDs, cohortID
 

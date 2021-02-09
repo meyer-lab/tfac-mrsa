@@ -25,7 +25,7 @@ def test_fullImport():
 
 
 def test_formMissing():
-    """ Test that we can import the full dataset. """
+    """ Test that we can form the missing tensor. """
     tensor_slices, cytokines, geneIDs, cohortID = form_missing_tensor()
 
     assert isinstance(tensor_slices, list)
@@ -41,7 +41,7 @@ def test_formMissing():
 
 @pytest.mark.parametrize("dataType", ["serum", "plasma"])
 def test_formTensor(dataType):
-    """ Test that the most basic imports work. """
+    """ Test that we can form the standard tensor. """
     tensor_slices, cytokines, geneIDs, cohortID = form_MRSA_tensor(dataType)
 
     assert len(tensor_slices) == 2

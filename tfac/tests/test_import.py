@@ -30,12 +30,13 @@ def test_formMissing():
 
     assert isinstance(tensor_slices, list)
 
-    for i in range(3):
-        assert isinstance(tensor_slices[i], np.ndarray)
-        assert np.any(np.isnan(tensor_slices[i]))
+    for dd in tensor_slices:
+        assert isinstance(dd, np.ndarray)
+        assert np.any(np.isnan(dd))
+        assert np.any(np.isfinite(dd)) # At least one value should be finite
 
     assert isinstance(geneIDs, list)
-    assert tensor_slices[0].shape[1] == tensor_slices[1].shape[1]
+    assert tensor_slices[0].shape == tensor_slices[1].shape
     assert tensor_slices[0].shape[1] == tensor_slices[2].shape[1]
 
 
@@ -45,6 +46,10 @@ def test_formTensor(dataType):
     tensor_slices, cytokines, geneIDs, cohortID = form_MRSA_tensor(dataType)
 
     assert len(tensor_slices) == 2
+    for dd in tensor_slices:
+        assert isinstance(dd, np.ndarray)
+        assert np.any(np.isfinite(dd))
+
     assert np.all(np.isfinite(tensor_slices[1]))  # Gene expression should be complete
     assert isinstance(cohortID, list)
     assert isinstance(geneIDs, list)

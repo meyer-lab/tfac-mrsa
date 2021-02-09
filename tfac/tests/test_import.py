@@ -19,6 +19,7 @@ def test_fullImport():
     """ Test that we can import the full dataset. """
     cyto_list, cytokines, dfExp, geneIDs = full_import()
 
+    assert isinstance(geneIDs, list)
     assert isinstance(dfExp, pd.DataFrame)
     assert isinstance(cyto_list, list)
 
@@ -33,6 +34,7 @@ def test_formMissing():
         assert isinstance(tensor_slices[i], np.ndarray)
         assert np.any(np.isnan(tensor_slices[i]))
 
+    assert isinstance(geneIDs, list)
     assert tensor_slices[0].shape[1] == tensor_slices[1].shape[1]
     assert tensor_slices[0].shape[1] == tensor_slices[2].shape[1]
 

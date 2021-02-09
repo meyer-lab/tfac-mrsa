@@ -5,7 +5,7 @@ import pickle
 import pandas as pd
 import seaborn as sns
 from tensorly.parafac2_tensor import apply_parafac2_projections
-from ..MRSA_dataHelpers import form_MRSA_tensor
+from ..dataImport import form_MRSA_tensor
 from ..explore_factors import label_points, ensembl_convert
 from .figureCommon import subplotLabel, getSetup
 

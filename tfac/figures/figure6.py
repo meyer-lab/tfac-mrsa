@@ -8,7 +8,7 @@ import seaborn as sns
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import roc_auc_score
-from ..MRSA_dataHelpers import produce_outcome_bools, get_patient_info, form_MRSA_tensor, find_SVC_proba
+from ..dataImport import produce_outcome_bools, get_patient_info, form_MRSA_tensor, find_SVC_proba
 from .figureCommon import subplotLabel, getSetup
 
 

@@ -3,9 +3,16 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 import gseapy as gp
 from pybiomart import Server
+from sklearn.model_selection import cross_val_predict
+from sklearn.svm import SVC
+
+
+def find_SVC_proba(patient_matrix, outcomes):
+    """Given a particular patient matrix and outcomes list, performs cross validation of SVC and returns the decision function to be used for AUC"""
+    proba = cross_val_predict(SVC(kernel="rbf"), patient_matrix, outcomes, cv=30, method="decision_function")
+    return proba
 
 
 def label_points(df, names, ax):

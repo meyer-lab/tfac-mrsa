@@ -45,7 +45,7 @@ def test_formTensor(dataType):
     tensor_slices, cytokines, geneIDs, cohortID = form_MRSA_tensor(dataType)
 
     assert len(tensor_slices) == 2
-    assert np.all(np.isfinite(tensor_slices[1])) # Gene expression should be complete
+    assert np.all(np.isfinite(tensor_slices[1]))  # Gene expression should be complete
     assert isinstance(cohortID, list)
     assert isinstance(geneIDs, list)
     assert tensor_slices[0].shape[1] == tensor_slices[1].shape[1]

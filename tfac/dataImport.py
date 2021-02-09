@@ -67,7 +67,7 @@ def form_MRSA_tensor(sample_type, variance1: float = 1.0, variance2: float = 1.0
     else:
         raise ValueError("Bad sample type selection.")
 
-    # Below line, as well as others in same format are to avoid the decomposition method 
+    # Below line, as well as others in same format are to avoid the decomposition method
     # biasing one of the slices due to its overall variance being large due to normalization changes.
     cytoNumpy = dfCyto.to_numpy()
     cytoNumpy = cytoNumpy * ((1 / np.var(cytoNumpy)) ** 0.5) * variance1

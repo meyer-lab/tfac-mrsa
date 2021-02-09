@@ -13,9 +13,6 @@ def test_TMTF():
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
 
-    print(tensor.shape)
-    print(matrix.shape)
-
-    tFac, mFac, R2X = perform_TMTF(tensor, matrix, r=1)
+    tFac, mFac, R2X = perform_TMTF(tensor, matrix, r=4)
 
     assert R2X > 0.0

@@ -50,11 +50,11 @@ def censored_lstsq(A, B):
 
 
 def perform_TMTF(tOrig, mOrig, r=10):
-    """ Perform CMTF decomposition. """
+    """ Perform TMTF decomposition. """
     tFac = initialize_cp(np.nan_to_num(tOrig), r, init="random")
 
     # Everything from the original mFac will be overwritten
-    mFac = initialize_cp(np.nan_to_num(mOrig), r, init="random")
+    mFac = initialize_cp(np.nan_to_num(mOrig), r)
 
     # Pre-unfold
     selPat = np.all(np.isfinite(mOrig), axis=1)
@@ -66,7 +66,7 @@ def perform_TMTF(tOrig, mOrig, r=10):
     mFac.factors[0] = tFac.factors[0]
     mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
 
-    for ii in range(80):
+    for ii in range(40000):
         # Solve for the subject matrix
         kr = khatri_rao(tFac.factors[1], tFac.factors[2])[~missing, :]
         assert np.all(np.isfinite(kr))
@@ -86,10 +86,9 @@ def perform_TMTF(tOrig, mOrig, r=10):
         # Solve for the glycan matrix fit
         mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
 
-        if ii % 20 == 0:
+        if ii % 10 == 0:
             R2X_last = R2X
             R2X = calcR2X(tOrig, mOrig, tFac, mFac)
-            print(R2X)
             assert np.isfinite(R2X)
 
         if R2X - R2X_last < 1e-7:

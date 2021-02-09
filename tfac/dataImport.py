@@ -20,7 +20,7 @@ def get_C1_patient_info():
     return dataCohort[["sample", "outcome_txt", "sampletype"]]
 
 
-def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0, variance3: float = 1.0):
+def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     """Create list of normalized data matrices for parafac2: cytokines from serum, cytokines from plasma, RNAseq"""
     cyto_list, cytokines, dfExp, geneIDs = full_import()
     # Make initial data slices
@@ -40,9 +40,9 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0, variance
     plasmaNumpy = dfCyto_plasma.to_numpy()
     expNumpy = dfExp.to_numpy()
     # Eliminate normalization bias
-    serumNumpy = serumNumpy * ((1.0 / np.var(serumNumpy)) ** 0.5) * variance1
-    plasmaNumpy = plasmaNumpy * ((1.0 / np.var(plasmaNumpy)) ** 0.5) * variance2
-    expNumpy = expNumpy * ((1.0 / np.var(expNumpy)) ** 0.5) * variance3
+    serumNumpy = serumNumpy * ((1.0 / np.nanvar(serumNumpy)) ** 0.5) * variance1
+    plasmaNumpy = plasmaNumpy * ((1.0 / np.nanvar(plasmaNumpy)) ** 0.5) * variance1
+    expNumpy = expNumpy * ((1.0 / np.nanvar(expNumpy)) ** 0.5) * variance2
     tensor_slices = [serumNumpy, plasmaNumpy, expNumpy]
     return tensor_slices, cytokines, geneIDs, cohortID
 
@@ -70,10 +70,10 @@ def form_MRSA_tensor(sample_type, variance1: float = 1.0, variance2: float = 1.0
     # Below line, as well as others in same format are to avoid the decomposition method
     # biasing one of the slices due to its overall variance being large due to normalization changes.
     cytoNumpy = dfCyto.to_numpy()
-    cytoNumpy = cytoNumpy * ((1 / np.var(cytoNumpy)) ** 0.5) * variance1
+    cytoNumpy = cytoNumpy * ((1 / np.nanvar(cytoNumpy)) ** 0.5) * variance1
     cohortID = dfExp.columns.to_list()
     expNumpy = dfExp.to_numpy()
-    expNumpy = expNumpy * ((1 / np.var(expNumpy)) ** 0.5) * variance2
+    expNumpy = expNumpy * ((1 / np.nanvar(expNumpy)) ** 0.5) * variance2
     tensor_slices = [cytoNumpy, expNumpy]
 
     return tensor_slices, cytokines, geneIDs, cohortID
@@ -99,7 +99,7 @@ def full_import():
     for idx, df in enumerate(cyto_list):
         df = df.transform(np.log)
         df -= df.mean(axis=0)
-        df -= df.mean(axis=1)
+        df = df.sub(df.mean(axis=1), axis=0)
         cyto_list[idx] = df.T
     cytokines = dfCyto_c1.columns.to_list()
 

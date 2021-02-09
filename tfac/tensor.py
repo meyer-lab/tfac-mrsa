@@ -17,12 +17,11 @@ def R2Xparafac2(tensor_slices, decomposition):
 #### Decomposition Methods ###################################################################
 
 
-def MRSA_decomposition(tensor_slices, components, random_state=None):
+def MRSA_decomposition(tensor_slices, components, **kwargs):
     """Perform tensor formation and decomposition for particular variance and component number
     ---------------------------------------------
     Returns
         parafac2tensor object
         tensor_slices list
     """
-    parafac2tensor = parafac2(tensor_slices, components, random_state=random_state, verbose=False)
-    return parafac2tensor
+    return parafac2(tensor_slices, components, **kwargs)

@@ -50,6 +50,7 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0, variance
 def form_MRSA_tensor(sample_type, variance1: float = 1.0, variance2: float = 1.0):
     """Create list of data matrices for parafac2. The sample type argument chosen for cohort 3 is incorporated into the tensor, the data for the other type is not used.
     Keeps both types for cohort 1."""
+    # TODO: This can just be derived from form_missing_tensor
     cyto_list, cytokines, dfExp, geneIDs = full_import()
 
     for cyto_idx in range(1, 3):

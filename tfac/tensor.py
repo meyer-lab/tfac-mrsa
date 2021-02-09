@@ -14,6 +14,7 @@ def R2Xparafac2(tensor_slices, decomposition):
         R2XX[idx] = 1.0 - np.var(reconstruction - tensor_slice) / np.var(tensor_slice)
     return R2XX
 
+
 #### Decomposition Methods ###################################################################
 
 

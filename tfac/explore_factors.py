@@ -18,23 +18,23 @@ def find_SVC_proba(patient_matrix, outcomes):
 def label_points(df, names, ax):
     """Label given points given df of coordinates and names"""
     for _, point in df.iterrows():
-        ax.text(point[df.columns[0]] + .002, point[df.columns[1]], str(point[names]), fontsize=13, fontweight="semibold", color='k')
+        ax.text(point[df.columns[0]] + 0.002, point[df.columns[1]], str(point[names]), fontsize=13, fontweight="semibold", color="k")
 
 
 def ensembl_convert(factors, geneids, decimals):
     """Converts array of gene weights and list of ensembl ids to dataframe for gsea"""
     convtable = pd.DataFrame()
-    server = Server(host='http://www.ensembl.org')
-    dataset = (server.marts['ENSEMBL_MART_ENSEMBL'].datasets['hsapiens_gene_ensembl'])
-    convtable = dataset.query(attributes=['ensembl_gene_id', 'external_gene_name'])
+    server = Server(host="http://www.ensembl.org")
+    dataset = server.marts["ENSEMBL_MART_ENSEMBL"].datasets["hsapiens_gene_ensembl"]
+    convtable = dataset.query(attributes=["ensembl_gene_id", "external_gene_name"])
     ourids = copy.deepcopy(geneids)
     if decimals:
         for a in range(len(ourids)):
-            ourids[a] = ourids[a][:ourids[a].index(".")]
+            ourids[a] = ourids[a][: ourids[a].index(".")]
     newnames = []
     newtens = pd.DataFrame(factors)
     newtens["ensembl ids"] = ourids
-    #droppedids = newtens[~newtens["ensembl ids"].isin(convtable["Gene stable ID"])]
+    # droppedids = newtens[~newtens["ensembl ids"].isin(convtable["Gene stable ID"])]
     newtens = newtens[newtens["ensembl ids"].isin(convtable["Gene stable ID"])]
     for ensid in newtens["ensembl ids"]:
         table = convtable[convtable["Gene stable ID"] == ensid]
@@ -49,7 +49,9 @@ def ensembl_convert(factors, geneids, decimals):
 def prerank(newtens, component, geneset):
     """Runs prerank gsea on specific component/gene list"""
     prtens = pd.concat((newtens["Gene ID"], newtens[newtens.columns[component]]), axis=1)
-    pre_res = gp.prerank(rnk=prtens, gene_sets=geneset, processes=16, min_size=10, max_size=5000, permutation_num=1000, weighted_score_type=0, outdir=None, seed=6)
+    pre_res = gp.prerank(
+        rnk=prtens, gene_sets=geneset, processes=16, min_size=10, max_size=5000, permutation_num=1000, weighted_score_type=0, outdir=None, seed=6
+    )
     return pre_res.res2d
 
 
@@ -68,14 +70,10 @@ def plot_svc_decision_function(model, ax=None, plot_support=True):
     P = model.decision_function(xy).reshape(X.shape)
 
     # plot decision boundary and margins
-    ax.contour(X, Y, P, colors='k',
-               levels=[-1, 0, 1], alpha=1,
-               linestyles=['--', '-', '--'])
+    ax.contour(X, Y, P, colors="k", levels=[-1, 0, 1], alpha=1, linestyles=["--", "-", "--"])
 
     # plot support vectors
     if plot_support:
-        ax.scatter(model.support_vectors_[:, 0],
-                   model.support_vectors_[:, 1],
-                   s=300, linewidth=1, facecolors='none')
+        ax.scatter(model.support_vectors_[:, 0], model.support_vectors_[:, 1], s=300, linewidth=1, facecolors="none")
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)

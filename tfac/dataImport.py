@@ -187,7 +187,7 @@ def importCohort3Expression():
 
 def removeC1_dupes(df):
     """ Removes duplicate genes from cohort 1 data. There are only a few (approx. 10) out of ~50,000, they are possibly different isoforms. The ones similar to cohort 3 are kept. """
-    return df[~df.index.duplicated(keep='first')]
+    return df[~df.index.duplicated(keep="first")]
 
 
 def import_C3_cyto():

@@ -40,9 +40,9 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0, variance
     plasmaNumpy = dfCyto_plasma.to_numpy()
     expNumpy = dfExp.to_numpy()
     # Eliminate normalization bias
-    serumNumpy = serumNumpy * ((1 / np.var(serumNumpy)) ** 0.5) * variance1
-    plasmaNumpy = plasmaNumpy * ((1 / np.var(plasmaNumpy)) ** 0.5) * variance2
-    expNumpy = expNumpy * ((1 / np.var(expNumpy)) ** 0.5) * variance3
+    serumNumpy = serumNumpy * ((1.0 / np.var(serumNumpy)) ** 0.5) * variance1
+    plasmaNumpy = plasmaNumpy * ((1.0 / np.var(plasmaNumpy)) ** 0.5) * variance2
+    expNumpy = expNumpy * ((1.0 / np.var(expNumpy)) ** 0.5) * variance3
     tensor_slices = [serumNumpy, plasmaNumpy, expNumpy]
     return tensor_slices, cytokines, geneIDs, cohortID
 

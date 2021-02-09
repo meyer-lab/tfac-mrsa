@@ -5,30 +5,15 @@ import numpy as np
 from scipy.linalg import khatri_rao
 import tensorly as tl
 from tensorly.decomposition._cp import initialize_cp
-from tensorly.decomposition import parafac2
-from tensorly.parafac2_tensor import parafac2_to_slice
+
+tl.set_backend("numpy")
 
 
-def R2Xparafac2(tensor_slices, decomposition):
-    """Calculate the R2X of parafac2 decomposition"""
-    R2XX = np.zeros(len(tensor_slices))
-    for idx, tensor_slice in enumerate(tensor_slices):
-        reconstruction = parafac2_to_slice(decomposition, idx)
-        R2XX[idx] = 1.0 - np.var(reconstruction - tensor_slice) / np.var(tensor_slice)
-    return R2XX
-
-
-#### Decomposition Methods ###################################################################
-
-
-def MRSA_decomposition(tensor_slices, components, **kwargs):
-    """Perform tensor formation and decomposition for particular variance and component number
-    ---------------------------------------------
-    Returns
-        parafac2tensor object
-        tensor_slices list
-    """
-    return parafac2(tensor_slices, components, **kwargs)
+def calcR2X(tensorIn, matrixIn, tensorFac, matrixFac):
+    """ Calculate R2X. """
+    tErr = np.nanvar(tl.cp_to_tensor(tensorFac) - tensorIn)
+    mErr = np.nanvar(tl.cp_to_tensor(matrixFac) - matrixIn)
+    return 1.0 - (tErr + mErr) / (np.nanvar(tensorIn) + np.nanvar(matrixIn))
 
 
 def reorient_factors(tensorFac, matrixFac):
@@ -64,12 +49,12 @@ def censored_lstsq(A, B):
     return X.T
 
 
-def perform_CMTF(tOrig, mOrig, r=10):
+def perform_TMTF(tOrig, mOrig, r=10):
     """ Perform CMTF decomposition. """
-    tFac = initialize_cp(np.nan_to_num(tOrig, nan=np.nanmean(tOrig)), r, non_negative=True)
+    tFac = initialize_cp(np.nan_to_num(tOrig), r, init="random")
 
     # Everything from the original mFac will be overwritten
-    mFac = initialize_cp(np.nan_to_num(mOrig), r)
+    mFac = initialize_cp(np.nan_to_num(mOrig), r, init="random")
 
     # Pre-unfold
     selPat = np.all(np.isfinite(mOrig), axis=1)
@@ -81,10 +66,12 @@ def perform_CMTF(tOrig, mOrig, r=10):
     mFac.factors[0] = tFac.factors[0]
     mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
 
-    for ii in range(8000):
+    for ii in range(80):
         # Solve for the subject matrix
         kr = khatri_rao(tFac.factors[1], tFac.factors[2])[~missing, :]
+        assert np.all(np.isfinite(kr))
         kr2 = np.vstack((kr, mFac.factors[1]))
+        assert np.all(np.isfinite(kr2))
         unfolded2 = np.hstack((unfolded, mOrig))
 
         tFac.factors[0] = censored_lstsq(kr2, unfolded2.T)
@@ -102,6 +89,8 @@ def perform_CMTF(tOrig, mOrig, r=10):
         if ii % 20 == 0:
             R2X_last = R2X
             R2X = calcR2X(tOrig, mOrig, tFac, mFac)
+            print(R2X)
+            assert np.isfinite(R2X)
 
         if R2X - R2X_last < 1e-7:
             break

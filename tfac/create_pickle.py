@@ -5,10 +5,9 @@ from os.path import join, dirname
 from sklearn.model_selection import LeaveOneOut
 from sklearn.metrics import roc_auc_score
 from sklearn.svm import SVC
-from tensorly.parafac2_tensor import apply_parafac2_projections
-from .MRSA_dataHelpers import form_MRSA_tensor, get_C1_patient_info, produce_outcome_bools, find_SVC_proba
-from .tensor import MRSA_decomposition, R2Xparafac2
-from .explore_factors import ensembl_convert, prerank
+from .dataImport import form_missing_tensor, get_C1_patient_info, produce_outcome_bools
+from .tensor import perform_TMTF, calcR2X
+from .explore_factors import ensembl_convert, prerank, find_SVC_proba
 
 
 path_here = dirname(dirname(__file__))
@@ -16,20 +15,21 @@ path_here = dirname(dirname(__file__))
 
 def pickle_all():
     '''Create and pickle the best predicting decomposition, R2X, GSEA, and cell type deconvolution'''
-    tensor_slices, _, geneIDs, _ = form_MRSA_tensor('serum')
-    components = tensor_slices[0].shape[0]
+    tensor_slices, _, geneIDs, _ = form_missing_tensor()
+    tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
+    matrix = tensor_slices[2].T
+    components = 40
     AllR2X = []
-    parafac2tensors = []
+    all_tensors = []
     #Run factorization at each component number up to limit (38 due to 38 cytokines)
     for component in range(1, components + 1):
-        parafac2tensor = MRSA_decomposition(tensor_slices, component, random_state=None)
-        R2X = np.round(R2Xparafac2(tensor_slices, parafac2tensor), 6)
-        parafac2tensors.append(parafac2tensor)
+        tFac, mFac, R2X = perform_TMTF(tensor, matrix, r=component)
+        all_tensors.append([tFac, mFac])
         AllR2X.append(R2X)
-    best = Full_SVC(parafac2tensors, components)
-    best_decomp = parafac2tensors[best[1] - 1]
+    best = Full_SVC(all_tensors, components)
+    best_decomp = all_tensors[best[1] - 1]
     best_comps = best[2]
-    gsea = Full_GSEA(best_decomp, best_comps, ['ARCHS4_Tissues', 'Jensen_TISSUES'], geneIDs)
+    gsea = Full_GSEA(best_decomp[1], best_comps, ['ARCHS4_Tissues', 'Jensen_TISSUES'], geneIDs)
     deconv = import_deconv()
     #pickle.dump([best_decomp, AllR2X, gsea, deconv], open("test.p", "wb"))
 
@@ -39,7 +39,7 @@ def import_deconv():
     return pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter=",", index_col='sample').sort_index().drop(['gender', 'cell_type'], axis=1)
 
 
-def Full_SVC(parafac2tensors, components):
+def Full_SVC(all_tensors, components):
     '''Perform cross validated SVC for each decomposition to determine optimal decomposition and component pair.
   
     Parameters: 
@@ -54,7 +54,7 @@ def Full_SVC(parafac2tensors, components):
     #For each decomposition, perform loo CV SVC
     pairs = []
     for comp in range(2, components + 1):
-        patient_matrix = parafac2tensors[comp - 1][1][2]
+        patient_matrix = all_tensors[comp - 1][0][1][0]
         patient_matrix = patient_matrix[:61, :]
         loo = LeaveOneOut()
         bests = []
@@ -82,7 +82,7 @@ def Full_SVC(parafac2tensors, components):
     return sorted(pairs, reverse=True)[0]
 
 
-def Full_GSEA(best_decomp, best_comps, libraries, geneids):
+def Full_GSEA(gene_factors, best_comps, libraries, geneids):
     '''Perform GSEA on the gene factor matrix, with each component done individually. Each of the 2 best predicting components from SVC are then compared to the other 37 
     to find which gene set are uniquely enriched in that component.
 
@@ -101,22 +101,19 @@ def Full_GSEA(best_decomp, best_comps, libraries, geneids):
     Returns: 
     gseacompA, gseacompB (DataFrame): GSEA results for component pair and given gene set, with columns for "uniqueness" based on nes across components
     '''
-    #Get full factor matrices from tensor object
-    patient_mats_applied = apply_parafac2_projections(best_decomp)
-    gene_matrix = patient_mats_applied[1][1][1]
     #Convert ensembl ids to gene names and construct DataFrame
-    newtens = ensembl_convert(gene_matrix, geneids)
+    newtens = ensembl_convert(gene_factors, geneids)
     preranked_all = []
     #Run for all libraries
     all_dfs = []
     for library in libraries:
         #Perform GSEA on each component
-        for comp in best_decomp[1][2].shape[1]:
+        for comp in gene_factors.shape[1]:
             preranked = prerank(newtens, comp, library)
             preranked_all.append(preranked)
         #Construct DataFrame for comparing nes for gene sets
         alls = pd.DataFrame()
-        for i in range(best_decomp[1][2].shape[1]):
+        for i in range(gene_factors.shape[1]):
             df = preranked_all[i][preranked_all[i]['fdr'] < .05]
             alls = pd.concat((alls, df['nes']), axis=1)
         alls.columns = range(38)

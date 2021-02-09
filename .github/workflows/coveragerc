@@ -1,0 +1,5 @@
+[run]
+
+omit = 
+  tfac/figures/*
+  tfac/data/*

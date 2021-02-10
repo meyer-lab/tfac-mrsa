@@ -23,22 +23,22 @@ def pickle_all():
 
 
 def Full_GSEA(gene_factors, best_comps, libraries, geneids):
-    """Perform GSEA on the gene factor matrix, with each component done individually. Each of the 2 best predicting components from SVC are then compared to the other 37 
+    """Perform GSEA on the gene factor matrix, with each component done individually. Each of the 2 best predicting components from SVC are then compared to the other 37
     to find which gene set are uniquely enriched in that component.
 
-    Some important things to note - the library chosen and the ultimate unique gene sets that are relevant depend upon the application. 
-    For our purposes, we wanted to look at the immune system, and decided that observing enrichment of certain cell types would be a better method than looking at 
-    smaller cellular programs, thus we chose libraries of cell types. The results were examined manually, as there were many gene sets irrelevant to us - such as 
-    cell types that were not among the samples taken nor involved in the immune system. Gene sets that appeared as highly unique - aka with a normalized 
+    Some important things to note - the library chosen and the ultimate unique gene sets that are relevant depend upon the application.
+    For our purposes, we wanted to look at the immune system, and decided that observing enrichment of certain cell types would be a better method than looking at
+    smaller cellular programs, thus we chose libraries of cell types. The results were examined manually, as there were many gene sets irrelevant to us - such as
+    cell types that were not among the samples taken nor involved in the immune system. Gene sets that appeared as highly unique - aka with a normalized
     enrichment score greater in magnitude than in other components - and relevant are those determined to be enriched.
-    
-    Parameters: 
+
+    Parameters:
     best_decomp (parafac2tensor): Decomposition with best status prediction
     best_comps (tuple): tuple of component pair that provides optimal prediction within SVC
     library (string): Name of Enricher library to use
     geneids (list): Ensembl ids for all genes in matrix
-  
-    Returns: 
+
+    Returns:
     gseacompA, gseacompB (DataFrame): GSEA results for component pair and given gene set, with columns for "uniqueness" based on nes across components
     """
     # Convert ensembl ids to gene names and construct DataFrame

@@ -9,7 +9,7 @@ pandoc-eqnos==2.5.0
 pandoc-tablenos==2.3.0
 matplotlib==3.3.4
 seaborn==0.11.1
-svgutils==0.3.2
+svgutils==0.3.3
 tensorly==0.5.1
 scikit-learn==0.24.1
 pybiomart==0.2.0

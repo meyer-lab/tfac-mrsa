@@ -33,7 +33,7 @@ def test_formMissing():
     for dd in tensor_slices:
         assert isinstance(dd, np.ndarray)
         assert np.any(np.isnan(dd))
-        assert np.any(np.isfinite(dd)) # At least one value should be finite
+        assert np.any(np.isfinite(dd))  # At least one value should be finite
 
     assert isinstance(geneIDs, list)
     assert tensor_slices[0].shape == tensor_slices[1].shape

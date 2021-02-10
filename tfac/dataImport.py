@@ -15,7 +15,7 @@ def produce_outcome_bools(statusID):
 
 
 def import_deconv():
-    """Imports and returns cell deconvolution data."""
+    """ Imports and returns cell deconvolution data. """
     return (
         pd.read_csv(join(path_here, "tfac/data/mrsa/deconvo_cibersort_APMB.csv"), delimiter=",", index_col="sample")
         .sort_index()
@@ -24,13 +24,13 @@ def import_deconv():
 
 
 def get_C1_patient_info():
-    """Return specific patient ID information for cohort 1 - used in model building"""
+    """ Return specific patient ID information for cohort 1 - used in model building. """
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
     return dataCohort[["sample", "outcome_txt", "sampletype"]]
 
 
 def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
-    """Create list of normalized data matrices for parafac2: cytokines from serum, cytokines from plasma, RNAseq"""
+    """ Create list of normalized data matrices: cytokines from serum, cytokines from plasma, RNAseq. """
     cyto_list, cytokines, dfExp, geneIDs = full_import()
     # Make initial data slices
     C1patInfo = get_C1_patient_info()
@@ -57,7 +57,7 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
 
 
 def full_import():
-    """Imports raw cytokine and RNAseq data for both cohort 1 and 3. Performs normalization and fixes bad values."""
+    """ Imports raw cytokine and RNAseq data for both cohort 1 and 3. Performs normalization and fixes bad values. """
     # Import cytokines
     dfClin, dfCoh = importClinicalMRSA()
     dfCyto_c1 = clinicalCyto(dfClin, dfCoh)
@@ -110,14 +110,14 @@ def full_import():
 
 
 def import_methylation():
-    """import methylation data"""
+    """ Import methylation data. """
     dataMeth = pd.read_csv(join(path_here, "tfac/data/mrsa/MRSA.Methylation.txt.xz"), delimiter=" ", compression="xz")
     locs = dataMeth.values[:, 0]
     return dataMeth, locs
 
 
 def importClinicalMRSA():
-    """import clincal MRSA data"""
+    """ Import clincal MRSA data. """
     dataClin = pd.read_csv(join(path_here, "tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv"))
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
     return dataClin, dataCohort
@@ -148,7 +148,7 @@ def clinicalCyto(dataClinical, dataCohort):
 
 
 def importCohort1Expression():
-    """import expression data"""
+    """ Import expression data. """
     df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt"))
     df.drop(["Chr", "Start", "End", "Strand", "Length"], inplace=True, axis=1)
     nodecimals = [val[: val.index(".")] for val in df["Geneid"]]

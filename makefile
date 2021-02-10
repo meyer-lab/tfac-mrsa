@@ -5,7 +5,7 @@ SHELL := /bin/bash
 flist = 1 2 3 4 5 6
 flistFull = $(patsubst %, output/figure%.svg, $(flist))
 
-all: pylint.log $(flistFull) output/manuscript.md
+all: pylint.log output/manuscript.md #$(flistFull)
 
 venv: venv/bin/activate
 
@@ -22,14 +22,14 @@ output/manuscript.md: venv manuscript/*.md venv/bin/activate
 	. venv/bin/activate && manubot process --content-directory=manuscript --output-directory=output --cache-directory=cache --skip-citations --log-level=INFO
 	git remote rm rootstock
 
-output/manuscript.html: venv output/manuscript.md $(patsubst %, output/figure%.svg, $(flist))
+output/manuscript.html: venv output/manuscript.md #$(flistFull)
 	mkdir output/output
 	cp output/*.svg output/output/
 	. venv/bin/activate && pandoc --verbose \
 		--defaults=./common/templates/manubot/pandoc/common.yaml \
 		--defaults=./common/templates/manubot/pandoc/html.yaml output/manuscript.md
 
-output/manuscript.docx: venv output/manuscript.md $(flistFull)
+output/manuscript.docx: venv output/manuscript.md #$(flistFull)
 	. venv/bin/activate && pandoc --verbose -t docx $(pandocCommon) \
 		--reference-doc=common/templates/manubot/default.docx \
 		--resource-path=.:content \

@@ -17,7 +17,7 @@ def produce_outcome_bools(statusID):
 def import_deconv():
     """Imports and returns cell deconvolution data."""
     return (
-        pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter=",", index_col="sample")
+        pd.read_csv(join(path_here, "tfac/data/mrsa/deconvo_cibersort_APMB.csv"), delimiter=",", index_col="sample")
         .sort_index()
         .drop(["gender", "cell_type"], axis=1)
     )

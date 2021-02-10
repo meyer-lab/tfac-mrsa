@@ -1,7 +1,5 @@
 """Functions for exploring components to MRSA parafac2 decomposition"""
 import copy
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import gseapy as gp
 from pybiomart import Server
@@ -23,7 +21,7 @@ def label_points(df, names, ax):
 
 def ensembl_convert(factors, geneids):
     """Converts array of gene weights and list of ensembl ids to dataframe for gsea"""
-    #Import ensembl for id conversion
+    # Import ensembl for id conversion
     convtable = pd.DataFrame()
     server = Server(host="http://www.ensembl.org")
     dataset = server.marts["ENSEMBL_MART_ENSEMBL"].datasets["hsapiens_gene_ensembl"]
@@ -47,5 +45,7 @@ def ensembl_convert(factors, geneids):
 def prerank(newtens, component, geneset):
     """Runs prerank gsea on specific component/gene list"""
     prtens = pd.concat((newtens["Gene ID"], newtens[newtens.columns[component]]), axis=1)
-    pre_res = gp.prerank(rnk=prtens, gene_sets=geneset, processes=16, min_size=1, max_size=5000, permutation_num=100, weighted_score_type=0, outdir=None, seed=6)
+    pre_res = gp.prerank(
+        rnk=prtens, gene_sets=geneset, processes=16, min_size=1, max_size=5000, permutation_num=100, weighted_score_type=0, outdir=None, seed=6
+    )
     return pre_res.res2d

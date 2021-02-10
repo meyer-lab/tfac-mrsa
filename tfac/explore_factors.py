@@ -1,18 +1,8 @@
 """Functions for exploring components to MRSA parafac2 decomposition"""
 import copy
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import gseapy as gp
 from pybiomart import Server
-from sklearn.model_selection import cross_val_predict
-from sklearn.svm import SVC
-
-
-def find_SVC_proba(patient_matrix, outcomes):
-    """Given a particular patient matrix and outcomes list, performs cross validation of SVC and returns the decision function to be used for AUC"""
-    proba = cross_val_predict(SVC(kernel="rbf"), patient_matrix, outcomes, cv=30, method="decision_function")
-    return proba
 
 
 def label_points(df, names, ax):
@@ -23,7 +13,7 @@ def label_points(df, names, ax):
 
 def ensembl_convert(factors, geneids):
     """Converts array of gene weights and list of ensembl ids to dataframe for gsea"""
-    #Import ensembl for id conversion
+    # Import ensembl for id conversion
     convtable = pd.DataFrame()
     server = Server(host="http://www.ensembl.org")
     dataset = server.marts["ENSEMBL_MART_ENSEMBL"].datasets["hsapiens_gene_ensembl"]
@@ -47,5 +37,7 @@ def ensembl_convert(factors, geneids):
 def prerank(newtens, component, geneset):
     """Runs prerank gsea on specific component/gene list"""
     prtens = pd.concat((newtens["Gene ID"], newtens[newtens.columns[component]]), axis=1)
-    pre_res = gp.prerank(rnk=prtens, gene_sets=geneset, processes=16, min_size=1, max_size=5000, permutation_num=1000, weighted_score_type=0, outdir=None)
+    pre_res = gp.prerank(
+        rnk=prtens, gene_sets=geneset, processes=16, min_size=1, max_size=5000, permutation_num=1000, weighted_score_type=0, outdir=None, seed=6
+    )
     return pre_res.res2d

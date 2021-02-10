@@ -14,14 +14,23 @@ def produce_outcome_bools(statusID):
     return np.array([categs[x] for x in statusID])
 
 
+def import_deconv():
+    """ Imports and returns cell deconvolution data. """
+    return (
+        pd.read_csv(join(path_here, "tfac/data/mrsa/deconvo_cibersort_APMB.csv"), delimiter=",", index_col="sample")
+        .sort_index()
+        .drop(["gender", "cell_type"], axis=1)
+    )
+
+
 def get_C1_patient_info():
-    """Return specific patient ID information for cohort 1 - used in model building"""
+    """ Return specific patient ID information for cohort 1 - used in model building. """
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
     return dataCohort[["sample", "outcome_txt", "sampletype"]]
 
 
 def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
-    """Create list of normalized data matrices for parafac2: cytokines from serum, cytokines from plasma, RNAseq"""
+    """ Create list of normalized data matrices: cytokines from serum, cytokines from plasma, RNAseq. """
     cyto_list, cytokines, dfExp, geneIDs = full_import()
     # Make initial data slices
     C1patInfo = get_C1_patient_info()
@@ -47,40 +56,8 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     return tensor_slices, cytokines, geneIDs, cohortID
 
 
-def form_MRSA_tensor(sample_type, variance1: float = 1.0, variance2: float = 1.0):
-    """Create list of data matrices for parafac2. The sample type argument chosen for cohort 3 is incorporated into the tensor, the data for the other type is not used.
-    Keeps both types for cohort 1."""
-    # TODO: This can just be derived from form_missing_tensor
-    cyto_list, cytokines, dfExp, geneIDs = full_import()
-
-    for cyto_idx in range(1, 3):
-        cyto_list[cyto_idx].drop([patient for patient in cyto_list[cyto_idx].columns if patient not in dfExp.columns], axis=1, inplace=True)
-    dfExp.drop(
-        [patient for patient in dfExp.columns if patient not in cyto_list[0].columns.to_list() + cyto_list[1].columns.to_list()], axis=1, inplace=True
-    )
-    # Uses sample type argument to construct tensor, specifically choosing which data set for cohort 3 will be used.
-    if sample_type == "serum":
-        dfCyto = pd.concat([cyto_list[0], cyto_list[1]], axis=1)
-    elif sample_type == "plasma":
-        dfCyto = pd.concat([cyto_list[0], cyto_list[2]], axis=1)
-        dfExp = dfExp.drop(7008, axis=1)
-    else:
-        raise ValueError("Bad sample type selection.")
-
-    # Below line, as well as others in same format are to avoid the decomposition method
-    # biasing one of the slices due to its overall variance being large due to normalization changes.
-    cytoNumpy = dfCyto.to_numpy()
-    cytoNumpy = cytoNumpy * ((1 / np.nanvar(cytoNumpy)) ** 0.5) * variance1
-    cohortID = dfExp.columns.to_list()
-    expNumpy = dfExp.to_numpy()
-    expNumpy = expNumpy * ((1 / np.nanvar(expNumpy)) ** 0.5) * variance2
-    tensor_slices = [cytoNumpy, expNumpy]
-
-    return tensor_slices, cytokines, geneIDs, cohortID
-
-
 def full_import():
-    """Imports raw cytokine and RNAseq data for both cohort 1 and 3. Performs normalization and fixes bad values."""
+    """ Imports raw cytokine and RNAseq data for both cohort 1 and 3. Performs normalization and fixes bad values. """
     # Import cytokines
     dfClin, dfCoh = importClinicalMRSA()
     dfCyto_c1 = clinicalCyto(dfClin, dfCoh)
@@ -133,14 +110,14 @@ def full_import():
 
 
 def import_methylation():
-    """import methylation data"""
+    """ Import methylation data. """
     dataMeth = pd.read_csv(join(path_here, "tfac/data/mrsa/MRSA.Methylation.txt.xz"), delimiter=" ", compression="xz")
     locs = dataMeth.values[:, 0]
     return dataMeth, locs
 
 
 def importClinicalMRSA():
-    """import clincal MRSA data"""
+    """ Import clincal MRSA data. """
     dataClin = pd.read_csv(join(path_here, "tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv"))
     dataCohort = pd.read_csv(join(path_here, "tfac/data/mrsa/clinical_metadata_cohort1.txt"), delimiter="\t")
     return dataClin, dataCohort
@@ -171,7 +148,7 @@ def clinicalCyto(dataClinical, dataCohort):
 
 
 def importCohort1Expression():
-    """import expression data"""
+    """ Import expression data. """
     df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt"))
     df.drop(["Chr", "Start", "End", "Strand", "Length"], inplace=True, axis=1)
     nodecimals = [val[: val.index(".")] for val in df["Geneid"]]

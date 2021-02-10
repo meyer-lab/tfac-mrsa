@@ -4,10 +4,10 @@ Test that we can successfully import the datasets.
 import pytest
 import numpy as np
 import pandas as pd
-from ..dataImport import importCohort1Expression, importCohort3Expression, full_import, form_missing_tensor, get_C1_patient_info, form_MRSA_tensor
+from ..dataImport import importCohort1Expression, importCohort3Expression, full_import, form_missing_tensor, get_C1_patient_info, import_deconv
 
 
-@pytest.mark.parametrize("call", [importCohort1Expression, importCohort3Expression, get_C1_patient_info])
+@pytest.mark.parametrize("call", [importCohort1Expression, importCohort3Expression, get_C1_patient_info, import_deconv])
 def test_importBases(call):
     """ Test that the most basic imports work. """
     data = call()
@@ -33,24 +33,8 @@ def test_formMissing():
     for dd in tensor_slices:
         assert isinstance(dd, np.ndarray)
         assert np.any(np.isnan(dd))
-        assert np.any(np.isfinite(dd)) # At least one value should be finite
+        assert np.any(np.isfinite(dd))  # At least one value should be finite
 
     assert isinstance(geneIDs, list)
     assert tensor_slices[0].shape == tensor_slices[1].shape
     assert tensor_slices[0].shape[1] == tensor_slices[2].shape[1]
-
-
-@pytest.mark.parametrize("dataType", ["serum", "plasma"])
-def test_formTensor(dataType):
-    """ Test that we can form the standard tensor. """
-    tensor_slices, cytokines, geneIDs, cohortID = form_MRSA_tensor(dataType)
-
-    assert len(tensor_slices) == 2
-    for dd in tensor_slices:
-        assert isinstance(dd, np.ndarray)
-        assert np.any(np.isfinite(dd))
-
-    assert np.all(np.isfinite(tensor_slices[1]))  # Gene expression should be complete
-    assert isinstance(cohortID, list)
-    assert isinstance(geneIDs, list)
-    assert tensor_slices[0].shape[1] == tensor_slices[1].shape[1]

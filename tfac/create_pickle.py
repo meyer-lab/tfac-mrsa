@@ -21,7 +21,7 @@ def pickle_all():
     components = 40
     AllR2X = []
     all_tensors = []
-    #Run factorization at each component number up to limit (38 due to 38 cytokines)
+    #Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
         tFac, mFac, R2X = perform_TMTF(tensor, matrix, r=component)
         all_tensors.append([tFac, mFac])
@@ -49,8 +49,8 @@ def Full_SVC(all_tensors, components):
     best_decomp (parafac2tensor): Decomposition with best status prediction
     comps (tuple): tuple of component pair that provides optimal prediction within SVC'''
     #import information on patient ID, P vs R status
-    _, status_ID, _ = get_C1_patient_info()
-    outcomes = produce_outcome_bools(status_ID)
+    info_df = get_C1_patient_info()
+    outcomes = produce_outcome_bools(info_df["outcome_txt"])
     #For each decomposition, perform loo CV SVC
     pairs = []
     for comp in range(2, components + 1):

@@ -47,5 +47,5 @@ def ensembl_convert(factors, geneids):
 def prerank(newtens, component, geneset):
     """Runs prerank gsea on specific component/gene list"""
     prtens = pd.concat((newtens["Gene ID"], newtens[newtens.columns[component]]), axis=1)
-    pre_res = gp.prerank(rnk=prtens, gene_sets=geneset, processes=16, min_size=1, max_size=5000, permutation_num=100, weighted_score_type=0, outdir=None, seed=6)
+    pre_res = gp.prerank(rnk=prtens, gene_sets=geneset, processes=16, min_size=1, max_size=5000, permutation_num=1000, weighted_score_type=0, outdir=None)
     return pre_res.res2d

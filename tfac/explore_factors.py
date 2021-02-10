@@ -23,7 +23,7 @@ def label_points(df, names, ax):
 
 def ensembl_convert(factors, geneids):
     """Converts array of gene weights and list of ensembl ids to dataframe for gsea"""
-    #Import ensembl for id conversion
+    # Import ensembl for id conversion
     convtable = pd.DataFrame()
     server = Server(host="http://www.ensembl.org")
     dataset = server.marts["ENSEMBL_MART_ENSEMBL"].datasets["hsapiens_gene_ensembl"]

@@ -52,37 +52,34 @@ def censored_lstsq(A, B):
 
 def perform_TMTF(tOrig, mOrig, r=10):
     """ Perform TMTF decomposition. """
-    tFac = initialize_cp(np.nan_to_num(tOrig), r, init="random")
+    tFac = initialize_cp(np.nan_to_num(tOrig), r)
 
     # Everything from the original mFac will be overwritten
     mFac = initialize_cp(np.nan_to_num(mOrig), r)
 
     # Pre-unfold
     selPat = np.all(np.isfinite(mOrig), axis=1)
-    unfolded = tl.unfold(tOrig, 0)
-    missing = np.any(np.isnan(unfolded), axis=0)
-    unfolded = unfolded[:, ~missing]
+    unfolded = [tl.unfold(tOrig, i) for i in range(3)]
+    unfolded[0] = np.hstack((unfolded[0], mOrig))
 
     R2X = -1.0
-    mFac.factors[0] = tFac.factors[0]
     mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
+    mFac.factors[0] = tFac.factors[0]
 
     for ii in range(40000):
         # Solve for the subject matrix
-        kr = khatri_rao(tFac.factors[1], tFac.factors[2])[~missing, :]
+        kr = khatri_rao(tFac.factors[1], tFac.factors[2])
         assert np.all(np.isfinite(kr))
         kr2 = np.vstack((kr, mFac.factors[1]))
         assert np.all(np.isfinite(kr2))
-        unfolded2 = np.hstack((unfolded, mOrig))
 
-        tFac.factors[0] = censored_lstsq(kr2, unfolded2.T)
+        tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T)
         mFac.factors[0] = tFac.factors[0]
 
         # PARAFAC on other antigen modes
         for m in [1, 2]:
             kr = khatri_rao(tFac.factors[0], tFac.factors[3 - m])
-            unfold = tl.unfold(tOrig, m)
-            tFac.factors[m] = censored_lstsq(kr, unfold.T)
+            tFac.factors[m] = censored_lstsq(kr, unfolded[m].T)
 
         # Solve for the glycan matrix fit
         mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
@@ -92,7 +89,7 @@ def perform_TMTF(tOrig, mOrig, r=10):
             R2X = calcR2X(tOrig, mOrig, tFac, mFac)
             assert np.isfinite(R2X)
 
-        if R2X - R2X_last < 1e-7:
+        if R2X - R2X_last < 1e-4:
             break
 
     tFac.normalize()

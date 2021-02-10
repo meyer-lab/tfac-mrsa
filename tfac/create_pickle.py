@@ -1,12 +1,9 @@
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import LeaveOneOut
-from sklearn.metrics import roc_auc_score
-from sklearn.svm import SVC
-from .dataImport import form_missing_tensor, get_C1_patient_info, produce_outcome_bools
+from .dataImport import form_missing_tensor
 from .tensor import perform_TMTF
-from .explore_factors import ensembl_convert, prerank, find_SVC_proba
+from .explore_factors import ensembl_convert, prerank
 
 
 def pickle_all():
@@ -23,49 +20,6 @@ def pickle_all():
         all_tensors.append(perform_TMTF(tensor, matrix, r=component))
 
     pickle.dump(all_tensors, open("test.p", "wb"))
-
-
-def Full_SVC(all_tensors, components):
-    """Perform cross validated SVC for each decomposition to determine optimal decomposition and component pair.
-  
-    Parameters: 
-    parafac2tensors (list): list of 38 parafac2tensor objects
-  
-    Returns: 
-    best_decomp (parafac2tensor): Decomposition with best status prediction
-    comps (tuple): tuple of component pair that provides optimal prediction within SVC"""
-    # import information on patient ID, P vs R status
-    _, status_ID, _ = get_C1_patient_info()
-    outcomes = produce_outcome_bools(status_ID)
-    # For each decomposition, perform loo CV SVC
-    pairs = []
-    for comp in range(2, components + 1):
-        patient_matrix = all_tensors[comp - 1][0][1][0]
-        patient_matrix = patient_matrix[:61, :]
-        loo = LeaveOneOut()
-        bests = []
-        choices = []
-        for train, test in loo.split(patient_matrix):
-            values_comps = []
-            # for each component pair, perform SVC and score it
-            for i in range(0, comp - 1):
-                for j in range(i + 1, comp):
-                    double = np.vstack((patient_matrix[train, i], patient_matrix[train, j])).T
-                    decisions = find_SVC_proba(double, outcomes[train])
-                    auc = roc_auc_score(outcomes[train], decisions)
-                    values_comps.append([i, j, auc])
-            # Make it look nice and fit a model using the best pair, then predict
-            df_comp = pd.DataFrame(values_comps)
-            df_comp.columns = ["First", "Second", "AUC"]
-            df_comp = df_comp.sort_values(by=["AUC"], ascending=False)
-            best1 = df_comp.iloc[0, 0]
-            best2 = df_comp.iloc[0, 1]
-            clf = SVC().fit(np.vstack((patient_matrix[train, best1], patient_matrix[train, best2])).T, outcomes[train])
-            choices.append(clf.decision_function(np.vstack((patient_matrix[test, best1], patient_matrix[test, best2])).T))
-            bests.append(df_comp.iloc[:1, :])
-        best_auc = roc_auc_score(outcomes, choices)
-        pairs.append([best_auc, comp, bests])
-    return sorted(pairs, reverse=True)[0]
 
 
 def Full_GSEA(gene_factors, best_comps, libraries, geneids):

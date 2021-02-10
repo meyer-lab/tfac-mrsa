@@ -63,8 +63,8 @@ def perform_TMTF(tOrig, mOrig, r=10):
     unfolded[0] = np.hstack((unfolded[0], mOrig))
 
     R2X = -1.0
-    mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
     mFac.factors[0] = tFac.factors[0]
+    mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
 
     for ii in range(40000):
         # Solve for the subject matrix

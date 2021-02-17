@@ -9,16 +9,23 @@ from matplotlib import gridspec, pyplot as plt
 from string import ascii_lowercase
 from .figureCommon import subplotLabel, getSetup
 from ..dataImport import form_missing_tensor, get_C1_patient_info, produce_outcome_bools
+from ..tensor import perform_TMTF
 
 
 def fig_2_setup():
     """Import and organize R2X and heatmaps"""
     #R2X
-    _, cytokines, _, cohortID = form_missing_tensor()
-    all_tensors = pickle.load(open("Factorized.p", "rb"))
-    components = 40
+    tensor_slices, cytokines, _, cohortID = form_missing_tensor()
+    tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
+    matrix = tensor_slices[2].T
+    components = 10
+    all_tensors = []
+    #Run factorization at each component number up to chosen limit
+    for component in range(1, components + 1):
+        print(f"Starting decomposition with {component} components.")
+        all_tensors.append(perform_TMTF(tensor, matrix, r=component))
     AllR2X = [all_tensors[x][2] for x in range(0, components)]
-    R2X = pd.DataFrame({"Number of Components": np.arange(1, 41), "R2X": AllR2X})
+    R2X = pd.DataFrame({"Number of Components": np.arange(1, 11), "R2X": AllR2X})
     #Heatmaps
     # TODO: Change once determined by SVC
     best_comp = 3

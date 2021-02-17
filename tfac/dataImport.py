@@ -35,7 +35,7 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     # Make initial data slices
     C1patInfo = get_C1_patient_info()
     cyto1 = cyto_list[0].T
-    cyto1["type"] = C1patInfo.sampletype
+    cyto1["type"] = C1patInfo.sampletype.to_list()
     dfCyto_serum = pd.concat([cyto1[cyto1["type"] == "Serum"].T.drop("type"), cyto_list[1]], axis=1)
     dfCyto_plasma = pd.concat([cyto1[cyto1["type"] == "Plasma"].T.drop("type"), cyto_list[2]], axis=1)
     # Add in NaNs
@@ -45,9 +45,9 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     dfExp = temp.iloc[76:, :]
 
     cohortID = dfExp.columns.to_list()
-    serumNumpy = dfCyto_serum.to_numpy()
-    plasmaNumpy = dfCyto_plasma.to_numpy()
-    expNumpy = dfExp.to_numpy()
+    serumNumpy = dfCyto_serum.to_numpy().astype('float')
+    plasmaNumpy = dfCyto_plasma.to_numpy().astype('float')
+    expNumpy = dfExp.to_numpy().astype('float')
     # Eliminate normalization bias
     serumNumpy = serumNumpy * ((1.0 / np.nanvar(serumNumpy)) ** 0.5) * variance1
     plasmaNumpy = plasmaNumpy * ((1.0 / np.nanvar(plasmaNumpy)) ** 0.5) * variance1

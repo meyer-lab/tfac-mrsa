@@ -18,7 +18,7 @@ def fig_2_setup():
     tensor_slices, cytokines, _, cohortID = form_missing_tensor()
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
-    components = 6
+    components = 3
     all_tensors = []
     #Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
@@ -29,12 +29,12 @@ def fig_2_setup():
     R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
     #Heatmaps
     # TODO: Change once determined by SVC
-    best_comp = 5
-    factors = all_tensors[best_comp][0]
+    factors = perform_TMTF(tensor, matrix, r=2)[0]
 
-    subs = pd.DataFrame(factors.factors[0], columns=[f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)], index=[str(x) for x in cohortID])
-    cytos = pd.DataFrame(factors.factors[1], columns=[f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)], index=cytokines)
-    sour = pd.DataFrame(factors.factors[2], columns=[f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)], index=["Serum", "Plasma"])
+    colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
+    subs = pd.DataFrame(factors.factors[0], columns=colnames, index=[str(x) for x in cohortID])
+    cytos = pd.DataFrame(factors.factors[1], columns=colnames, index=cytokines)
+    sour = pd.DataFrame(factors.factors[2], columns=colnames, index=["Serum", "Plasma"])
 
     return R2X, subs, cytos, sour
 
@@ -61,6 +61,7 @@ def makeFigure():
 
     sns.set(rc={'axes.facecolor':'whitesmoke'})
     sns.scatterplot(data=R2X, x="Number of Components", y="R2X", ax=ax1)
+    ax1.set_ylim(0.0, 1.0)
     ax1.grid(True, ls="--")
     sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=ax11, vmin=vmin, vmax=vmax, ax=ax9)
     sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax13)

@@ -31,15 +31,9 @@ def get_C1_patient_info():
 
 def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     """ Create list of normalized data matrices: cytokines from serum, cytokines from plasma, RNAseq. """
-    cyto_list, cytokines, dfExp, geneIDs = full_import()
-    # Make initial data slices
-    C1patInfo = get_C1_patient_info()
-    cyto1 = cyto_list[0].T
-    cyto1["type"] = C1patInfo.sampletype.to_list()
-    dfCyto_serum = pd.concat([cyto1[cyto1["type"] == "Serum"].T.drop("type"), cyto_list[1]], axis=1)
-    dfCyto_plasma = pd.concat([cyto1[cyto1["type"] == "Plasma"].T.drop("type"), cyto_list[2]], axis=1)
+    cyto_list, cytokines, dfExp, geneIDs = full_import()    
     # Add in NaNs
-    temp = pd.concat([dfCyto_serum, dfCyto_plasma, dfExp])
+    temp = pd.concat([cyto_list[0], cyto_list[1], dfExp])
     dfCyto_serum = temp.iloc[:38, :]
     dfCyto_plasma = temp.iloc[38:76, :]
     dfExp = temp.iloc[76:, :]
@@ -67,44 +61,41 @@ def full_import():
     dfExp_c1 = importCohort1Expression()
     dfExp_c3 = importCohort3Expression()
 
+
     # Modify cytokines
     dfCyto_c1.columns = dfCyto_c3_serum.columns
     # Fix limit of detection error - bring to next lowest value
     dfCyto_c1["IL-12(p70)"] = [val * 16000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
     # normalize separately and extract cytokines
-    cyto_list = [dfCyto_c1, dfCyto_c3_serum, dfCyto_c3_plasma]
+    # Make initial data slices
+    C1patInfo = get_C1_patient_info()
+    dfCyto_c1["type"] = C1patInfo.sampletype.to_list()
+    dfCyto_serum = pd.concat([dfCyto_c1[dfCyto_c1["type"] == "Serum"].T.drop("type"), dfCyto_c3_serum.T], axis=1).astype('float')
+    dfCyto_plasma = pd.concat([dfCyto_c1[dfCyto_c1["type"] == "Plasma"].T.drop("type"), dfCyto_c3_plasma.T], axis=1).astype('float')
+    cyto_list = [dfCyto_serum, dfCyto_plasma]
     for idx, df in enumerate(cyto_list):
         df = df.transform(np.log)
-        df -= df.mean(axis=0)
+        df.mean(axis=0)
         df = df.sub(df.mean(axis=1), axis=0)
-        cyto_list[idx] = df.T
-    cytokines = dfCyto_c1.columns.to_list()
+        cyto_list[idx] = df
+    cytokines = dfCyto_serum.columns.to_list()
 
     # Modify RNAseq
     dfExp_c1 = removeC1_dupes(dfExp_c1)
     # Drop genes not shared
     dfExp_c1.sort_values("Geneid", inplace=True)
     dfExp_c3.sort_values("Geneid", inplace=True)
-    drop_df = pd.concat([dfExp_c1, dfExp_c3], axis=1, join="inner")
-    # Remove those with very few reads on average
-    drop_df["Mean"] = np.mean(drop_df.to_numpy(), axis=1)
-    mean_drop = drop_df[drop_df["Mean"] < 2].index
-    dfExp_c1 = dfExp_c1.drop(mean_drop)
-    dfExp_c3 = dfExp_c3.drop(mean_drop)
-    # Store info for later
-    pats_c1 = dfExp_c1.columns.astype(int)
-    pats_c3 = dfExp_c3.columns.astype(int)
-    genes_c1 = dfExp_c1.index
-    genes_c3 = dfExp_c3.index
-    # Normalize
-    dfExp_c1 = scale(dfExp_c1, axis=0)
-    dfExp_c1 = scale(dfExp_c1, axis=1)
-    dfExp_c3 = scale(dfExp_c3, axis=0)
-    dfExp_c3 = scale(dfExp_c3, axis=1)
-    # Return to dataframe format after scaling
-    dfExp_c1 = pd.DataFrame(dfExp_c1, index=genes_c1, columns=pats_c1)
-    dfExp_c3 = pd.DataFrame(dfExp_c3, index=genes_c3, columns=pats_c3)
     dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1, join="inner")
+    # Remove those with very few reads on average
+    dfExp["Mean"] = np.mean(dfExp.to_numpy(), axis=1)
+    dfExp = dfExp[dfExp["Mean"] > 2].drop("Mean", axis=1)
+    # Store info for later
+    pats = dfExp.columns.astype(int)
+    genes = dfExp.index
+    # Normalize
+    dfExp = scale(dfExp, axis=0)
+    dfExp = scale(dfExp, axis=1)
+    dfExp = pd.DataFrame(dfExp, index=genes, columns=pats)
     geneIDs = dfExp.index.to_list()
     return cyto_list, cytokines, dfExp, geneIDs
 

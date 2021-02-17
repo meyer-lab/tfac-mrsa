@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import gridspec, pyplot as plt
+from string import ascii_lowercase
 from .figureCommon import subplotLabel, getSetup
-from ..dataImport import form_missing_tensor
+from ..dataImport import form_missing_tensor, get_C1_patient_info, produce_outcome_bools
 
 
 def fig_2_setup():

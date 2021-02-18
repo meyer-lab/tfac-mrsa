@@ -13,7 +13,7 @@ def pickle_all():
     matrix = tensor_slices[2].T
     components = 40
     all_tensors = []
-    #Run factorization at each component number up to chosen limit
+    # Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
         print(f"Starting decomposition with {component} components.")
         all_tensors.append(perform_TMTF(tensor, matrix, r=component))

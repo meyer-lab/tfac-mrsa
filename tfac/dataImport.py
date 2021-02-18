@@ -31,7 +31,7 @@ def get_C1_patient_info():
 
 def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     """ Create list of normalized data matrices: cytokines from serum, cytokines from plasma, RNAseq. """
-    cyto_list, cytokines, dfExp, geneIDs = full_import()    
+    cyto_list, cytokines, dfExp, geneIDs = full_import()
     # Add in NaNs
     temp = pd.concat([cyto_list[0], cyto_list[1], dfExp])
     dfCyto_serum = temp.iloc[:38, :]
@@ -60,7 +60,6 @@ def full_import():
     # Import RNAseq
     dfExp_c1 = importCohort1Expression()
     dfExp_c3 = importCohort3Expression()
-
 
     # Modify cytokines
     dfCyto_c1.columns = dfCyto_c3_serum.columns

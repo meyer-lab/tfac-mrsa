@@ -18,25 +18,24 @@ def fig_2_setup():
     tensor_slices, cytokines, _, cohortID = form_missing_tensor()
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
-    components = 10
+    components = 3
     all_tensors = []
     #Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
         print(f"Starting decomposition with {component} components.")
         all_tensors.append(perform_TMTF(tensor, matrix, r=component))
+
     AllR2X = [all_tensors[x][2] for x in range(0, components)]
-    R2X = pd.DataFrame({"Number of Components": np.arange(1, 11), "R2X": AllR2X})
+    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
     #Heatmaps
     # TODO: Change once determined by SVC
-    best_comp = 3
-    factors = all_tensors[best_comp][0]
-    sub_facs = np.squeeze(factors.factors[0])
-    cyto_facs = np.squeeze(factors.factors[1])
-    sour_facs = np.squeeze(factors.factors[2])
+    factors = perform_TMTF(tensor, matrix, r=2)[0]
 
-    subs = pd.DataFrame(sub_facs, columns=[f"Cmp. {i}" for i in np.arange(1, best_comp + 2)], index=[str(x) for x in cohortID])
-    cytos = pd.DataFrame(cyto_facs, columns=[f"Cmp. {i}" for i in np.arange(1, best_comp + 2)], index=cytokines)
-    sour = pd.DataFrame(sour_facs, columns=[f"Cmp. {i}" for i in np.arange(1, best_comp + 2)], index=["Serum", "Plasma"])
+    colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
+    subs = pd.DataFrame(factors.factors[0], columns=colnames, index=[str(x) for x in cohortID])
+    cytos = pd.DataFrame(factors.factors[1], columns=colnames, index=cytokines)
+    sour = pd.DataFrame(factors.factors[2], columns=colnames, index=["Serum", "Plasma"])
+
     return R2X, subs, cytos, sour
 
 
@@ -62,6 +61,7 @@ def makeFigure():
 
     sns.set(rc={'axes.facecolor':'whitesmoke'})
     sns.scatterplot(data=R2X, x="Number of Components", y="R2X", ax=ax1)
+    ax1.set_ylim(0.0, 1.0)
     ax1.grid(True, ls="--")
     sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=ax11, vmin=vmin, vmax=vmax, ax=ax9)
     sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax13)
@@ -113,14 +113,12 @@ def makeFigure():
     ax5.yaxis.set_tick_params(rotation=90)
     ax8.set_ylabel("")
 
-    ax = [ax1, ax9, ax13, ax15]
-
     ax1.set_title("R2X", fontsize=15)
     ax9.set_title("Subjects", fontsize=15)
     ax13.set_title("Cytokines", fontsize=15)
     ax15.set_title("Source", fontsize=15)
 
-    for ii, ax in enumerate(ax):
+    for ii, ax in enumerate([ax1, ax9, ax13, ax15]):
         ax.text(-0.2, 1.1, ascii_lowercase[ii], transform=ax.transAxes, fontsize=25, fontweight="bold", va="top")
 
     return f

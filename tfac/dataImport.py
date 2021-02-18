@@ -39,9 +39,9 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     dfExp = temp.iloc[76:, :]
 
     cohortID = dfExp.columns.to_list()
-    serumNumpy = dfCyto_serum.to_numpy().astype('float')
-    plasmaNumpy = dfCyto_plasma.to_numpy().astype('float')
-    expNumpy = dfExp.to_numpy().astype('float')
+    serumNumpy = dfCyto_serum.to_numpy(dtype=float)
+    plasmaNumpy = dfCyto_plasma.to_numpy(dtype=float)
+    expNumpy = dfExp.to_numpy(dtype=float)
     # Eliminate normalization bias
     serumNumpy = serumNumpy * ((1.0 / np.nanvar(serumNumpy)) ** 0.5) * variance1
     plasmaNumpy = plasmaNumpy * ((1.0 / np.nanvar(plasmaNumpy)) ** 0.5) * variance1

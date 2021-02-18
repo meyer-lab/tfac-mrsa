@@ -75,10 +75,10 @@ def full_import():
     cyto_list = [dfCyto_serum, dfCyto_plasma]
     for idx, df in enumerate(cyto_list):
         df = df.transform(np.log)
-        df.mean(axis=0)
+        df -= df.mean(axis=0)
         df = df.sub(df.mean(axis=1), axis=0)
         cyto_list[idx] = df
-    cytokines = dfCyto_serum.columns.to_list()
+    cytokines = dfCyto_serum.index.to_list()
 
     # Modify RNAseq
     dfExp_c1 = removeC1_dupes(dfExp_c1)

@@ -12,14 +12,12 @@ def pickle_all():
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
     components = 40
-
     all_tensors = []
-    # Run factorization at each component number up to limit (38 due to 38 cytokines)
+    #Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
         print(f"Starting decomposition with {component} components.")
         all_tensors.append(perform_TMTF(tensor, matrix, r=component))
-
-    pickle.dump(all_tensors, open("test.p", "wb"))
+    pickle.dump(all_tensors, open("Factorized.p", "wb"))
 
 
 def Full_GSEA(gene_factors, best_comps, libraries, geneids):

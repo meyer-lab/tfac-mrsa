@@ -29,7 +29,7 @@ def fig_2_setup():
     R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
     # Heatmaps
     # TODO: Change once determined by SVC
-    factors = perform_TMTF(tensor, matrix, r=2)[0]
+    factors = perform_TMTF(tensor, matrix, r=12)[0]
 
     colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
     subs = pd.DataFrame(factors.factors[0], columns=colnames, index=[str(x) for x in cohortID])

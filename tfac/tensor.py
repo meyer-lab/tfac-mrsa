@@ -82,6 +82,7 @@ def perform_TMTF(tOrig, mOrig, r=10):
         assert np.all(np.isfinite(kr2))
 
         tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T, uniqueInfo[0])
+        tFac.factors[0] = np.linalg.qr(tFac.factors[0])[0]
         mFac.factors[0] = tFac.factors[0]
 
         # PARAFAC on other antigen modes

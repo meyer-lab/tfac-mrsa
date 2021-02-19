@@ -14,20 +14,20 @@ from ..tensor import perform_TMTF
 
 def fig_2_setup():
     """Import and organize R2X and heatmaps"""
-    #R2X
+    # R2X
     tensor_slices, cytokines, _, cohortID = form_missing_tensor()
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
     components = 5
     all_tensors = []
-    #Run factorization at each component number up to chosen limit
+    # Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
         print(f"Starting decomposition with {component} components.")
         all_tensors.append(perform_TMTF(tensor, matrix, r=component))
 
     AllR2X = [all_tensors[x][2] for x in range(0, components)]
     R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
-    #Heatmaps
+    # Heatmaps
     # TODO: Change once determined by SVC
     factors = perform_TMTF(tensor, matrix, r=12)[0]
 
@@ -44,7 +44,7 @@ def makeFigure():
     R2X, subs, cytos, sour = fig_2_setup()
     # Get list of axis objects
     f = plt.figure(figsize=(20, 7))
-    #Width corresponds to plots as such: [R2X, spacer, cohortcbar, spacer, outcomecbar, spacer, cohort, outcome, subs, spacer, cbar, spacer, cyto, spacer, source]
+    # Width corresponds to plots as such: [R2X, spacer, cohortcbar, spacer, outcomecbar, spacer, cohort, outcome, subs, spacer, cbar, spacer, cyto, spacer, source]
     gs = gridspec.GridSpec(1, 15, width_ratios=[35, 4, 1.5, 4, 1.5, 1, 1, 1, 25, 1, 2, 12, 25, 8, 25], wspace=0)
     ax1 = plt.subplot(gs[0])
     ax3 = plt.subplot(gs[2])
@@ -59,14 +59,14 @@ def makeFigure():
     vmin = min(subs.values.min(), cytos.values.min(), sour.values.min()) * .6
     vmax = max(subs.values.max(), cytos.values.max(), sour.values.max()) * .6
 
-    sns.set(rc={'axes.facecolor':'whitesmoke'})
+    sns.set(rc={'axes.facecolor': 'whitesmoke'})
     sns.scatterplot(data=R2X, x="Number of Components", y="R2X", ax=ax1)
     ax1.set_ylim(0.0, 1.0)
     ax1.grid(True, ls="--")
     sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=ax11, vmin=vmin, vmax=vmax, ax=ax9)
     sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax13)
     sns.heatmap(sour, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax15)
-    ax15.set_yticklabels(["Serum", "Plasma"], rotation = 0)
+    ax15.set_yticklabels(["Serum", "Plasma"], rotation=0)
 
     outcome_colors = ["gray", "green", "red"]
     cohort_colors = ["navy", "skyblue"]
@@ -90,7 +90,6 @@ def makeFigure():
     ax3.yaxis.set_ticks_position('left')
     ax3.yaxis.set_tick_params(rotation=90)
     ax7.set_ylabel("")
-
 
     df = get_C1_patient_info()
     outs = produce_outcome_bools(df["outcome_txt"])

@@ -8,6 +8,7 @@ import seaborn as sns
 from .figureCommon import subplotLabel, getSetup
 from ..predict import SVC_predict
 
+
 def fig_3_setup():
     return
 

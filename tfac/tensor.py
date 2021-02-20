@@ -3,6 +3,7 @@ Tensor decomposition methods
 """
 import numpy as np
 from scipy.linalg import khatri_rao
+from scipy.stats import gmean
 import tensorly as tl
 from tensorly.random import random_cp
 
@@ -74,6 +75,13 @@ def perform_TMTF(tOrig, mOrig, r=10):
     R2X = -1000.0
     for ii in range(400):
         if ii < 20:
+            # Don't let the subjects drift to different scalings
+            varr = np.array([np.var(tFac.factors[0][uniqueInfo[0][1] == ii, :], axis=0) for ii in range(uniqueInfo[0][0].shape[1])])
+            varr /= gmean(varr, axis=0)[np.newaxis, :]
+
+            for i in range(uniqueInfo[0][0].shape[1]):
+                tFac.factors[0][uniqueInfo[0][1] == i, :] /= varr[i][np.newaxis, :]
+
             tFac.factors[0] = np.linalg.qr(tFac.factors[0])[0]
             mFac.factors[0] = tFac.factors[0]
 

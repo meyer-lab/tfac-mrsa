@@ -4,10 +4,10 @@ Test that we can successfully import the datasets.
 import pytest
 import numpy as np
 import pandas as pd
-from ..dataImport import importCohort1Expression, importCohort3Expression, full_import, form_missing_tensor, get_C1_patient_info, import_deconv
+from ..dataImport import importCohort1Expression, importCohort3Expression, full_import, form_missing_tensor, get_training_patient_info, import_deconv, import_C3_cyto
 
 
-@pytest.mark.parametrize("call", [importCohort1Expression, importCohort3Expression, get_C1_patient_info, import_deconv])
+@pytest.mark.parametrize("call", [importCohort1Expression, importCohort3Expression, get_training_patient_info, import_deconv, import_C3_cyto])
 def test_importBases(call):
     """ Test that the most basic imports work. """
     data = call()
@@ -26,7 +26,7 @@ def test_fullImport():
 
 def test_formMissing():
     """ Test that we can form the missing tensor. """
-    tensor_slices, cytokines, geneIDs, cohortID = form_missing_tensor()
+    tensor_slices, cytokines, geneIDs, patInfo = form_missing_tensor()
 
     assert isinstance(tensor_slices, list)
 

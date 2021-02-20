@@ -4,10 +4,10 @@ Test that we can successfully import the datasets.
 import pytest
 import numpy as np
 import pandas as pd
-from ..dataImport import importCohort1Expression, importCohort3Expression, full_import, form_missing_tensor, get_training_patient_info, import_deconv, import_C3_cyto
+from ..dataImport import importCohort1Expression, importCohort3Expression, full_import, form_missing_tensor, get_training_patient_info, import_deconv
 
 
-@pytest.mark.parametrize("call", [importCohort1Expression, importCohort3Expression, get_training_patient_info, import_deconv, import_C3_cyto])
+@pytest.mark.parametrize("call", [importCohort1Expression, importCohort3Expression, get_training_patient_info, import_deconv])
 def test_importBases(call):
     """ Test that the most basic imports work. """
     data = call()

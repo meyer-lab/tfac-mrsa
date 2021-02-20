@@ -29,7 +29,7 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     # Add in NaNs
     temp = pd.concat([cyto_list[0], cyto_list[1], dfExp])
     # Arrange and gather patient info
-    temp = temp.append(pd.DataFrame(index=["type"], columns = temp.columns, data=""))
+    temp = temp.append(pd.DataFrame(index=["type"], columns=temp.columns, data=""))
     for col in temp.columns:
         if np.isfinite(temp[col][0]):
             temp.loc["type"][col] += "0Serum"
@@ -37,9 +37,9 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
             temp.loc["type"][col] += "1Plasma"
         if np.isfinite(temp[col][76]):
             temp.loc["type"][col] += "2RNAseq"
-    df = get_training_patient_info().sort_values(by="sid").set_index("sid").T.drop("stype")        
-    df_c3_info = pd.DataFrame(index=["cohort", "status"], columns = temp.columns[148:], data =[[3] * 132, ["Unknown"] * 132])
-    patInfo = pd.concat([df, df_c3_info], axis = 1)
+    df = get_training_patient_info().sort_values(by="sid").set_index("sid").T.drop("stype")
+    df_c3_info = pd.DataFrame(index=["cohort", "status"], columns=temp.columns[148:], data=[[3] * 132, ["Unknown"] * 132])
+    patInfo = pd.concat([df, df_c3_info], axis=1)
     temp = temp.append(patInfo).sort_values(by=["cohort", "type", "status"], axis=1)
     patInfo = temp.loc[["type", "status", "cohort"]]
     # Assign data to matrices
@@ -82,10 +82,10 @@ def full_import():
     dfCyto_c2["type"] = patInfo[patInfo["cohort"] == 2].stype.to_list()
     dfCyto_serum = pd.concat(
         [dfCyto_c1[dfCyto_c1["type"] == "Serum"].T.drop("type"), dfCyto_c2[dfCyto_c2["type"] == "Serum"].T.drop("type"), dfCyto_c3_serum.T], axis=1
-        ).astype('float')
+    ).astype('float')
     dfCyto_plasma = pd.concat(
         [dfCyto_c1[dfCyto_c1["type"] == "Plasma"].T.drop("type"), dfCyto_c2[dfCyto_c2["type"] == "Plasma"].T.drop("type"), dfCyto_c3_plasma.T], axis=1
-        ).astype('float')
+    ).astype('float')
     cyto_list = [dfCyto_serum, dfCyto_plasma]
     for idx, df in enumerate(cyto_list):
         df = df.transform(np.log)

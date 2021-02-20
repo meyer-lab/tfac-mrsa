@@ -98,7 +98,7 @@ def perform_TMTF(tOrig, mOrig, r=10):
             R2X = calcR2X(tOrig, mOrig, tFac, mFac)
             assert np.isfinite(R2X)
 
-        if R2X - R2X_last < 1e-5:
+        if R2X - R2X_last < 1e-6:
             break
 
     tFac.normalize()

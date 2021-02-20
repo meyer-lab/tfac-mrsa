@@ -14,20 +14,20 @@ from ..tensor import perform_TMTF
 
 def fig_2_setup():
     """Import and organize R2X and heatmaps"""
-    #R2X
+    # R2X
     tensor_slices, cytokines, _, patInfo = form_missing_tensor()
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
     components = 6
     all_tensors = []
-    #Run factorization at each component number up to chosen limit
+    # Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
         print(f"Starting decomposition with {component} components.")
         all_tensors.append(perform_TMTF(tensor, matrix, r=component))
 
     AllR2X = [all_tensors[x][2] for x in range(0, components)]
     R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
-    #Heatmaps
+    # Heatmaps
     # TODO: Change once determined by SVC
     factors = perform_TMTF(tensor, matrix)[0]
 
@@ -62,14 +62,14 @@ def makeFigure():
     vmin = min(subs.values.min(), cytos.values.min(), sour.values.min()) * .6
     vmax = max(subs.values.max(), cytos.values.max(), sour.values.max()) * .6
     # Plot main graphs
-    sns.set(rc={'axes.facecolor':'whitesmoke'})
+    sns.set(rc={'axes.facecolor': 'whitesmoke'})
     sns.scatterplot(data=R2X, x="Number of Components", y="R2X", ax=ax1)
     ax1.set_ylim(0.0, 1.0)
     ax1.grid(True, ls="--")
     sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=ax14, vmin=vmin, vmax=vmax, ax=ax12)
     sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax16)
     sns.heatmap(sour, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax18)
-    ax18.set_yticklabels(["Serum", "Plasma"], rotation = 0)
+    ax18.set_yticklabels(["Serum", "Plasma"], rotation=0)
     # Set up subject colorbars
     outcome_colors = ["gray", "lightgreen", "brown"]
     cohort_colors = ["deeppink", "orchid", "pink"]

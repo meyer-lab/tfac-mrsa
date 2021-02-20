@@ -4,7 +4,7 @@ Tensor decomposition methods
 import numpy as np
 from scipy.linalg import khatri_rao
 import tensorly as tl
-from tensorly.decomposition._cp import initialize_cp
+from tensorly.random import random_cp
 
 
 tl.set_backend("numpy")
@@ -57,10 +57,11 @@ def censored_lstsq(A, B, uniqueInfo):
 
 def perform_TMTF(tOrig, mOrig, r=10):
     """ Perform TMTF decomposition. """
-    tFac = initialize_cp(np.nan_to_num(tOrig), r)
+    tFac = random_cp(np.shape(tOrig), r, random_state=1, normalise_factors=False)
+    tFac.factors[2] = np.ones_like(tFac.factors[2])
 
     # Everything from the original mFac will be overwritten
-    mFac = initialize_cp(np.nan_to_num(mOrig), r)
+    mFac = random_cp(np.shape(mOrig), r, random_state=1, normalise_factors=False)
 
     # Pre-unfold
     selPat = np.all(np.isfinite(mOrig), axis=1)
@@ -70,23 +71,11 @@ def perform_TMTF(tOrig, mOrig, r=10):
     # Precalculate the missingness patterns
     uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
 
-    R2X = -1.0
-    mFac.factors[0] = tFac.factors[0]
-    mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
-
-    for ii in range(40000):
-        # Solve for the subject matrix
-        kr = khatri_rao(tFac.factors[1], tFac.factors[2])
-        assert np.all(np.isfinite(kr))
-        kr2 = np.vstack((kr, mFac.factors[1]))
-        assert np.all(np.isfinite(kr2))
-
-        tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T, uniqueInfo[0])
-        
-        if ii < 5:
+    R2X = -1000.0
+    for ii in range(400):
+        if ii < 20:
             tFac.factors[0] = np.linalg.qr(tFac.factors[0])[0]
-
-        mFac.factors[0] = tFac.factors[0]
+            mFac.factors[0] = tFac.factors[0]
 
         # PARAFAC on other antigen modes
         for m in [1, 2]:
@@ -96,12 +85,19 @@ def perform_TMTF(tOrig, mOrig, r=10):
         # Solve for the glycan matrix fit
         mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
 
-        if ii % 10 == 0:
+        # Solve for the subject matrix
+        kr = khatri_rao(tFac.factors[1], tFac.factors[2])
+        kr2 = np.vstack((kr, mFac.factors[1]))
+
+        tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T, uniqueInfo[0])
+        mFac.factors[0] = tFac.factors[0]
+
+        if ii % 2 == 0:
             R2X_last = R2X
             R2X = calcR2X(tOrig, mOrig, tFac, mFac)
             assert np.isfinite(R2X)
 
-        if R2X - R2X_last < 1e-6:
+        if (ii < 40) and (R2X - R2X_last < 1e-4):
             break
 
     tFac.normalize()

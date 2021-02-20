@@ -18,7 +18,7 @@ def fig_2_setup():
     tensor_slices, cytokines, _, patInfo = form_missing_tensor()
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
-    components = 4
+    components = 6
     all_tensors = []
     #Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
@@ -29,7 +29,7 @@ def fig_2_setup():
     R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
     #Heatmaps
     # TODO: Change once determined by SVC
-    factors = perform_TMTF(tensor, matrix, r=components)[0]
+    factors = perform_TMTF(tensor, matrix)[0]
 
     colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
     subs = pd.DataFrame(factors.factors[0], columns=colnames, index=[str(x) for x in patInfo.columns])

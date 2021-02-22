@@ -105,7 +105,7 @@ def perform_TMTF(tOrig, mOrig, r=10):
             R2X = calcR2X(tOrig, mOrig, tFac, mFac)
             assert np.isfinite(R2X)
 
-        if (ii < 40) and (R2X - R2X_last < 1e-4):
+        if (ii > 40) and (R2X - R2X_last < 1e-4):
             break
 
     tFac.normalize()

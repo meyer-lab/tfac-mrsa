@@ -9,6 +9,7 @@ Original pickle files were extracted from figure6.py.
 import argparse
 import warnings
 
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
@@ -32,7 +33,11 @@ CLASSIFIERS = {
 }
 
 
-def get_scores(selector, clf, train_data, train_out, test_data, test_out):
+def normalize_feats(data):
+    return (data - np.mean(data)) / np.std(data, ddof=1)
+
+
+def get_scores(selector, clf, train_data, train_out, test_data, test_out, normalize=True):
     """
     Selects most informative features, then trains and tests model and
     returns performance.
@@ -56,6 +61,10 @@ def get_scores(selector, clf, train_data, train_out, test_data, test_out):
     train_data = train_data.loc[:, chosen_feats]
     test_data = test_data.loc[:, chosen_feats]
 
+    if normalize:
+        train_data = train_data.apply(normalize_feats)
+        test_data = test_data.apply(normalize_feats)
+
     clf.fit(train_data, train_out)
     proba = clf.predict_proba(test_data)
     proba = proba[:, 1]
@@ -64,7 +73,7 @@ def get_scores(selector, clf, train_data, train_out, test_data, test_out):
     return auc_score, chosen_feats
 
 
-def run_sequential(clf, data, outcomes, n_feats, n_splits=30):
+def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
     """
     Define cross-validation folds, performs sequential feature
     selection on training data, and tests against validation fold.
@@ -91,7 +100,7 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30):
 
         sfs = SequentialFeatureSelector(clf, n_features_to_select=n_feats)
         auc_score, chosen_feats = get_scores(
-            sfs, clf, train_data, train_out, test_data, test_out
+            sfs, clf, train_data, train_out, test_data, test_out, normalize
         )
 
         avg_auc += auc_score / n_splits
@@ -100,7 +109,7 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30):
     return avg_auc, feat_freq
 
 
-def run_k_best(clf, data, outcomes, n_feats, n_splits=30):
+def run_k_best(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
     """
     Define cross-validation folds, performs k-best feature selection on 
     training data, and tests against validation fold.
@@ -127,7 +136,7 @@ def run_k_best(clf, data, outcomes, n_feats, n_splits=30):
 
         k_best = SelectKBest(k=n_feats)
         auc_score, chosen_feats = get_scores(
-            k_best, clf, train_data, train_out, test_data, test_out
+            k_best, clf, train_data, train_out, test_data, test_out, normalize
         )
 
         avg_auc += auc_score / n_splits

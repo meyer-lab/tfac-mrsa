@@ -98,7 +98,7 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
         train_data, train_out = data.loc[train_index], outcomes.loc[train_index]
         test_data, test_out = data.loc[test_index], outcomes.loc[test_index]
 
-        sfs = SequentialFeatureSelector(clf, n_features_to_select=n_feats)
+        sfs = SequentialFeatureSelector(clf, n_features_to_select=n_feats, direction='backward')
         auc_score, chosen_feats = get_scores(
             sfs, clf, train_data, train_out, test_data, test_out, normalize
         )

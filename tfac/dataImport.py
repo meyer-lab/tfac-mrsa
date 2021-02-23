@@ -74,7 +74,7 @@ def full_import():
     dfCyto_c1.columns = dfCyto_c3_serum.columns
     dfCyto_c2.columns = dfCyto_c3_serum.columns
     # Fix limit of detection error - bring to next lowest value
-    dfCyto_c1["IL-12(p70)"] = [val * 16000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
+    dfCyto_c1["IL-12(p70)"] = [val * 123000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
     # normalize separately and extract cytokines
     # Make initial data slices
     patInfo = get_training_patient_info()

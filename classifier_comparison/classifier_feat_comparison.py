@@ -1,6 +1,6 @@
 """
-Evaluates classifier performance for various feature set sizes. This code can be
-used via the command line:
+Evaluates classifier performance for various feature set sizes. This code can 
+be called via the command line:
 
 python classifier_feat_comparison.py -c [cytokine.pkl] -g [genes.pkl] -p [parafac2.pkl] -l [labels.pkl]
 
@@ -9,6 +9,7 @@ Original pickle files were extracted from figure6.py.
 import argparse
 import warnings
 
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
@@ -32,7 +33,11 @@ CLASSIFIERS = {
 }
 
 
-def get_scores(selector, clf, train_data, train_out, test_data, test_out):
+def normalize_feats(data):
+    return (data - np.mean(data)) / np.std(data, ddof=1)
+
+
+def get_scores(selector, clf, train_data, train_out, test_data, test_out, normalize=True):
     """
     Selects most informative features, then trains and tests model and
     returns performance.
@@ -56,6 +61,10 @@ def get_scores(selector, clf, train_data, train_out, test_data, test_out):
     train_data = train_data.loc[:, chosen_feats]
     test_data = test_data.loc[:, chosen_feats]
 
+    if normalize:
+        train_data = train_data.apply(normalize_feats)
+        test_data = test_data.apply(normalize_feats)
+
     clf.fit(train_data, train_out)
     proba = clf.predict_proba(test_data)
     proba = proba[:, 1]
@@ -64,13 +73,13 @@ def get_scores(selector, clf, train_data, train_out, test_data, test_out):
     return auc_score, chosen_feats
 
 
-def run_sequential(clf_name, data, outcomes, n_feats, n_splits=30):
+def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
     """
     Define cross-validation folds, performs sequential feature
     selection on training data, and tests against validation fold.
 
     Parameters:
-        clf_name (str): name of classifier to instance
+        clf (sklearn classifier): sklearn classification class
         data (pandas.DataFrame): data prior to split
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
@@ -81,7 +90,6 @@ def run_sequential(clf_name, data, outcomes, n_feats, n_splits=30):
         feat_freq (pandas.Series): average feature weights across
             cross-validation folds
     """
-    clf = CLASSIFIERS[clf_name]["model"](**CLASSIFIERS[clf_name]["params"])
     kf = StratifiedKFold(n_splits=n_splits, shuffle=True)
     feat_freq = pd.Series(index=data.columns, dtype=float, data=0)
     avg_auc = 0
@@ -90,24 +98,24 @@ def run_sequential(clf_name, data, outcomes, n_feats, n_splits=30):
         train_data, train_out = data.loc[train_index], outcomes.loc[train_index]
         test_data, test_out = data.loc[test_index], outcomes.loc[test_index]
 
-        sfs = SequentialFeatureSelector(clf, n_features_to_select=n_feats)
+        sfs = SequentialFeatureSelector(clf, n_features_to_select=n_feats, direction='backward')
         auc_score, chosen_feats = get_scores(
-            sfs, clf, train_data, train_out, test_data, test_out
+            sfs, clf, train_data, train_out, test_data, test_out, normalize
         )
 
         avg_auc += auc_score / n_splits
         feat_freq.loc[chosen_feats] += 1 / n_splits
 
-    return auc_score, feat_freq
+    return avg_auc, feat_freq
 
 
-def run_k_best(clf_name, data, outcomes, n_feats, n_splits=30):
+def run_k_best(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
     """
-    Define cross-validation folds, performs k-best feature selection
-    on training data, and tests against validation fold.
+    Define cross-validation folds, performs k-best feature selection on 
+    training data, and tests against validation fold.
 
     Parameters:
-        clf_name (str): name of classifier to instance
+        clf (sklearn classifier): sklearn classification class
         data (pandas.DataFrame): data prior to split
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
@@ -118,7 +126,6 @@ def run_k_best(clf_name, data, outcomes, n_feats, n_splits=30):
         feat_freq (pandas.Series): average feature weights across
             cross-validation folds
     """
-    clf = CLASSIFIERS[clf_name]["model"](**CLASSIFIERS[clf_name]["params"])
     kf = StratifiedKFold(n_splits=n_splits, shuffle=True)
     feat_freq = pd.Series(index=data.columns, dtype=float, data=0)
     avg_auc = 0
@@ -129,18 +136,19 @@ def run_k_best(clf_name, data, outcomes, n_feats, n_splits=30):
 
         k_best = SelectKBest(k=n_feats)
         auc_score, chosen_feats = get_scores(
-            k_best, clf, train_data, train_out, test_data, test_out
+            k_best, clf, train_data, train_out, test_data, test_out, normalize
         )
 
         avg_auc += auc_score / n_splits
         feat_freq.loc[chosen_feats] += 1 / n_splits
 
-    return feat_freq, auc_score
+    return avg_auc, feat_freq
 
 
 def _read_args():
     """
-    Reads command line arguments--we use these to specify pickle files for classification
+    Reads command line arguments--we use these to specify pickle files for
+    classification
 
     Parameters:
         None
@@ -193,15 +201,21 @@ def main(parser):
             )
             for data in [cytokines, combined, genes]
         ]
+        # Instances classifier
+        clf = CLASSIFIERS[clf_name]["model"](**CLASSIFIERS[clf_name]["params"])
 
         # Runs cross-validation for feature set sizes in [1, 30]
-        for n_feats in tqdm(range(1, MAX_FEATS)):
+        for n_feats in tqdm(range(1, MAX_FEATS + 1)):
             # Runs sequential for cytokines and PARAFAC2, k-best for genes
             cyto_auc, cyto_feats = run_sequential(
-                clf_name, cytokines, outcomes, n_feats
+                clf, cytokines, outcomes, n_feats
             )
-            comb_auc, comb_feats = run_sequential(clf_name, combined, outcomes, n_feats)
-            gene_auc, gene_feats = run_k_best(clf_name, genes, outcomes, n_feats)
+            comb_auc, comb_feats = run_sequential(
+                clf, combined, outcomes, n_feats
+            )
+            gene_auc, gene_feats = run_k_best(
+                clf, genes, outcomes, n_feats
+            )
 
             # Records auc-roc scores
             clf_performance.loc[:, f"{n_feats}_features"] = [

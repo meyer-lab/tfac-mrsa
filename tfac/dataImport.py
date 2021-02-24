@@ -20,7 +20,7 @@ def import_deconv():
 def get_training_patient_info():
     """ Return specific patient ID information for cohort 1 - used in model building. """
     dataCohort = pd.read_csv("tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv")
-    return dataCohort[["sid", "status", "stype", "cohort"]]
+    return dataCohort[["sid", "status", "stype", "cohort"]].sort_values("sid")
 
 
 def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
@@ -37,7 +37,7 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
             temp.loc["type"][col] += "1Plasma"
         if np.isfinite(temp[col][76]):
             temp.loc["type"][col] += "2RNAseq"
-    df = get_training_patient_info().sort_values(by="sid").set_index("sid").T.drop("stype")
+    df = get_training_patient_info().set_index("sid").T.drop("stype")
     df_c3_info = pd.DataFrame(index=["cohort", "status"], columns=temp.columns[148:], data=[[3] * 132, ["Unknown"] * 132])
     patInfo = pd.concat([df, df_c3_info], axis=1)
     temp = temp.append(patInfo).sort_values(by=["cohort", "type", "status"], axis=1)

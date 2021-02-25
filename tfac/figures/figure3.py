@@ -40,15 +40,29 @@ def fig_3_setup():
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    ax, f = getSetup((15, 15), (3, 1))
+    ax, f = getSetup((15, 18), (3, 1))
     pears, ser, plas = fig_3_setup()
     a = sns.pointplot(data=pears, x=0, y=1, join=False, ax=ax[0])
     a.set_xticklabels(a.get_xticklabels(), rotation=45, fontsize=12, ha="right")
+    a.tick_params(axis='y', labelsize=12)
+    a.set_ylabel("Pearson's correlation", fontsize = 15)
+    a.set_xlabel("Cytokine", fontsize=15)
+    a.set_title("Serum-Plasma Cytokine Level Correlation", fontsize=15)
     b = sns.boxplot(data=ser, x="variable", y="value", hue="Outcome", ax=ax[1])
+    handles, _ = b.get_legend_handles_labels()
+    b.legend(handles, ["Resolved", "Persisted"], fontsize=12)
     b.set_xticklabels(b.get_xticklabels(), rotation=45, fontsize=12, ha="right")
+    b.tick_params(axis='y', labelsize=12)
+    b.set_ylabel("Normalized cytokine level", fontsize = 15)
+    b.set_xlabel("Cytokine", fontsize=15)
+    b.set_title("Normalized Serum Cytokine Level by Outcome", fontsize=15)
     c = sns.boxplot(data=plas, x="variable", y="value", hue="Outcome", ax=ax[2])
+    handles, _ = c.get_legend_handles_labels()
+    c.legend(handles, ["Resolved", "Persisted"], fontsize=12)
     c.set_xticklabels(c.get_xticklabels(), rotation=45, fontsize=12, ha="right")
-    # Add subplot labels
-    subplotLabel(ax)
+    c.tick_params(axis='y', labelsize=12)
+    c.set_ylabel("Normalized cytokine level", fontsize = 15)
+    c.set_xlabel("Cytokine", fontsize=15)
+    c.set_title("Normalized Plasma Cytokine Level by Outcome", fontsize=15)
 
     return f

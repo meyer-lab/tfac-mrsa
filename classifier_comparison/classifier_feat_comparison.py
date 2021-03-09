@@ -1,5 +1,5 @@
 """
-Evaluates classifier performance for various feature set sizes. This code can 
+Evaluates classifier performance for various feature set sizes. This code can
 be called via the command line:
 
 python classifier_feat_comparison.py -c [cytokine.pkl] -g [genes.pkl] -p [parafac2.pkl] -l [labels.pkl]
@@ -111,7 +111,7 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
 
 def run_k_best(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
     """
-    Define cross-validation folds, performs k-best feature selection on 
+    Define cross-validation folds, performs k-best feature selection on
     training data, and tests against validation fold.
 
     Parameters:

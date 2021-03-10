@@ -43,4 +43,5 @@ pylint.log: venv
 	. venv/bin/activate && (pylint --rcfile=./common/pylintrc tfac > pylint.log || echo "pylint exited with $?")
 
 clean:
-	rm -rf coverage.xml junit.xml output venv
+	rm -rf coverage.xml junit.xml venv
+	git clean -f output

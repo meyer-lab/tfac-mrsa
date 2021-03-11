@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .PHONY: clean test
 
-flist = 2 3
+flist = 2 3 S1
 flistFull = $(patsubst %, output/figure%.svg, $(flist))
 
 all: pylint.log output/manuscript.md $(flistFull)

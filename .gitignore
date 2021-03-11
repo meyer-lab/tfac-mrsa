@@ -108,5 +108,6 @@ venv.bak/
 # Apple finder files
 .DS_Store
 .pybiomart.sqlite
-output
+output/*
 cache
+!output/figure1.svg

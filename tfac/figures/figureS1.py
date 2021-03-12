@@ -9,6 +9,7 @@ from tfac.dataImport import form_missing_tensor
 from tfac.predict import SVC_predict
 from .figureCommon import subplotLabel, getSetup
 
+
 def fig_S1_setup():
     tensor_slices, cytokines, _, patInfo = form_missing_tensor()
     test = pd.concat([pd.DataFrame(tensor_slices[0]), pd.DataFrame(tensor_slices[1])])
@@ -33,6 +34,7 @@ def fig_S1_setup():
     plas = pd.melt(plas, id_vars=["Outcome"])
 
     return pears, ser, plas
+
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """

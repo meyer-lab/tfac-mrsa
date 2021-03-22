@@ -26,8 +26,8 @@ def fig_3_setup():
     facs = pd.concat([patInfo, facs.T]).T
     facs = facs[facs["type"].str.contains("2RNAseq")].sort_index().drop(missing)
     facs = facs.drop(["type", "status", "cohort"], axis=1)
-    dec1 = pd.read_csv(join(path_here, "tfac/data/mrsa/deconvo_cibersort_cohort3.csv", delimiter=",", index_col="cell_type")).T
-    dec3 = pd.read_csv(join(path_here, "tfac/data/mrsa/deconvo_cibersort_APMB.csv", delimiter=",", index_col="sample")).sort_index().drop(["gender", "cell_type"], axis=1)
+    dec1 = pd.read_csv(join(path_here, "tfac/data/mrsa/deconvo_cibersort_cohort3.csv"), delimiter=",", index_col="cell_type").T
+    dec3 = pd.read_csv(join(path_here, "tfac/data/mrsa/deconvo_cibersort_APMB.csv"), delimiter=",", index_col="sample").sort_index().drop(["gender", "cell_type"], axis=1)
     deconv = pd.concat([dec1, dec3]).sort_index()
     plotable = pd.DataFrame(columns=["CellType", "Pearson's R", "Component"])
     for cell in deconv.columns:

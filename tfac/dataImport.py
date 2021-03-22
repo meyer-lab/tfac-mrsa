@@ -152,7 +152,7 @@ def importCohort1Expression():
     """ Import expression data. """
     df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt"))
     df.drop(["Chr", "Start", "End", "Strand", "Length"], inplace=True, axis=1)
-    nodecimals = [val[: val.index(".")] for val in df["Geneid"]]
+    nodecimals = [val[:val.index(".")] for val in df["Geneid"]]
     df["Geneid"] = nodecimals
     return df.set_index("Geneid")
 

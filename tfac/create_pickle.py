@@ -49,17 +49,17 @@ def Full_GSEA(gene_factors, best_comps, libraries, geneids):
         for comp in gene_factors.shape[1]:
             preranked = prerank(newtens, comp, library)
             preranked_all.append(preranked)
-        # Construct DataFrame for comparing nes for gene sets
-        alls = pd.DataFrame()
-        for i in range(gene_factors.shape[1]):
-            df = preranked_all[i][preranked_all[i]["fdr"] < 0.05]
-            alls = pd.concat((alls, df["nes"]), axis=1)
-        alls.columns = range(38)
-        gseacompA = preranked_all[best_comps[0]]
-        gseacompB = preranked_all[best_comps[1]]
-        find_unique(gseacompA, alls)
-        find_unique(gseacompB, alls)
-        all_dfs.append(gseacompA, gseacompB)
+    # Construct DataFrame for comparing nes for gene sets
+    alls = pd.DataFrame()
+    for i in range(gene_factors.shape[1]):
+        df = preranked_all[i][preranked_all[i]["fdr"] < 0.05]
+        alls = pd.concat((alls, df["nes"]), axis=1)
+    alls.columns = range(38)
+    gseacompA = preranked_all[best_comps[0]]
+    gseacompB = preranked_all[best_comps[1]]
+    find_unique(gseacompA, alls)
+    find_unique(gseacompB, alls)
+    all_dfs.append(gseacompA, gseacompB)
     return all_dfs
 
 

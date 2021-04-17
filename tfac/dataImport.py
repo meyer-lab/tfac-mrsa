@@ -17,10 +17,15 @@ def import_deconv():
     )
 
 
-def get_training_patient_info():
-    """ Return specific patient ID information for cohort 1 - used in model building. """
+def get_C1C2_patient_info():
+    """ Return specific patient information for cohorts 1 and 2. """
     dataCohort = pd.read_csv("tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv")
     return dataCohort[["sid", "status", "stype", "cohort"]].sort_values("sid")
+
+
+def get_C3_patient_info():
+    """ Return specific patient information for cohort 3. """
+    return pd.read_csv("tfac/data/mrsa/metadata_cohort3.csv").sort_values("sid")
 
 
 def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
@@ -37,8 +42,8 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
             temp.loc["type"][col] += "1Plasma"
         if np.isfinite(temp[col][76]):
             temp.loc["type"][col] += "2RNAseq"
-    df = get_training_patient_info().set_index("sid").T.drop("stype")
-    df_c3_info = pd.DataFrame(index=["cohort", "status"], columns=temp.columns[148:], data=[[3] * 132, ["Unknown"] * 132])
+    df = get_C1C2_patient_info().set_index("sid").T.drop("stype")
+    df_c3_info = get_C3_patient_info().set_index("sid").T
     patInfo = pd.concat([df, df_c3_info], axis=1)
     temp = temp.append(patInfo).sort_values(by=["cohort", "type", "status"], axis=1)
     patInfo = temp.loc[["type", "status", "cohort"]]
@@ -59,7 +64,7 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
 
 
 def full_import():
-    """ Imports raw cytokine and RNAseq data for both cohort 1 and 3. Performs normalization and fixes bad values. """
+    """ Imports raw cytokine and RNAseq data for all 3 cohorts. Performs normalization and fixes bad values. """
     # Import cytokines
     dfCyto_c1 = import_C1_cyto()
     dfCyto_c1 = dfCyto_c1.set_index("sid")
@@ -77,7 +82,7 @@ def full_import():
     dfCyto_c1["IL-12(p70)"] = [val * 123000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
     # normalize separately and extract cytokines
     # Make initial data slices
-    patInfo = get_training_patient_info()
+    patInfo = get_C1C2_patient_info()
     dfCyto_c1["type"] = patInfo[patInfo["cohort"] == 1].stype.to_list()
     dfCyto_c2["type"] = patInfo[patInfo["cohort"] == 2].stype.to_list()
     dfCyto_serum = pd.concat(

@@ -25,7 +25,11 @@ def get_C1C2_patient_info():
 
 def get_C3_patient_info():
     """ Return specific patient information for cohort 3. """
-    return pd.read_csv("tfac/data/mrsa/metadata_cohort3.csv").sort_values("sid")
+    c3 = pd.read_csv("tfac/data/mrsa/metadata_cohort3.csv")
+    known = c3[c3["status"].str.contains("0|1")].astype(int)
+    unknown = c3[~c3["status"].str.contains("0|1")]
+    c3 = pd.concat([known, unknown])
+    return c3.sort_values("sid")
 
 
 def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):

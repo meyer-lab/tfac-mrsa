@@ -9,6 +9,7 @@ Original pickle files were extracted from figure6.py.
 import argparse
 import warnings
 
+from mlxtend.feature_selection import ExhaustiveFeatureSelector as EFS
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -18,6 +19,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.naive_bayes import GaussianNB
+from sklearn.preprocessing import scale
 from sklearn.svm import SVC
 from tqdm import tqdm
 from xgboost.sklearn import XGBClassifier
@@ -29,41 +31,45 @@ MAX_FEATS = 30
 CLASSIFIERS = {
     "Gaussian Naive Bayes": {"model": GaussianNB, "params": {}},
     "Logistic Regression": {"model": LogisticRegression, "params": {"C": 1}},
-    "SVC": {"model": SVC, "params": {"degree": 3, "probability": True}},
+    "SVC": {"model": SVC, "params": {}},
 }
 
 
-def normalize_feats(data):
-    return (data - np.mean(data)) / np.std(data, ddof=1)
-
-
-def get_scores(selector, clf, train_data, train_out, test_data, test_out, normalize=True):
+def get_scores(clf, train_data, train_out, test_data, test_out, selector=None, 
+               normalize=True):
     """
     Selects most informative features, then trains and tests model and
     returns performance.
 
     Parameters:
-        selector (sklearn feature selector): feature selector to pick most
-            informative features
         clf (sklearn classifier): sklearn classification class
         train_data (pandas.DataFrame): training data
         train_out (pandas.Series): training data classes
         test_data (pandas.DataFrame): testing data
         test_out (pandas.Series): testing data classes
+        selector (sklearn feature selector): feature selector to pick most
+            informative features (optional)
+        normalize (boolean): feature normalization via z-score (default: True)  
 
     Returns:
         auc_score (float): auc-roc score for testing data
         chosen_feats (list): index of feats selected via selector
     """
-    selector.fit(train_data, train_out)
-    chosen_feats = selector.get_support()
+    chosen_feats = None
+    if selector:
+        selector.fit(train_data, train_out)
 
-    train_data = train_data.loc[:, chosen_feats]
-    test_data = test_data.loc[:, chosen_feats]
+        if hasattr(selector, 'best_idx_'):
+            chosen_feats = list(selector.best_idx_)
+        else:
+            chosen_feats = selector.get_support()
+
+        train_data = train_data.loc[:, chosen_feats]
+        test_data = test_data.loc[:, chosen_feats]
 
     if normalize:
-        train_data = train_data.apply(normalize_feats)
-        test_data = test_data.apply(normalize_feats)
+        train_data = scale(train_data)
+        test_data = scale(test_data)
 
     clf.fit(train_data, train_out)
     proba = clf.predict_proba(test_data)
@@ -71,6 +77,46 @@ def get_scores(selector, clf, train_data, train_out, test_data, test_out, normal
     auc_score = roc_auc_score(test_out, proba)
 
     return auc_score, chosen_feats
+
+
+def run_exhaustive(clf, data, outcomes, n_splits=30, normalize=True):
+    """
+    Define cross-validation folds, performs sequential feature
+    selection on training data, and tests against validation fold.
+
+    Parameters:
+        clf (sklearn classifier): sklearn classification class
+        data (pandas.DataFrame): data prior to split
+        outcomes (pandas.Series): data classes
+        n_feats (int): number of features to select
+        n_splits (int): cross-validation splits to use
+        normalize (boolean): feature normalization via z-score (default: True)  
+
+    Returns:
+        auc_score (float): average auc-roc score across folds
+        feat_freq (pandas.Series): average feature weights across
+            cross-validation folds
+    """
+    kf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    feat_freq = pd.Series(index=data.columns, dtype=float, data=0)
+    avg_auc = 0
+
+    for train_index, test_index in kf.split(data, outcomes):
+        train_data, train_out = data.iloc[train_index], outcomes.iloc[train_index]
+        test_data, test_out = data.iloc[test_index], outcomes.iloc[test_index]
+
+        train_out = train_out.values.ravel()
+        test_out = test_out.values.ravel()
+
+        efs = EFS(clf, min_features=2, max_features=2, scoring='roc_auc', print_progress=False)
+        auc_score, chosen_feats = get_scores(
+            clf, train_data, train_out, test_data, test_out, selector=efs, normalize=normalize
+        )
+
+        avg_auc += auc_score / n_splits
+        feat_freq.loc[chosen_feats] += 1 / n_splits
+
+    return avg_auc, feat_freq
 
 
 def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
@@ -84,6 +130,7 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
+        normalize (boolean): feature normalization via z-score (default: True)  
 
     Returns:
         auc_score (float): average auc-roc score across folds
@@ -95,12 +142,15 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
     avg_auc = 0
 
     for train_index, test_index in kf.split(data, outcomes):
-        train_data, train_out = data.loc[train_index], outcomes.loc[train_index]
-        test_data, test_out = data.loc[test_index], outcomes.loc[test_index]
+        train_data, train_out = data.iloc[train_index], outcomes.iloc[train_index]
+        test_data, test_out = data.iloc[test_index], outcomes.iloc[test_index]
+
+        train_out = train_out.values.ravel()
+        test_out = test_out.values.ravel()
 
         sfs = SequentialFeatureSelector(clf, n_features_to_select=n_feats, direction='backward')
         auc_score, chosen_feats = get_scores(
-            sfs, clf, train_data, train_out, test_data, test_out, normalize
+            clf, train_data, train_out, test_data, test_out, selector=sfs, normalize=normalize
         )
 
         avg_auc += auc_score / n_splits
@@ -120,6 +170,7 @@ def run_k_best(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
+        normalize (boolean): feature normalization via z-score (default: True)  
 
     Returns:
         auc_score (float): average auc-roc score across folds
@@ -136,7 +187,7 @@ def run_k_best(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
 
         k_best = SelectKBest(k=n_feats)
         auc_score, chosen_feats = get_scores(
-            k_best, clf, train_data, train_out, test_data, test_out, normalize
+            clf, train_data, train_out, test_data, test_out, selector=k_best, normalize=normalize
         )
 
         avg_auc += auc_score / n_splits

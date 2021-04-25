@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .PHONY: clean test
 
-flist = 2 3
+flist = 2 3 S1
 flistFull = $(patsubst %, output/figure%.svg, $(flist))
 
 all: pylint.log output/manuscript.md $(flistFull)
@@ -43,4 +43,5 @@ pylint.log: venv
 	. venv/bin/activate && (pylint --rcfile=./common/pylintrc tfac > pylint.log || echo "pylint exited with $?")
 
 clean:
-	rm -rf coverage.xml junit.xml output venv
+	rm -rf coverage.xml junit.xml venv
+	git clean -f output

@@ -1,5 +1,5 @@
 """
-This creates Figure 3 - Cytokine plots
+This creates Figure S1 - Full Cytokine plots
 """
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ from tfac.predict import SVC_predict
 from .figureCommon import subplotLabel, getSetup
 
 
-def serum_vs_plasma_setup():
+def fig_S1_setup():
     tensor_slices, cytokines, _, patInfo = form_missing_tensor()
     test = pd.concat([pd.DataFrame(tensor_slices[0]), pd.DataFrame(tensor_slices[1])])
     test = test.dropna(axis=1)
@@ -21,38 +21,44 @@ def serum_vs_plasma_setup():
 
     ser = pd.DataFrame(tensor_slices[0], index=cytokines, columns=patInfo.columns).iloc[:, :148].dropna(axis=1).T
     ser["Outcome"] = patInfo.loc["status"]
+    out0 = ser[ser["Outcome"] == 0]
+    out1 = ser[ser["Outcome"] == 1]
+    ser = ser.append(pd.DataFrame(np.abs(out0.median() - out1.median()), columns=["diff"]).T).sort_values(by="diff", axis=1).drop("diff")
+    ser = pd.melt(ser, id_vars=["Outcome"])
+
     plas = pd.DataFrame(tensor_slices[1], index=cytokines, columns=patInfo.columns).iloc[:, :148].dropna(axis=1).T
     plas["Outcome"] = patInfo.loc["status"]
-    plas["Outcome"] += 2
-    cyto = pd.concat([ser, plas])
-    out0 = cyto[cyto["Outcome"] == 0]
-    out1 = cyto[cyto["Outcome"] == 1]
-    out2 = cyto[cyto["Outcome"] == 2]
-    out3 = cyto[cyto["Outcome"] == 3]
-    cyto = cyto.append(pd.DataFrame(np.abs(out0.median() - out1.median()) + np.abs(out2.median() - out3.median()), columns=["diff"]).T).sort_values(by="diff", axis=1).drop("diff")
-    cyto = pd.melt(cyto, id_vars=["Outcome"])
+    out0 = plas[plas["Outcome"] == 0]
+    out1 = plas[plas["Outcome"] == 1]
+    plas = plas.append(pd.DataFrame(np.abs(out0.median() - out1.median()), columns=["diff"]).T).sort_values(by="diff", axis=1).drop("diff")
+    plas = pd.melt(plas, id_vars=["Outcome"])
 
-    return pears, cyto
+    return pears, ser, plas
 
 
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    ax, f = getSetup((5, 5), (2, 1))
-    pears, cyto = serum_vs_plasma_setup()
-    kines = ["IL-10", "VEGF", "MCP-3", "IL-4", "Fractalkine"]
-    pears = pears[pears[0].isin(kines)]
-    cyto = cyto[cyto["variable"].isin(kines)]
+    ax, f = getSetup((8, 8), (3, 1))
+    pears, ser, plas = fig_S1_setup()
     a = sns.pointplot(data=pears, x=0, y=1, join=False, ax=ax[0])
+    a.set_xticklabels(a.get_xticklabels(), rotation=30, ha="right")
     a.set_xlabel("Cytokine")
     a.set_ylabel("Pearson's correlation")
     a.set_title("Serum-Plasma Cytokine Level Correlation")
-    a.set_ylim(0.0, 1.0)
-    b = sns.boxplot(data=cyto, x="variable", y="value", hue="Outcome", ax=ax[1])
+    b = sns.boxplot(data=ser, x="variable", y="value", hue="Outcome", ax=ax[1])
     handles, _ = b.get_legend_handles_labels()
-    b.legend(handles, ["Serum - Resolved", "Serum - Persisted", "Plasma - Resolved", "Plasma - Persisted"])
+    b.legend(handles, ["Resolved", "Persisted"])
+    b.set_xticklabels(b.get_xticklabels(), rotation=30, ha="right")
     b.set_xlabel("Cytokine")
     b.set_ylabel("Normalized cytokine level")
     b.set_title("Normalized Serum Cytokine Level by Outcome")
+    c = sns.boxplot(data=plas, x="variable", y="value", hue="Outcome", ax=ax[2])
+    handles, _ = c.get_legend_handles_labels()
+    c.legend(handles, ["Resolved", "Persisted"])
+    c.set_xticklabels(c.get_xticklabels(), rotation=30, ha="right")
+    c.set_xlabel("Cytokine")
+    c.set_ylabel("Normalized cytokine level")
+    c.set_title("Normalized Plasma Cytokine Level by Outcome")
 
     return f

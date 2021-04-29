@@ -1,5 +1,5 @@
 """
-Evaluates classifier performance for various feature set sizes. This code can 
+Evaluates classifier performance for various feature set sizes. This code can
 be called via the command line:
 
 python classifier_feat_comparison.py -c [cytokine.pkl] -g [genes.pkl] -p [parafac2.pkl] -l [labels.pkl]
@@ -35,7 +35,7 @@ CLASSIFIERS = {
 }
 
 
-def get_scores(clf, train_data, train_out, test_data, test_out, selector=None, 
+def get_scores(clf, train_data, train_out, test_data, test_out, selector=None,
                normalize=True):
     """
     Selects most informative features, then trains and tests model and
@@ -49,7 +49,7 @@ def get_scores(clf, train_data, train_out, test_data, test_out, selector=None,
         test_out (pandas.Series): testing data classes
         selector (sklearn feature selector): feature selector to pick most
             informative features (optional)
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): auc-roc score for testing data
@@ -94,7 +94,7 @@ def run_exhaustive(clf, data, outcomes, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): average auc-roc score across folds
@@ -134,7 +134,7 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): average auc-roc score across folds
@@ -165,7 +165,7 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
 
 def run_k_best(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
     """
-    Define cross-validation folds, performs k-best feature selection on 
+    Define cross-validation folds, performs k-best feature selection on
     training data, and tests against validation fold.
 
     Parameters:
@@ -174,7 +174,7 @@ def run_k_best(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): average auc-roc score across folds

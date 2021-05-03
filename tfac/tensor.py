@@ -2,37 +2,100 @@
 Tensor decomposition methods
 """
 import numpy as np
+import jax.numpy as jnp
+from jax import grad
+from jax.config import config
+from scipy.optimize import minimize
 from scipy.linalg import khatri_rao
-from scipy.stats import gmean
 import tensorly as tl
-from tensorly.random import random_cp
+from tensorly.decomposition._cp import initialize_cp
+from copy import deepcopy
 
 
-tl.set_backend("numpy")
+tl.set_backend('numpy')
+config.update("jax_enable_x64", True)
 
 
-def calcR2X(tensorIn, matrixIn, tensorFac, matrixFac):
-    """ Calculate R2X. """
-    tErr = np.nanvar(tl.cp_to_tensor(tensorFac) - tensorIn)
-    mErr = np.nanvar(tl.cp_to_tensor(matrixFac) - matrixIn)
-    return 1.0 - (tErr + mErr) / (np.nanvar(tensorIn) + np.nanvar(matrixIn))
+def buildGlycan(tFac):
+    """ Build the glycan matrix from the factors. """
+    return tFac.factors[0] @ tFac.mFactor.T
 
 
-def reorient_factors(tensorFac, matrixFac):
+def calcR2X(tFac, tIn=None, mIn=None):
+    """ Calculate R2X. Optionally it can be calculated for only the tensor or matrix. """
+    assert (tIn is not None) or (mIn is not None)
+
+    vTop = 0.0
+    vBottom = 0.0
+
+    if tIn is not None:
+        tMask = np.isfinite(tIn)
+        vTop += jnp.sum(jnp.square(tl.cp_to_tensor(tFac) * tMask - np.nan_to_num(tIn)))
+        vBottom += np.sum(np.square(np.nan_to_num(tIn)))
+    if mIn is not None:
+        mMask = np.isfinite(mIn)
+        vTop += jnp.sum(jnp.square(buildGlycan(tFac) * mMask - np.nan_to_num(mIn)))
+        vBottom += np.sum(np.square(np.nan_to_num(mIn)))
+
+    return 1.0 - vTop / vBottom
+
+
+def reorient_factors(tFac):
     """ This function ensures that factors are negative on at most one direction. """
-    for jj in range(1, len(tensorFac)):
-        # Calculate the sign of the current factor in each component
-        means = np.sign(np.mean(tensorFac[jj], axis=0))
+    # Flip the subjects to be positive
+    subjMeans = np.sign(np.mean(tFac.factors[0], axis=0))
+    tFac.factors[0] *= subjMeans[np.newaxis, :]
+    tFac.factors[1] *= subjMeans[np.newaxis, :]
+    tFac.mFactor *= subjMeans[np.newaxis, :]
 
-        # Update both the current and last factor
-        tensorFac[0] *= means[np.newaxis, :]
-        matrixFac[0] *= means[np.newaxis, :]
-        matrixFac[1] *= means[np.newaxis, :]
-        tensorFac[jj] *= means[np.newaxis, :]
-    return tensorFac, matrixFac
+    # Flip the receptors to be positive
+    rMeans = np.sign(np.mean(tFac.factors[1], axis=0))
+    tFac.factors[1] *= rMeans[np.newaxis, :]
+    tFac.factors[2] *= rMeans[np.newaxis, :]
+    return tFac
 
 
-def censored_lstsq(A, B, uniqueInfo):
+def sort_factors(tFac):
+    """ Sort the components from the largest variance to the smallest. """
+    rr = tFac.rank
+    tensor = deepcopy(tFac)
+    def totalVar(tFac): return np.nanvar(tl.cp_to_tensor(tFac)) + np.nanvar(tFac.factors[0] @ tFac.mFactor.T)
+    vars = np.array([totalVar(delete_component(tFac, np.delete(np.arange(rr), i))) for i in np.arange(rr)])
+    order = np.flip(np.argsort(vars))
+
+    tensor.weights = tensor.weights[order]
+    tensor.mFactor = tensor.mFactor[:, order]
+    for i, fac in enumerate(tensor.factors):
+        tensor.factors[i] = fac[:, order]
+
+    np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor))
+    np.testing.assert_allclose(buildGlycan(tFac), buildGlycan(tensor))
+    return tensor
+
+
+def delete_component(tFac, compNum):
+    """ Delete the indicated component. """
+    tensor = deepcopy(tFac)
+    if isinstance(compNum, int):
+        assert compNum < tensor.rank
+        tensor.rank -= 1
+    elif isinstance(compNum, list) or isinstance(compNum, np.ndarray):
+        compNum = np.unique(compNum)
+        assert all(i < tensor.rank for i in compNum)
+        tensor.rank -= len(compNum)
+    else:
+        raise TypeError
+
+    tensor.weights = np.delete(tensor.weights, compNum)
+    tensor.mFactor = np.delete(tensor.mFactor, compNum, axis=1)
+    for i, fac in enumerate(tensor.factors):
+        tensor.factors[i] = np.delete(fac, compNum, axis=1)
+        assert tensor.factors[i].shape[1] == tensor.rank
+
+    return tensor
+
+
+def censored_lstsq(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     """Solves least squares problem subject to missing data.
     Note: uses a for loop over the columns of B, leading to a
     slower but more numerically stable algorithm
@@ -45,10 +108,11 @@ def censored_lstsq(A, B, uniqueInfo):
     X (ndarray) : r x n matrix that minimizes norm(M*(AX - B))
     """
     X = np.empty((A.shape[1], B.shape[1]))
-    unique, uIDX = uniqueInfo
+    # Calculate the missingness patterns
+    unique, uIDX = np.unique(np.isfinite(B), axis=1, return_inverse=True)
 
     for i in range(unique.shape[1]):
-        uI = (uIDX == i)
+        uI = uIDX == i
         uu = np.squeeze(unique[:, i])
 
         Bx = B[uu, :]
@@ -56,61 +120,100 @@ def censored_lstsq(A, B, uniqueInfo):
     return X.T
 
 
-def perform_TMTF(tOrig, mOrig, r=10):
-    """ Perform TMTF decomposition. """
-    tFac = random_cp(np.shape(tOrig), r, random_state=1, normalise_factors=False)
-    tFac.factors[2] = np.ones_like(tFac.factors[2])
+def cp_normalize(tFac):
+    """ Normalize the factors using the inf norm. """
+    for i, factor in enumerate(tFac.factors):
+        scales = np.linalg.norm(factor, ord=np.inf, axis=0)
+        tFac.weights *= scales
+        if i == 0:
+            tFac.mFactor *= scales
 
-    # Everything from the original mFac will be overwritten
-    mFac = random_cp(np.shape(mOrig), r, random_state=1, normalise_factors=False)
+        tFac.factors[i] /= scales
+
+    return tFac
+
+
+def perform_CMTF(tOrig, mOrig, r=10):
+    """ Perform CMTF decomposition. """
+    tFac = initialize_cp(np.nan_to_num(tOrig), r)
 
     # Pre-unfold
     selPat = np.all(np.isfinite(mOrig), axis=1)
     unfolded = [tl.unfold(tOrig, i) for i in range(3)]
     unfolded[0] = np.hstack((unfolded[0], mOrig))
 
-    # Precalculate the missingness patterns
-    uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
+    tFac.R2X = -1.0
+    tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
 
-    R2X = -1000.0
-    for ii in range(400):
-        # Don't let the subjects drift to different scalings
-        varr = np.array([np.var(tFac.factors[0][uniqueInfo[0][1] == ii, :], axis=0) for ii in range(uniqueInfo[0][0].shape[1])])
-        varr /= gmean(varr, axis=0)[np.newaxis, :]
+    for ii in range(100):
+        # Solve for the subject matrix
+        kr = khatri_rao(tFac.factors[1], tFac.factors[2])
+        kr2 = np.vstack((kr, tFac.mFactor))
 
-        for i in range(uniqueInfo[0][0].shape[1]):
-            tFac.factors[0][uniqueInfo[0][1] == i, :] /= varr[i][np.newaxis, :]
-
-        tFac.factors[0] = np.linalg.qr(tFac.factors[0])[0]
-        mFac.factors[0] = tFac.factors[0]
+        tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T)
 
         # PARAFAC on other antigen modes
         for m in [1, 2]:
             kr = khatri_rao(tFac.factors[0], tFac.factors[3 - m])
-            tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
+            tFac.factors[m] = censored_lstsq(kr, unfolded[m].T)
 
         # Solve for the glycan matrix fit
-        mFac.factors[1] = np.linalg.lstsq(mFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
-
-        # Solve for the subject matrix
-        kr = khatri_rao(tFac.factors[1], tFac.factors[2])
-        kr2 = np.vstack((kr, mFac.factors[1]))
-
-        tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T, uniqueInfo[0])
-        mFac.factors[0] = tFac.factors[0]
+        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
 
         if ii % 2 == 0:
-            R2X_last = R2X
-            R2X = calcR2X(tOrig, mOrig, tFac, mFac)
-            assert np.isfinite(R2X)
+            R2X_last = tFac.R2X
+            tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+            assert tFac.R2X > 0.0
 
-        if (ii > 40) and (R2X - R2X_last < 1e-4):
+        if tFac.R2X - R2X_last < 1e-6:
             break
 
-    tFac.normalize()
-    mFac.normalize()
+    # Refine with direct optimization
+    tFac = fit_refine(tFac, tOrig, mOrig)
 
-    # Reorient the later tensor factors
-    tFac.factors, mFac.factors = reorient_factors(tFac.factors, mFac.factors)
+    tFac = cp_normalize(tFac)
+    tFac = reorient_factors(tFac)
+    tFac = sort_factors(tFac)
+    return tFac
 
-    return tFac, mFac, R2X
+
+def cp_to_vec(tFac):
+    vec = np.concatenate([tFac.factors[i].flatten() for i in range(3)])
+    return np.concatenate((vec, tFac.mFactor.flatten()))
+
+
+def buildTensors(pIn, tensor, matrix, r):
+    """ Use parameter vector to build kruskal tensors. """
+    assert tensor.shape[0] == matrix.shape[0]
+    nN = np.cumsum(np.array(tensor.shape) * r)
+    A = jnp.reshape(pIn[:nN[0]], (tensor.shape[0], r))
+    B = jnp.reshape(pIn[nN[0]:nN[1]], (tensor.shape[1], r))
+    C = jnp.reshape(pIn[nN[1]:nN[2]], (tensor.shape[2], r))
+    tFac = tl.cp_tensor.CPTensor((None, [A, B, C]))
+    tFac.mFactor = jnp.reshape(pIn[nN[2]:], (matrix.shape[1], r))
+    return tFac
+
+
+def cost(pIn, tOrig, mOrig, r):
+    tFac = buildTensors(pIn, tOrig, mOrig, r)
+    return -calcR2X(tFac, tOrig, mOrig)
+
+
+def fit_refine(tFac, tOrig, mOrig):
+    """ Refine the factorization with direct optimization. """
+    r = tFac.rank
+    x0 = cp_to_vec(tFac)
+
+    gF = grad(cost, 0)
+
+    def gradF(*args):
+        return np.array(gF(*args))
+
+    tl.set_backend('jax')
+    # TODO: Setup constraint to avoid opposing components
+    res = minimize(cost, x0, method="L-BFGS-B", jac=gradF, args=(tOrig, mOrig, r), options={"gtol": 1e-10, "ftol": 1e-10})
+    tl.set_backend('numpy')
+
+    tFac = buildTensors(res.x, tOrig, mOrig, r)
+    tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+    return tFac

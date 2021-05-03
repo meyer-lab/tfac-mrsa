@@ -34,7 +34,7 @@ output/manuscript.docx: venv output/manuscript.md $(flistFull)
 		-o $@ output/manuscript.md
 
 test: venv
-	. venv/bin/activate && pytest -s
+	. venv/bin/activate && pytest -s -x -v
 
 coverage.xml: venv
 	. venv/bin/activate && pytest --junitxml=junit.xml --cov=tfac --cov-report xml:coverage.xml

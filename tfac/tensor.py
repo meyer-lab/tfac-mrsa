@@ -178,8 +178,7 @@ def perform_CMTF(tOrig, mOrig, r=10):
 
 
 def cp_to_vec(tFac):
-    vec = np.concatenate([tFac.factors[i].flatten() for i in range(3)])
-    return np.concatenate((vec, tFac.mFactor.flatten()))
+    return np.concatenate([tFac.factors[i].flatten() for i in range(3)])
 
 
 def buildTensors(pIn, tensor, matrix, r):
@@ -190,7 +189,8 @@ def buildTensors(pIn, tensor, matrix, r):
     B = jnp.reshape(pIn[nN[0]:nN[1]], (tensor.shape[1], r))
     C = jnp.reshape(pIn[nN[1]:nN[2]], (tensor.shape[2], r))
     tFac = tl.cp_tensor.CPTensor((None, [A, B, C]))
-    tFac.mFactor = jnp.reshape(pIn[nN[2]:], (matrix.shape[1], r))
+    selPat = np.all(np.isfinite(matrix), axis=1)
+    tFac.mFactor = jnp.linalg.lstsq(tFac.factors[0][selPat, :], matrix[selPat, :], rcond=None)[0].T
     return tFac
 
 
@@ -211,7 +211,7 @@ def fit_refine(tFac, tOrig, mOrig):
 
     tl.set_backend('jax')
     # TODO: Setup constraint to avoid opposing components
-    res = minimize(cost, x0, method="L-BFGS-B", jac=gradF, args=(tOrig, mOrig, r), options={"gtol": 1e-10, "ftol": 1e-10})
+    res = minimize(cost, x0, method="L-BFGS-B", jac=gradF, args=(tOrig, mOrig, r), options={"gtol": 1e-10})
     tl.set_backend('numpy')
 
     tFac = buildTensors(res.x, tOrig, mOrig, r)

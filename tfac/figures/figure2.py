@@ -6,7 +6,6 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import gridspec, pyplot as plt
 from string import ascii_lowercase
-from .figureCommon import subplotLabel, getSetup
 from ..dataImport import form_missing_tensor
 from ..tensor import perform_CMTF
 
@@ -24,8 +23,9 @@ def fig_2_setup():
         print(f"Starting decomposition with {component} components.")
         all_tensors.append(perform_CMTF(tensor, matrix, r=component))
 
-    AllR2X = [all_tensors[x].R2X for x in range(0, components)]
+    AllR2X = [x.R2X for x in all_tensors]
     R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
+
     # Heatmaps
     # TODO: Change once determined by SVC
     factors = perform_CMTF(tensor, matrix)

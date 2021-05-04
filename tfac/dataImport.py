@@ -123,13 +123,6 @@ def full_import():
     return cyto_list, cytokines, dfExp, geneIDs
 
 
-def import_methylation():
-    """ Import methylation data. """
-    dataMeth = pd.read_csv(join(path_here, "tfac/data/mrsa/MRSA.Methylation.txt.xz"), delimiter=" ", compression="xz")
-    locs = dataMeth.values[:, 0]
-    return dataMeth, locs
-
-
 def import_C1_cyto():
     """ Import cytokine data from clinical data set. """
     coh1 = pd.read_csv("tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv")
@@ -159,7 +152,7 @@ def import_C3_cyto():
 
 def importCohort1Expression():
     """ Import expression data. """
-    df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt"))
+    df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt.xz"), compression="xz")
     df.drop(["Chr", "Start", "End", "Strand", "Length"], inplace=True, axis=1)
     nodecimals = [val[: val.index(".")] for val in df["Geneid"]]
     df["Geneid"] = nodecimals

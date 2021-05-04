@@ -1,15 +1,13 @@
 """
 This creates Figure 2 - MRSA R2X
 """
-import pickle
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import gridspec, pyplot as plt
 from string import ascii_lowercase
-from .figureCommon import subplotLabel, getSetup
 from ..dataImport import form_missing_tensor
-from ..tensor import perform_TMTF
+from ..tensor import perform_CMTF
 
 
 def fig_2_setup():
@@ -23,13 +21,14 @@ def fig_2_setup():
     # Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
         print(f"Starting decomposition with {component} components.")
-        all_tensors.append(perform_TMTF(tensor, matrix, r=component))
+        all_tensors.append(perform_CMTF(tensor, matrix, r=component))
 
-    AllR2X = [all_tensors[x][2] for x in range(0, components)]
-    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
+    AllR2X = [x.R2X for x in all_tensors]
+    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": [float(arr) for arr in AllR2X]})
+
     # Heatmaps
     # TODO: Change once determined by SVC
-    factors = perform_TMTF(tensor, matrix)[0]
+    factors = perform_CMTF(tensor, matrix)
 
     colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
     subs = pd.DataFrame(factors.factors[0], columns=colnames, index=[str(x) for x in patInfo.columns])

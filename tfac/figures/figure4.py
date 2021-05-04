@@ -1,10 +1,8 @@
 """
 This creates Figure 4 - Cytokine weights.
 """
-import pickle
 import pandas as pd
 import seaborn as sns
-from tensorly.parafac2_tensor import apply_parafac2_projections
 from .figureCommon import subplotLabel, getSetup
 from ..dataImport import form_MRSA_tensor
 from ..explore_factors import label_points

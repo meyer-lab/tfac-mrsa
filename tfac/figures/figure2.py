@@ -24,7 +24,7 @@ def fig_2_setup():
         all_tensors.append(perform_CMTF(tensor, matrix, r=component))
 
     AllR2X = [x.R2X for x in all_tensors]
-    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
+    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": [float(arr) for arr in AllR2X]})
 
     # Heatmaps
     # TODO: Change once determined by SVC

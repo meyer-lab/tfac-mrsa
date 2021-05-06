@@ -17,14 +17,13 @@ def fig_2_setup():
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
     components = 8
-    all_tensors = []
+    AllR2X = []
     # Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):
         print(f"Starting decomposition with {component} components.")
-        all_tensors.append(perform_CMTF(tensor, matrix, r=component))
+        AllR2X.append(perform_CMTF(tensor, matrix, r=component).R2X)
 
-    AllR2X = [x.R2X for x in all_tensors]
-    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": [float(arr) for arr in AllR2X]})
+    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
 
     # Heatmaps
     # TODO: Change once determined by SVC

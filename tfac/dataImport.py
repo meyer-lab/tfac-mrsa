@@ -32,7 +32,7 @@ def get_C3_patient_info():
     return c3.sort_values("sid")
 
 
-def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
+def form_missing_tensor(variance1: float = 1.0):
     """ Create list of normalized data matrices: cytokines from serum, cytokines from plasma, RNAseq. """
     cyto_list, cytokines, dfExp, geneIDs = full_import()
     # Add in NaNs
@@ -60,9 +60,11 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     plasmaNumpy = dfCyto_plasma.to_numpy(dtype=float)
     expNumpy = dfExp.to_numpy(dtype=float)
     # Eliminate normalization bias
-    serumNumpy = serumNumpy * ((1.0 / np.nanvar(serumNumpy)) ** 0.5) * variance1
-    plasmaNumpy = plasmaNumpy * ((1.0 / np.nanvar(plasmaNumpy)) ** 0.5) * variance1
-    expNumpy = expNumpy * ((1.0 / np.nanvar(expNumpy)) ** 0.5) * variance2
+    cytokVar = np.linalg.norm(np.nan_to_num(serumNumpy)) + np.linalg.norm(np.nan_to_num(plasmaNumpy))
+    serumNumpy /= cytokVar
+    plasmaNumpy /= cytokVar
+    expVar = np.linalg.norm(np.nan_to_num(expNumpy))
+    expNumpy /= expVar * variance1
     tensor_slices = [serumNumpy, plasmaNumpy, expNumpy]
     return tensor_slices, cytokines, geneIDs, patInfo
 

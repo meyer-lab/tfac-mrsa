@@ -59,7 +59,7 @@ def sort_factors(tFac):
     """ Sort the components from the largest variance to the smallest. """
     rr = tFac.rank
     tensor = deepcopy(tFac)
-    def totalVar(tFac): return np.nanvar(tl.cp_to_tensor(tFac)) + np.nanvar(tFac.factors[0] @ tFac.mFactor.T)
+    def totalVar(tFac): return np.var(tl.cp_to_tensor(tFac)) + np.var(buildGlycan(tFac))
     vars = np.array([totalVar(delete_component(tFac, np.delete(np.arange(rr), i))) for i in np.arange(rr)])
     order = np.flip(np.argsort(vars))
 
@@ -95,7 +95,7 @@ def delete_component(tFac, compNum):
     return tensor
 
 
-def censored_lstsq(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+def censored_lstsq(A: np.ndarray, B: np.ndarray, uniqueInfo) -> np.ndarray:
     """Solves least squares problem subject to missing data.
     Note: uses a for loop over the columns of B, leading to a
     slower but more numerically stable algorithm
@@ -108,8 +108,7 @@ def censored_lstsq(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     X (ndarray) : r x n matrix that minimizes norm(M*(AX - B))
     """
     X = np.empty((A.shape[1], B.shape[1]))
-    # Calculate the missingness patterns
-    unique, uIDX = np.unique(np.isfinite(B), axis=1, return_inverse=True)
+    unique, uIDX = uniqueInfo
 
     for i in range(unique.shape[1]):
         uI = uIDX == i
@@ -145,17 +144,20 @@ def perform_CMTF(tOrig, mOrig, r=10):
     tFac.R2X = -1.0
     tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
 
+    # Precalculate the missingness patterns
+    uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
+
     for ii in range(100):
         # Solve for the subject matrix
         kr = khatri_rao(tFac.factors[1], tFac.factors[2])
         kr2 = np.vstack((kr, tFac.mFactor))
 
-        tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T)
+        tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T, uniqueInfo[0])
 
         # PARAFAC on other antigen modes
         for m in [1, 2]:
             kr = khatri_rao(tFac.factors[0], tFac.factors[3 - m])
-            tFac.factors[m] = censored_lstsq(kr, unfolded[m].T)
+            tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
         # Solve for the glycan matrix fit
         tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
@@ -211,9 +213,9 @@ def fit_refine(tFac, tOrig, mOrig):
 
     tl.set_backend('jax')
     # TODO: Setup constraint to avoid opposing components
-    res = minimize(cost, x0, method="L-BFGS-B", jac=gradF, args=(tOrig, mOrig, r), options={"gtol": 1e-10})
+    res = minimize(cost, x0, method="L-BFGS-B", jac=gradF, args=(tOrig, mOrig, r))
     tl.set_backend('numpy')
 
     tFac = buildTensors(res.x, tOrig, mOrig, r)
-    tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+    tFac.R2X = float(calcR2X(tFac, tOrig, mOrig))
     return tFac

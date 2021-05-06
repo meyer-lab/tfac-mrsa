@@ -199,7 +199,7 @@
             <text x="1480.83px" y="811.425px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:48px;">CMTF</text>
         </g>
         <g transform="matrix(1,0,0,1,168.303,151.533)">
-            <text x="1480.83px" y="811.425px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:52px;">TMTF</text>
+            <text x="1480.83px" y="811.425px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:52px;">CMTF</text>
         </g>
         <g transform="matrix(1,0,0,1,-17.0746,-234.99)">
             <text x="1471.28px" y="918.156px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:26px;">Cytokine <tspan x="1579.18px 1592.18px 1606.64px " y="918.156px 918.156px 918.156px ">Ten</tspan>sor</text>
@@ -490,7 +490,7 @@
         <path d="M1581.58,180.833C1581.58,178.407 1579.61,176.44 1577.19,176.44L1328.88,176.44C1326.45,176.44 1324.49,178.407 1324.49,180.833L1324.49,337.872C1324.49,340.298 1326.45,342.264 1328.88,342.264L1577.19,342.264C1579.61,342.264 1581.58,340.298 1581.58,337.872L1581.58,180.833ZM1577.19,180.833L1328.88,180.833L1328.88,337.872L1577.19,337.872L1577.19,180.833Z"/>
     </g>
     <g transform="matrix(1.18725,0,0,1.18725,-433.539,-688.068)">
-        <text x="1502.15px" y="811.425px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:36px;">TMTF</text>
+        <text x="1502.15px" y="811.425px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:36px;">CMTF</text>
     </g>
     <g transform="matrix(1.04874,0.60549,-0.273326,0.473415,1126.61,-100.335)">
         <path d="M419.383,230.949L419.383,218.563C419.383,218.563 534.56,204.112 534.56,204.112L543.249,224.756L534.56,245.401C534.56,245.401 419.383,230.949 419.383,230.949Z"/>

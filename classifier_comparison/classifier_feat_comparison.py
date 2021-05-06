@@ -71,10 +71,6 @@ def get_scores(clf, train_data, train_out, test_data, test_out, selector=None,
         train_data = scale(train_data)
         test_data = scale(test_data)
 
-    if normalize:
-        train_data = train_data.apply(normalize_feats)
-        test_data = test_data.apply(normalize_feats)
-
     clf.fit(train_data, train_out)
     proba = clf.predict_proba(test_data)
     proba = proba[:, 1]

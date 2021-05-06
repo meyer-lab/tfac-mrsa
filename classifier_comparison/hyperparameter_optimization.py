@@ -12,6 +12,8 @@ import os
 import sys
 import warnings
 
+sys.path.append('../tfac')
+
 from hyperopt import fmin, hp, tpe, Trials
 from hyperopt.pyll import scope
 import numpy as np
@@ -31,17 +33,17 @@ warnings.filterwarnings('ignore', category=ConvergenceWarning)
 CLASSIFIERS = {
     'Logistic Regression': {
         'model': LogisticRegression, 
-        'file': 'lr_hp_trials.pkl',
+        'file': 'lr_hp_trials_large.pkl',
         'space': {
-            'C': hp.normal('C', 1, 0.5),
+            'C': hp.uniform('C', 1E-4, 1E4),
             'n_feats': scope.int(hp.quniform('n_feats', 1, 39, 1))
         },
     },
     'SVC_rbf': {
         'model': SVC, 
-        'file': 'SVC_rbf_hp_trials.pkl',
+        'file': 'SVC_rbf_hp_trials_large.pkl',
         'space': {
-            'C': hp.normal('C', 1, 0.5),
+            'C': hp.uniform('C', 1E-4, 1E4),
             'gamma': hp.lognormal('gamma', 0.5, 0.25),
             'kernel': 'rbf',
             'n_feats': scope.int(hp.quniform('n_feats', 1, 39, 1)),
@@ -50,9 +52,9 @@ CLASSIFIERS = {
     },
     'Gaussian Naive Bayes': {
         'model': GaussianNB, 
-        'file': 'gnb_hp_trials.pkl',
+        'file': 'gnb_hp_trials_large.pkl',
         'space': {
-            'var_smoothing': hp.loguniform('var_smoothing', 1E-8, 1E-1),
+            'var_smoothing': hp.uniform('var_smoothing', 1E-4, 1E4),
             'n_feats': scope.int(hp.quniform('n_feats', 1, 39, 1))
         },
     },
@@ -100,7 +102,7 @@ def main(parser):
     max_evals = parser.max_evals
 
     # Reduces data to only 40-factor decomposition
-    data = data[-1][0].factors[0]
+    data = data[0].factors[0]
     data = pd.DataFrame(data)
 
     # Casts labels to int and removes samples with unknown outcomes

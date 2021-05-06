@@ -16,9 +16,14 @@ tl.set_backend('numpy')
 config.update("jax_enable_x64", True)
 
 
-def buildGlycan(tFac):
+def buildMat(tFac):
     """ Build the glycan matrix from the factors. """
     return tFac.factors[0] @ tFac.mFactor.T
+
+
+def totalVar(tFac):
+    """ Calculate the total variance of the reconstructed data. """
+    return np.square(tl.cp_norm(tFac)) + np.sum(np.square(buildMat(tFac)))
 
 
 def calcR2X(tFac, tIn=None, mIn=None):
@@ -34,7 +39,7 @@ def calcR2X(tFac, tIn=None, mIn=None):
         vBottom += np.sum(np.square(np.nan_to_num(tIn)))
     if mIn is not None:
         mMask = np.isfinite(mIn)
-        vTop += jnp.sum(jnp.square(buildGlycan(tFac) * mMask - np.nan_to_num(mIn)))
+        vTop += jnp.sum(jnp.square(buildMat(tFac) * mMask - np.nan_to_num(mIn)))
         vBottom += np.sum(np.square(np.nan_to_num(mIn)))
 
     return 1.0 - vTop / vBottom
@@ -59,17 +64,15 @@ def sort_factors(tFac):
     """ Sort the components from the largest variance to the smallest. """
     rr = tFac.rank
     tensor = deepcopy(tFac)
-    def totalVar(tFac): return np.var(tl.cp_to_tensor(tFac)) + np.var(buildGlycan(tFac))
     vars = np.array([totalVar(delete_component(tFac, np.delete(np.arange(rr), i))) for i in np.arange(rr)])
     order = np.flip(np.argsort(vars))
 
     tensor.weights = tensor.weights[order]
     tensor.mFactor = tensor.mFactor[:, order]
-    for i, fac in enumerate(tensor.factors):
-        tensor.factors[i] = fac[:, order]
+    tensor.factors = [fac[:, order] for fac in tensor.factors]
 
-    np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor))
-    np.testing.assert_allclose(buildGlycan(tFac), buildGlycan(tensor))
+    np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor), rtol=1e-6, atol=1e-9)
+    np.testing.assert_allclose(buildMat(tFac), buildMat(tensor), rtol=1e-6, atol=1e-9)
     return tensor
 
 

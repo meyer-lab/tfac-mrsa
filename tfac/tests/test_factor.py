@@ -6,7 +6,7 @@ from ..dataImport import form_missing_tensor
 from ..tensor import perform_CMTF
 
 
-def test_TMTF():
+def test_CMTF():
     """ Test that we can form the missing tensor. """
     tensor_slices, _, _, _ = form_missing_tensor()
 

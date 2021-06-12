@@ -3,13 +3,11 @@ Tensor decomposition methods
 """
 import numpy as np
 import jax.numpy as jnp
-from jax import value_and_grad
+from jax import value_and_grad, grad
 from jax.config import config
 from scipy.optimize import minimize
-from scipy.linalg import khatri_rao
 import tensorly as tl
 from tensorly.decomposition._cp import initialize_cp
-from copy import deepcopy
 
 
 tl.set_backend('numpy')
@@ -21,11 +19,6 @@ def buildMat(tFac):
     return tFac.factors[0] @ tFac.mFactor.T
 
 
-def totalVar(tFac):
-    """ Calculate the total variance of the reconstructed data. """
-    return np.square(tl.cp_norm(tFac)) + np.sum(np.square(buildMat(tFac)))
-
-
 def calcR2X(tFac, tIn=None, mIn=None):
     """ Calculate R2X. Optionally it can be calculated for only the tensor or matrix. """
     assert (tIn is not None) or (mIn is not None)
@@ -35,11 +28,11 @@ def calcR2X(tFac, tIn=None, mIn=None):
 
     if tIn is not None:
         tMask = np.isfinite(tIn)
-        vTop += jnp.sum(jnp.square(tl.cp_to_tensor(tFac) * tMask - np.nan_to_num(tIn)))
+        vTop += np.sum(np.square(tl.cp_to_tensor(tFac) * tMask - np.nan_to_num(tIn)))
         vBottom += np.sum(np.square(np.nan_to_num(tIn)))
     if mIn is not None:
         mMask = np.isfinite(mIn)
-        vTop += jnp.sum(jnp.square(buildMat(tFac) * mMask - np.nan_to_num(mIn)))
+        vTop += np.sum(np.square(buildMat(tFac) * mMask - np.nan_to_num(mIn)))
         vBottom += np.sum(np.square(np.nan_to_num(mIn)))
 
     return 1.0 - vTop / vBottom
@@ -60,68 +53,6 @@ def reorient_factors(tFac):
     return tFac
 
 
-def sort_factors(tFac):
-    """ Sort the components from the largest variance to the smallest. """
-    rr = tFac.rank
-    tensor = deepcopy(tFac)
-    vars = np.array([totalVar(delete_component(tFac, np.delete(np.arange(rr), i))) for i in np.arange(rr)])
-    order = np.flip(np.argsort(vars))
-
-    tensor.weights = tensor.weights[order]
-    tensor.mFactor = tensor.mFactor[:, order]
-    tensor.factors = [fac[:, order] for fac in tensor.factors]
-
-    np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor), rtol=1e-6, atol=1e-9)
-    np.testing.assert_allclose(buildMat(tFac), buildMat(tensor), rtol=1e-6, atol=1e-9)
-    return tensor
-
-
-def delete_component(tFac, compNum):
-    """ Delete the indicated component. """
-    tensor = deepcopy(tFac)
-    if isinstance(compNum, int):
-        assert compNum < tensor.rank
-        tensor.rank -= 1
-    elif isinstance(compNum, list) or isinstance(compNum, np.ndarray):
-        compNum = np.unique(compNum)
-        assert all(i < tensor.rank for i in compNum)
-        tensor.rank -= len(compNum)
-    else:
-        raise TypeError
-
-    tensor.weights = np.delete(tensor.weights, compNum)
-    tensor.mFactor = np.delete(tensor.mFactor, compNum, axis=1)
-    for i, fac in enumerate(tensor.factors):
-        tensor.factors[i] = np.delete(fac, compNum, axis=1)
-        assert tensor.factors[i].shape[1] == tensor.rank
-
-    return tensor
-
-
-def censored_lstsq(A: np.ndarray, B: np.ndarray, uniqueInfo) -> np.ndarray:
-    """Solves least squares problem subject to missing data.
-    Note: uses a for loop over the columns of B, leading to a
-    slower but more numerically stable algorithm
-    Args
-    ----
-    A (ndarray) : m x r matrix
-    B (ndarray) : m x n matrix
-    Returns
-    -------
-    X (ndarray) : r x n matrix that minimizes norm(M*(AX - B))
-    """
-    X = np.empty((A.shape[1], B.shape[1]))
-    unique, uIDX = uniqueInfo
-
-    for i in range(unique.shape[1]):
-        uI = uIDX == i
-        uu = np.squeeze(unique[:, i])
-
-        Bx = B[uu, :]
-        X[:, uI] = np.linalg.lstsq(A[uu, :], Bx[:, uI], rcond=None)[0]
-    return X.T
-
-
 def cp_normalize(tFac):
     """ Normalize the factors using the inf norm. """
     for i, factor in enumerate(tFac.factors):
@@ -135,91 +66,58 @@ def cp_normalize(tFac):
     return tFac
 
 
-def perform_CMTF(tOrig, mOrig, r=10):
-    """ Perform CMTF decomposition. """
-    tFac = initialize_cp(np.nan_to_num(tOrig), r)
-
-    # Pre-unfold
-    selPat = np.all(np.isfinite(mOrig), axis=1)
-    unfolded = [tl.unfold(tOrig, i) for i in range(3)]
-    unfolded[0] = np.hstack((unfolded[0], mOrig))
-
-    tFac.R2X = -1.0
-    tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
-
-    # Precalculate the missingness patterns
-    uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
-
-    for ii in range(100):
-        # Solve for the subject matrix
-        kr = khatri_rao(tFac.factors[1], tFac.factors[2])
-        kr2 = np.vstack((kr, tFac.mFactor))
-
-        tFac.factors[0] = censored_lstsq(kr2, unfolded[0].T, uniqueInfo[0])
-
-        # PARAFAC on other antigen modes
-        for m in [1, 2]:
-            kr = khatri_rao(tFac.factors[0], tFac.factors[3 - m])
-            tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
-
-        # Solve for the glycan matrix fit
-        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPat, :], mOrig[selPat, :], rcond=None)[0].T
-
-        if ii % 2 == 0:
-            R2X_last = tFac.R2X
-            tFac.R2X = calcR2X(tFac, tOrig, mOrig)
-            assert tFac.R2X > 0.0
-
-        if tFac.R2X - R2X_last < 1e-6:
-            break
-
-    # Refine with direct optimization
-    tFac = fit_refine(tFac, tOrig, mOrig)
-
-    tFac = cp_normalize(tFac)
-    tFac = reorient_factors(tFac)
-    tFac = sort_factors(tFac)
-    return tFac
-
-
 def cp_to_vec(tFac):
-    return np.concatenate([tFac.factors[i].flatten() for i in range(3)])
+    return np.concatenate([tFac.factors[i].flatten() for i in [0, 2]])
 
 
-def buildTensors(pIn, tensor, matrix, r):
+def buildTensors(pIn, tensor, matrix, r, cost=False):
     """ Use parameter vector to build kruskal tensors. """
     assert tensor.shape[0] == matrix.shape[0]
-    nN = np.cumsum(np.array(tensor.shape) * r)
+    nN = np.cumsum(np.array([tensor.shape[0], tensor.shape[2]]) * r)
     A = jnp.reshape(pIn[:nN[0]], (tensor.shape[0], r))
-    B = jnp.reshape(pIn[nN[0]:nN[1]], (tensor.shape[1], r))
-    C = jnp.reshape(pIn[nN[1]:nN[2]], (tensor.shape[2], r))
+    C = jnp.reshape(pIn[nN[0]:nN[1]], (tensor.shape[2], r))
+
+    kr = tl.tenalg.khatri_rao([A, C])
+    unfold = tl.unfold(tensor, 1)
+    selPat = np.all(np.isfinite(unfold), axis=0)
+    selPatM = np.all(np.isfinite(matrix), axis=1)
+
+    if cost:
+        cost = jnp.sum(jnp.linalg.lstsq(kr[selPat, :], unfold[:, selPat].T, rcond=None)[1])
+        cost += jnp.sum(jnp.linalg.lstsq(A[selPatM, :], matrix[selPatM, :], rcond=None)[1])
+        return cost
+
+    B = np.linalg.lstsq(kr[selPat, :], unfold[:, selPat].T, rcond=None)[0].T
     tFac = tl.cp_tensor.CPTensor((None, [A, B, C]))
-    selPat = np.all(np.isfinite(matrix), axis=1)
-    tFac.mFactor = jnp.linalg.lstsq(tFac.factors[0][selPat, :], matrix[selPat, :], rcond=None)[0].T
+    tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPatM, :], matrix[selPatM, :], rcond=None)[0].T
     return tFac
 
 
 def cost(pIn, tOrig, mOrig, r):
-    tFac = buildTensors(pIn, tOrig, mOrig, r)
-    return -calcR2X(tFac, tOrig, mOrig)
+    return buildTensors(pIn, tOrig, mOrig, r, cost=True)
 
 
-def fit_refine(tFac, tOrig, mOrig):
-    """ Refine the factorization with direct optimization. """
-    r = tFac.rank
+def perform_CMTF(tOrig, mOrig, r=10):
+    """ Perform CMTF decomposition by direct optimization. """
+    tFac = initialize_cp(np.nan_to_num(tOrig), r)
+    tFac.factors[2] = np.ones_like(tFac.factors[2])
     x0 = cp_to_vec(tFac)
 
     gF = value_and_grad(cost, 0)
 
-    def gradF(*args):
-        value, grad = gF(*args)
-        return value, np.array(grad)
+    def gradF(x):
+        return gF(x, tOrig, mOrig, r)
+
+    def hvp(x, v):
+        return grad(lambda x: jnp.vdot(gF(x, tOrig, mOrig, r)[1], v))(x)
 
     tl.set_backend('jax')
-    # TODO: Setup constraint to avoid opposing components
-    res = minimize(gradF, x0, method="L-BFGS-B", jac=True, args=(tOrig, mOrig, r), options={"gtol": 1e-10, "ftol": 1e-10})
+    res = minimize(gradF, x0, method="trust-constr", jac=True, hessp=hvp, options={"maxiter": 100})
     tl.set_backend('numpy')
 
     tFac = buildTensors(res.x, tOrig, mOrig, r)
-    tFac.R2X = float(calcR2X(tFac, tOrig, mOrig))
+    tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+
+    tFac = cp_normalize(tFac)
+    tFac = reorient_factors(tFac)
     return tFac

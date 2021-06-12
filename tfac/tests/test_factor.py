@@ -13,6 +13,6 @@ def test_CMTF():
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
 
-    tFac = perform_CMTF(tensor, matrix, r=2)
+    tFac = perform_CMTF(tensor, matrix, r=3)
 
     assert tFac.R2X > 0.0

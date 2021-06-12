@@ -28,11 +28,11 @@ def calcR2X(tFac, tIn=None, mIn=None):
 
     if tIn is not None:
         tMask = np.isfinite(tIn)
-        vTop += jnp.sum(jnp.square(tl.cp_to_tensor(tFac) * tMask - np.nan_to_num(tIn)))
+        vTop += np.sum(np.square(tl.cp_to_tensor(tFac) * tMask - np.nan_to_num(tIn)))
         vBottom += np.sum(np.square(np.nan_to_num(tIn)))
     if mIn is not None:
         mMask = np.isfinite(mIn)
-        vTop += jnp.sum(jnp.square(buildMat(tFac) * mMask - np.nan_to_num(mIn)))
+        vTop += np.sum(np.square(buildMat(tFac) * mMask - np.nan_to_num(mIn)))
         vBottom += np.sum(np.square(np.nan_to_num(mIn)))
 
     return 1.0 - vTop / vBottom
@@ -70,7 +70,7 @@ def cp_to_vec(tFac):
     return np.concatenate([tFac.factors[i].flatten() for i in [0, 2]])
 
 
-def buildTensors(pIn, tensor, matrix, r):
+def buildTensors(pIn, tensor, matrix, r, cost=False):
     """ Use parameter vector to build kruskal tensors. """
     assert tensor.shape[0] == matrix.shape[0]
     nN = np.cumsum(np.array([tensor.shape[0], tensor.shape[2]]) * r)
@@ -80,17 +80,21 @@ def buildTensors(pIn, tensor, matrix, r):
     kr = tl.tenalg.khatri_rao([A, C])
     unfold = tl.unfold(tensor, 1)
     selPat = np.all(np.isfinite(unfold), axis=0)
-    B = jnp.linalg.lstsq(kr[selPat, :], unfold[:, selPat].T, rcond=None)[0].T
+    selPatM = np.all(np.isfinite(matrix), axis=1)
 
+    if cost:
+        cost = jnp.sum(jnp.linalg.lstsq(kr[selPat, :], unfold[:, selPat].T, rcond=None)[1])
+        cost += jnp.sum(jnp.linalg.lstsq(A[selPatM, :], matrix[selPatM, :], rcond=None)[1])
+        return cost
+
+    B = np.linalg.lstsq(kr[selPat, :], unfold[:, selPat].T, rcond=None)[0].T
     tFac = tl.cp_tensor.CPTensor((None, [A, B, C]))
-    selPat = np.all(np.isfinite(matrix), axis=1)
-    tFac.mFactor = jnp.linalg.lstsq(tFac.factors[0][selPat, :], matrix[selPat, :], rcond=None)[0].T
+    tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPatM, :], matrix[selPatM, :], rcond=None)[0].T
     return tFac
 
 
 def cost(pIn, tOrig, mOrig, r):
-    tFac = buildTensors(pIn, tOrig, mOrig, r)
-    return -calcR2X(tFac, tOrig, mOrig)
+    return buildTensors(pIn, tOrig, mOrig, r, cost=True)
 
 
 def perform_CMTF(tOrig, mOrig, r=10):

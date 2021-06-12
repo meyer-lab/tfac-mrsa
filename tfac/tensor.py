@@ -112,7 +112,7 @@ def perform_CMTF(tOrig, mOrig, r=10):
         return grad(lambda x: jnp.vdot(gF(x, tOrig, mOrig, r)[1], v))(x)
 
     tl.set_backend('jax')
-    res = minimize(gradF, x0, method="trust-constr", jac=True, hessp=hvp, options={"maxiter": 100})
+    res = minimize(gradF, x0, method="trust-constr", jac=True, hessp=hvp, options={"maxiter": 200})
     tl.set_backend('numpy')
 
     tFac = buildTensors(res.x, tOrig, mOrig, r)

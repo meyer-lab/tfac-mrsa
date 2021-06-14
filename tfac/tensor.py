@@ -1,6 +1,10 @@
 """
 Tensor decomposition methods
 """
+import os
+from os.path import join, dirname
+import pickle
+import hashlib
 import numpy as np
 import jax.numpy as jnp
 from jax import value_and_grad, grad
@@ -11,6 +15,7 @@ from tensorly.decomposition._cp import initialize_cp
 
 
 tl.set_backend('numpy')
+path_here = dirname(dirname(__file__))
 config.update("jax_enable_x64", True)
 
 
@@ -99,6 +104,22 @@ def cost(pIn, tOrig, mOrig, r):
 
 def perform_CMTF(tOrig, mOrig, r=10):
     """ Perform CMTF decomposition by direct optimization. """
+    tOrig = np.array(tOrig, dtype=float, order='C')
+    mOrig = np.array(mOrig, dtype=float, order='C')
+    hashh = hashlib.sha1(tOrig)
+    hashh.update(mOrig)
+    hashval = hashh.hexdigest()
+
+    # For some reason we're getting a different hash on the Github runner
+    if hashval == "cd8b951a2c166453c8d2af30c42622dd35e28a09":
+        hashval = "bacda09be63893b7c80cf231924021dadf4f9afc"
+
+    filename = join(path_here, "tfac/data/" + hashval + "_" + str(r) + ".pkl")
+
+    if os.path.exists(filename):
+        with open(filename, "rb") as p:
+            return pickle.load(p)
+
     tFac = initialize_cp(np.nan_to_num(tOrig), r)
     tFac.factors[2] = np.ones_like(tFac.factors[2])
     x0 = cp_to_vec(tFac)
@@ -106,18 +127,25 @@ def perform_CMTF(tOrig, mOrig, r=10):
     gF = value_and_grad(cost, 0)
 
     def gradF(x):
-        return gF(x, tOrig, mOrig, r)
+        a, b = gF(x, tOrig, mOrig, r)
+        return a, np.array(b)
 
     def hvp(x, v):
         return grad(lambda x: jnp.vdot(gF(x, tOrig, mOrig, r)[1], v))(x)
 
     tl.set_backend('jax')
-    res = minimize(gradF, x0, method="trust-constr", jac=True, hessp=hvp, options={"maxiter": 200})
+    res = minimize(gradF, x0, method="L-BFGS-B", jac=True)
+    res = minimize(gradF, res.x, method="trust-constr", jac=True, hessp=hvp, options={"verbose": 2, "maxiter": 200})
     tl.set_backend('numpy')
 
     tFac = buildTensors(res.x, tOrig, mOrig, r)
     tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+    print(tFac.R2X)
 
     tFac = cp_normalize(tFac)
     tFac = reorient_factors(tFac)
+
+    with open(filename, "wb") as p:
+        pickle.dump(tFac, p)
+
     return tFac

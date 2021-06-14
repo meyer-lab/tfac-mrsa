@@ -108,7 +108,13 @@ def perform_CMTF(tOrig, mOrig, r=10):
     mOrig = np.array(mOrig, dtype=float, order='C')
     hashh = hashlib.sha1(tOrig)
     hashh.update(mOrig)
-    filename = join(path_here, "tfac/data/" + str(hashh.hexdigest()) + "_" + str(r) + ".pkl")
+    hashval = hashh.hexdigest()
+
+    # For some reason we're getting a different hash on the Github runner
+    if hashval == "cd8b951a2c166453c8d2af30c42622dd35e28a09":
+        hashval = "bacda09be63893b7c80cf231924021dadf4f9afc"
+
+    filename = join(path_here, "tfac/data/" + hashval + "_" + str(r) + ".pkl")
 
     if os.path.exists(filename):
         with open(filename, "rb") as p:
@@ -128,7 +134,7 @@ def perform_CMTF(tOrig, mOrig, r=10):
         return grad(lambda x: jnp.vdot(gF(x, tOrig, mOrig, r)[1], v))(x)
 
     tl.set_backend('jax')
-    res = minimize(gradF, x0, method="L-BFGS-B", jac=True, options={"disp": 1})
+    res = minimize(gradF, x0, method="L-BFGS-B", jac=True)
     res = minimize(gradF, res.x, method="trust-constr", jac=True, hessp=hvp, options={"verbose": 2, "maxiter": 200})
     tl.set_backend('numpy')
 

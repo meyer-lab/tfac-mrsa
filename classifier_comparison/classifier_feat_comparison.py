@@ -10,9 +10,7 @@ import argparse
 import warnings
 
 from mlxtend.feature_selection import ExhaustiveFeatureSelector as EFS
-import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.feature_selection import SelectKBest, SequentialFeatureSelector
 from sklearn.linear_model import LogisticRegression
@@ -22,7 +20,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import scale
 from sklearn.svm import SVC
 from tqdm import tqdm
-from xgboost.sklearn import XGBClassifier
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -81,7 +78,7 @@ def get_scores(clf, train_data, train_out, test_data, test_out, selector=None,
 
 def run_exhaustive(clf, data, outcomes, n_splits=30, normalize=True):
     """
-    Define cross-validation folds, performs sequential feature
+    Define cross-validation folds, performs exhaustive feature
     selection on training data, and tests against validation fold.
 
     Parameters:

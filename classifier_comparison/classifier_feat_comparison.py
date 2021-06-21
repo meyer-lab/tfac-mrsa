@@ -87,7 +87,7 @@ def run_exhaustive(clf, data, outcomes, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): average auc-roc score across folds

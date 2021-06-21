@@ -16,7 +16,7 @@ venv/bin/activate: requirements.txt
 
 output/figure%.svg: genFigures.py tfac/figures/figure%.py venv
 	@ mkdir -p ./output
-	. venv/bin/activate && ./genFigures.py $*
+	. venv/bin/activate && JAX_PLATFORM_NAME=cpu ./genFigures.py $*
 
 output/manuscript.md: venv manuscript/*.md venv/bin/activate
 	. venv/bin/activate && manubot process --content-directory=manuscript --output-directory=output --cache-directory=cache --skip-citations --log-level=INFO
@@ -34,7 +34,7 @@ output/manuscript.docx: venv output/manuscript.md $(flistFull)
 		-o $@ output/manuscript.md
 
 test: venv
-	. venv/bin/activate && pytest -s
+	. venv/bin/activate && JAX_PLATFORM_NAME=cpu pytest -s -x -v
 
 coverage.xml: venv
 	. venv/bin/activate && pytest --junitxml=junit.xml --cov=tfac --cov-report xml:coverage.xml

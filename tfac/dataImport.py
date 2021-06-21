@@ -32,7 +32,7 @@ def get_C3_patient_info():
     return c3.sort_values("sid")
 
 
-def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
+def form_missing_tensor(variance1: float = 1.0):
     """ Create list of normalized data matrices: cytokines from serum, cytokines from plasma, RNAseq. """
     cyto_list, cytokines, dfExp, geneIDs = full_import()
     # Add in NaNs
@@ -60,9 +60,11 @@ def form_missing_tensor(variance1: float = 1.0, variance2: float = 1.0):
     plasmaNumpy = dfCyto_plasma.to_numpy(dtype=float)
     expNumpy = dfExp.to_numpy(dtype=float)
     # Eliminate normalization bias
-    serumNumpy = serumNumpy * ((1.0 / np.nanvar(serumNumpy)) ** 0.5) * variance1
-    plasmaNumpy = plasmaNumpy * ((1.0 / np.nanvar(plasmaNumpy)) ** 0.5) * variance1
-    expNumpy = expNumpy * ((1.0 / np.nanvar(expNumpy)) ** 0.5) * variance2
+    cytokVar = np.linalg.norm(np.nan_to_num(serumNumpy)) + np.linalg.norm(np.nan_to_num(plasmaNumpy))
+    serumNumpy /= cytokVar
+    plasmaNumpy /= cytokVar
+    expVar = np.linalg.norm(np.nan_to_num(expNumpy))
+    expNumpy /= expVar * variance1
     tensor_slices = [serumNumpy, plasmaNumpy, expNumpy]
     return tensor_slices, cytokines, geneIDs, patInfo
 
@@ -123,13 +125,6 @@ def full_import():
     return cyto_list, cytokines, dfExp, geneIDs
 
 
-def import_methylation():
-    """ Import methylation data. """
-    dataMeth = pd.read_csv(join(path_here, "tfac/data/mrsa/MRSA.Methylation.txt.xz"), delimiter=" ", compression="xz")
-    locs = dataMeth.values[:, 0]
-    return dataMeth, locs
-
-
 def import_C1_cyto():
     """ Import cytokine data from clinical data set. """
     coh1 = pd.read_csv("tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv")
@@ -159,7 +154,7 @@ def import_C3_cyto():
 
 def importCohort1Expression():
     """ Import expression data. """
-    df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt"))
+    df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt.xz"), compression="xz")
     df.drop(["Chr", "Start", "End", "Strand", "Length"], inplace=True, axis=1)
     nodecimals = [val[: val.index(".")] for val in df["Geneid"]]
     df["Geneid"] = nodecimals

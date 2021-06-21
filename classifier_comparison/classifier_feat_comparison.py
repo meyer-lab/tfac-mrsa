@@ -10,9 +10,7 @@ import argparse
 import warnings
 
 from mlxtend.feature_selection import ExhaustiveFeatureSelector as EFS
-import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.feature_selection import SelectKBest, SequentialFeatureSelector
 from sklearn.linear_model import LogisticRegression
@@ -22,7 +20,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import scale
 from sklearn.svm import SVC
 from tqdm import tqdm
-from xgboost.sklearn import XGBClassifier
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -35,7 +32,7 @@ CLASSIFIERS = {
 }
 
 
-def get_scores(clf, train_data, train_out, test_data, test_out, selector=None, 
+def get_scores(clf, train_data, train_out, test_data, test_out, selector=None,
                normalize=True):
     """
     Selects most informative features, then trains and tests model and
@@ -49,7 +46,7 @@ def get_scores(clf, train_data, train_out, test_data, test_out, selector=None,
         test_out (pandas.Series): testing data classes
         selector (sklearn feature selector): feature selector to pick most
             informative features (optional)
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): auc-roc score for testing data
@@ -81,7 +78,7 @@ def get_scores(clf, train_data, train_out, test_data, test_out, selector=None,
 
 def run_exhaustive(clf, data, outcomes, n_splits=30, normalize=True):
     """
-    Define cross-validation folds, performs sequential feature
+    Define cross-validation folds, performs exhaustive feature
     selection on training data, and tests against validation fold.
 
     Parameters:
@@ -90,7 +87,7 @@ def run_exhaustive(clf, data, outcomes, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): average auc-roc score across folds
@@ -130,7 +127,7 @@ def run_sequential(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): average auc-roc score across folds
@@ -170,7 +167,7 @@ def run_k_best(clf, data, outcomes, n_feats, n_splits=30, normalize=True):
         outcomes (pandas.Series): data classes
         n_feats (int): number of features to select
         n_splits (int): cross-validation splits to use
-        normalize (boolean): feature normalization via z-score (default: True)  
+        normalize (boolean): feature normalization via z-score (default: True)
 
     Returns:
         auc_score (float): average auc-roc score across folds

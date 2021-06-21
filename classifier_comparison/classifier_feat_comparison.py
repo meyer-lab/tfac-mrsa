@@ -1,5 +1,5 @@
 """
-Evaluates classifier performance for various feature set sizes. This code can 
+Evaluates classifier performance for various feature set sizes. This code can
 be called via the command line:
 
 python classifier_feat_comparison.py -c [cytokine.pkl] -g [genes.pkl] -p [parafac2.pkl] -l [labels.pkl]

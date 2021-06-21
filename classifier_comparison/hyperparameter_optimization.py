@@ -1,6 +1,6 @@
 """
 Runs hyperparameter optimization for each of the classifiers specified in the
-CLASSIFIERS dict below. This code can be called via the command line as 
+CLASSIFIERS dict below. This code can be called via the command line as
 follows:
 
 python hyperparamter_optimization.py -d [path/to/data.pkl] -l [path/to/label.pkl] -m [number of evals]
@@ -32,7 +32,7 @@ warnings.filterwarnings('ignore', category=ConvergenceWarning)
 
 CLASSIFIERS = {
     'Logistic Regression': {
-        'model': LogisticRegression, 
+        'model': LogisticRegression,
         'file': 'lr_hp_trials_large.pkl',
         'space': {
             'C': hp.uniform('C', 1E-4, 1E4),
@@ -40,7 +40,7 @@ CLASSIFIERS = {
         },
     },
     'SVC_rbf': {
-        'model': SVC, 
+        'model': SVC,
         'file': 'SVC_rbf_hp_trials_large.pkl',
         'space': {
             'C': hp.uniform('C', 1E-4, 1E4),
@@ -51,7 +51,7 @@ CLASSIFIERS = {
         },
     },
     'Gaussian Naive Bayes': {
-        'model': GaussianNB, 
+        'model': GaussianNB,
         'file': 'gnb_hp_trials_large.pkl',
         'space': {
             'var_smoothing': hp.uniform('var_smoothing', 1E-4, 1E4),
@@ -132,7 +132,7 @@ def main(parser):
 
         # Dumps trial object to file
         with open(file_name, 'wb') as handle:
-            pickle.dump(trials, handle, protocol=pickle.HIGHEST_PROTOCOL)        
+            pickle.dump(trials, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def _read_args():
@@ -158,23 +158,23 @@ def _read_args():
     )
     parser.add_argument(
         '-e',
-        '--exhaustive', 
+        '--exhaustive',
         dest='exhaustive',
         action='store_true',
         help='Enables exhaustive feature search',
     )
     parser.add_argument(
         '-l',
-        '--labels', 
+        '--labels',
         dest='labels',
-        type=str, 
+        type=str,
         help='Label pickle file path',
     )
     parser.add_argument(
         '-m',
-        '--max_evals', 
+        '--max_evals',
         dest='max_evals',
-        type=int, 
+        type=int,
         help='Maximum hyperopt evals per classifier',
     )
 

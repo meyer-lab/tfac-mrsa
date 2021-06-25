@@ -1,3 +1,4 @@
+from dataImport import full_import, form_missing_tensor
 import argparse
 import os
 import sys
@@ -12,7 +13,6 @@ from tqdm import tqdm
 
 sys.path.append(os.path.join(sys.path[0], '..', 'tfac'))
 
-from dataImport import full_import, form_missing_tensor
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
@@ -31,7 +31,7 @@ def main(parser):
     _, _, _, outcomes = form_missing_tensor()
     outcomes = outcomes.T
     outcomes = outcomes.loc[outcomes['status'] != 'Unknown']
-    
+
     # Remove samples with unknown outcomes
     samples = list(set(outcomes.index) & set(data.index))
     outcomes = outcomes.loc[samples, :]
@@ -85,12 +85,12 @@ def main(parser):
         # Applies trained model to every other cohort
         for comp in range(1, 4):
             if comp == 2 and parser.rna:
-                continue 
+                continue
 
             test_data, test_labels = get_data_labels(data, outcomes, comp)
             score = clf.score(test_data, test_labels)
             comp = f'Cohort_{comp}'
-            
+
             # If test and train cohorts are the same, instead returns
             # cross-validation result
             if comp == cohort:
@@ -151,7 +151,7 @@ def _read_args():
     )
     parser.add_argument(
         '-s',
-        '--splits', 
+        '--splits',
         dest='splits',
         type=int,
         default=10,
@@ -160,7 +160,7 @@ def _read_args():
     parser.add_argument(
         '-c',
         dest='c',
-        type=int, 
+        type=int,
         default=100,
         help='Number of Cs (regularization constants) to test',
     )

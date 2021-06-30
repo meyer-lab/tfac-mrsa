@@ -95,14 +95,17 @@ def buildTensors(pIn, tensor, matrix, r, cost=False):
     B = np.linalg.lstsq(kr[selPat, :], unfold[:, selPat].T, rcond=None)[0].T
     tFac = tl.cp_tensor.CPTensor((None, [A, B, C]))
     tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPatM, :], matrix[selPatM, :], rcond=None)[0].T
-    return tFac
+    tFac.R2X = calcR2X(tFac, tensor, matrix)
+    tFac = cp_normalize(tFac)
+    print(tFac.R2X)
+    return reorient_factors(tFac)
 
 
 def cost(pIn, tOrig, mOrig, r):
     return buildTensors(pIn, tOrig, mOrig, r, cost=True)
 
 
-def perform_CMTF(tOrig, mOrig, r=10):
+def perform_CMTF(tOrig, mOrig, r=11):
     """ Perform CMTF decomposition by direct optimization. """
     tOrig = np.array(tOrig, dtype=float, order='C')
     mOrig = np.array(mOrig, dtype=float, order='C')
@@ -118,11 +121,10 @@ def perform_CMTF(tOrig, mOrig, r=10):
 
     if os.path.exists(filename):
         with open(filename, "rb") as p:
-            return pickle.load(p)
+            xx = pickle.load(p)
+            return buildTensors(xx, tOrig, mOrig, r)
 
-    tFac = initialize_cp(np.nan_to_num(tOrig), r)
-    tFac.factors[2] = np.ones_like(tFac.factors[2])
-    x0 = cp_to_vec(tFac)
+    x0 = np.random.randn((tOrig.shape[0] + tOrig.shape[2]) * r)
 
     gF = value_and_grad(cost, 0)
 
@@ -138,14 +140,7 @@ def perform_CMTF(tOrig, mOrig, r=10):
     res = minimize(gradF, res.x, method="trust-constr", jac=True, hessp=hvp, options={"verbose": 2, "maxiter": 200})
     tl.set_backend('numpy')
 
-    tFac = buildTensors(res.x, tOrig, mOrig, r)
-    tFac.R2X = calcR2X(tFac, tOrig, mOrig)
-    print(tFac.R2X)
-
-    tFac = cp_normalize(tFac)
-    tFac = reorient_factors(tFac)
-
     with open(filename, "wb") as p:
-        pickle.dump(tFac, p)
+        pickle.dump(res.x, p)
 
-    return tFac
+    return buildTensors(res.x, tOrig, mOrig, r)

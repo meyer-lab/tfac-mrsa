@@ -1,22 +1,14 @@
 """
 Tensor decomposition methods
 """
-import os
-from os.path import join, dirname
-import pickle
-import hashlib
+
 import numpy as np
-import jax.numpy as jnp
-from jax import value_and_grad, grad
-from jax.config import config
-from scipy.optimize import minimize
 import tensorly as tl
+from tensorly.tenalg import khatri_rao
 from tensorly.decomposition._cp import initialize_cp
 
 
 tl.set_backend('numpy')
-path_here = dirname(dirname(__file__))
-config.update("jax_enable_x64", True)
 
 
 def buildMat(tFac):
@@ -71,76 +63,100 @@ def cp_normalize(tFac):
     return tFac
 
 
-def cp_to_vec(tFac):
-    return np.concatenate([tFac.factors[i].flatten() for i in [0, 2]])
+def censored_lstsq(A: np.ndarray, B: np.ndarray, uniqueInfo) -> np.ndarray:
+    """Solves least squares problem subject to missing data.
+    Note: uses a for loop over the missing patterns of B, leading to a
+    slower but more numerically stable algorithm
+    Args
+    ----
+    A (ndarray) : m x r matrix
+    B (ndarray) : m x n matrix
+    Returns
+    -------
+    X (ndarray) : r x n matrix that minimizes norm(M*(AX - B))
+    """
+    X = np.empty((A.shape[1], B.shape[1]))
+    # Missingness patterns
+    unique, uIDX = uniqueInfo
+
+    for i in range(unique.shape[1]):
+        uI = uIDX == i
+        uu = np.squeeze(unique[:, i])
+
+        Bx = B[uu, :]
+        X[:, uI] = np.linalg.lstsq(A[uu, :], Bx[:, uI], rcond=None)[0]
+    return X.T
 
 
-def buildTensors(pIn, tensor, matrix, r, cost=False):
-    """ Use parameter vector to build kruskal tensors. """
-    assert tensor.shape[0] == matrix.shape[0]
-    nN = np.cumsum(np.array([tensor.shape[0], tensor.shape[2]]) * r)
-    A = jnp.reshape(pIn[:nN[0]], (tensor.shape[0], r))
-    C = jnp.reshape(pIn[nN[0]:nN[1]], (tensor.shape[2], r))
+def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
+    r"""Initialize factors used in `parafac`.
+    Parameters
+    ----------
+    tensor : ndarray
+    rank : int
+    Returns
+    -------
+    factors : CPTensor
+        An initial cp tensor.
+    """
+    factors = [np.ones((tensor.shape[i], rank)) for i in range(tensor.ndim)]
 
-    kr = tl.tenalg.khatri_rao([A, C])
+    # SVD init mode 1
     unfold = tl.unfold(tensor, 1)
-    selPat = np.all(np.isfinite(unfold), axis=0)
-    selPatM = np.all(np.isfinite(matrix), axis=1)
 
-    if cost:
-        cost = jnp.sum(jnp.linalg.lstsq(kr[selPat, :], unfold[:, selPat].T, rcond=None)[1])
-        cost += jnp.sum(jnp.linalg.lstsq(A[selPatM, :], matrix[selPatM, :], rcond=None)[1])
-        return cost
+    # Remove completely missing columns
+    unfold = unfold[:, np.all(np.isfinite(unfold), axis=0)]
+    U = np.linalg.svd(unfold)[0]
+    factors[1] = U[:, :rank]
 
-    B = np.linalg.lstsq(kr[selPat, :], unfold[:, selPat].T, rcond=None)[0].T
-    tFac = tl.cp_tensor.CPTensor((None, [A, B, C]))
-    tFac.mFactor = np.linalg.lstsq(tFac.factors[0][selPatM, :], matrix[selPatM, :], rcond=None)[0].T
-    tFac.R2X = calcR2X(tFac, tensor, matrix)
+    cp_init = tl.cp_tensor.CPTensor((None, factors))
+
+    # Solve for the mFactor
+    U = np.linalg.svd(matrix[np.all(np.isfinite(matrix), axis=1), :].T)[0]
+    cp_init.mFactor = U[:, :rank]
+
+    return cp_init
+
+
+def perform_CMTF(tOrig, mOrig, r=6):
+    """ Perform CMTF decomposition. """
+    tFac = initialize_cp(tOrig, mOrig, r)
+
+    # Pre-unfold
+    unfolded = [tl.unfold(tOrig, i) for i in range(tOrig.ndim)]
+
+    uniqueInfoM = np.unique(np.isfinite(mOrig), axis=1, return_inverse=True)
+    unfolded[0] = np.hstack((unfolded[0], mOrig))
+
+    R2X_last = -np.inf
+    tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+
+    # Precalculate the missingness patterns
+    uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
+
+    for ii in range(2000):
+        # PARAFAC on all modes
+        for m in range(len(tFac.factors)):
+            kr = khatri_rao(tFac.factors, skip_matrix=m)
+            if m == 0:
+                kr = np.vstack((kr, tFac.mFactor))
+
+            tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
+
+        # Solve for the glycan matrix fit
+        tFac.mFactor = censored_lstsq(tFac.factors[0], mOrig, uniqueInfoM)
+
+        if ii % 2 == 0:
+            R2X_last = tFac.R2X
+            tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+            assert tFac.R2X > 0.0
+
+        if tFac.R2X - R2X_last < 1e-3:
+            break
+
     tFac = cp_normalize(tFac)
+    tFac = reorient_factors(tFac)
+
     print(tFac.R2X)
-    return reorient_factors(tFac)
 
-
-def cost(pIn, tOrig, mOrig, r):
-    return buildTensors(pIn, tOrig, mOrig, r, cost=True)
-
-
-def perform_CMTF(tOrig, mOrig, r=11):
-    """ Perform CMTF decomposition by direct optimization. """
-    tOrig = np.array(tOrig, dtype=float, order='C')
-    mOrig = np.array(mOrig, dtype=float, order='C')
-    hashh = hashlib.sha1(tOrig)
-    hashh.update(mOrig)
-    hashval = hashh.hexdigest()
-
-    # For some reason we're getting a different hash on the Github runner
-    if hashval == "cd8b951a2c166453c8d2af30c42622dd35e28a09":
-        hashval = "bacda09be63893b7c80cf231924021dadf4f9afc"
-
-    filename = join(path_here, "tfac/data/" + hashval + "_" + str(r) + ".pkl")
-
-    if os.path.exists(filename):
-        with open(filename, "rb") as p:
-            xx = pickle.load(p)
-            return buildTensors(xx, tOrig, mOrig, r)
-
-    x0 = np.random.randn((tOrig.shape[0] + tOrig.shape[2]) * r)
-
-    gF = value_and_grad(cost, 0)
-
-    def gradF(x):
-        a, b = gF(x, tOrig, mOrig, r)
-        return a, np.array(b)
-
-    def hvp(x, v):
-        return grad(lambda x: jnp.vdot(gF(x, tOrig, mOrig, r)[1], v))(x)
-
-    tl.set_backend('jax')
-    res = minimize(gradF, x0, method="L-BFGS-B", jac=True)
-    res = minimize(gradF, res.x, method="trust-constr", jac=True, hessp=hvp, options={"verbose": 2, "maxiter": 200})
-    tl.set_backend('numpy')
-
-    with open(filename, "wb") as p:
-        pickle.dump(res.x, p)
-
-    return buildTensors(res.x, tOrig, mOrig, r)
+    return tFac

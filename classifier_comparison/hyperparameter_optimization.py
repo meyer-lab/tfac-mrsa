@@ -5,6 +5,18 @@ follows:
 
 python hyperparamter_optimization.py -d [path/to/data.pkl] -l [path/to/label.pkl] -m [number of evals]
 """
+from dataImport import form_missing_tensor
+from classifier_feat_comparison import run_sequential, run_exhaustive
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import SelectKBest, SequentialFeatureSelector
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+import numpy as np
+from hyperopt.pyll import scope
+from hyperopt import fmin, hp, tpe, Trials
 import argparse
 from functools import partial
 import pickle

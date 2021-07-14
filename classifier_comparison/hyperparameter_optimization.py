@@ -105,7 +105,7 @@ def obj_func(space, clf_name, tensor, matrix, labels, selector):
     # Hyperopt will sometimes suggest impossible parameters, so we return 1
     # to encourage it in the opposite direction
     for key in space.keys():
-        if (not isinstance(space[key], str)) and space[key] < 1E-8:
+        if (not isinstance(space[key], str)) and space[key] < 1E-13:
             return 1
 
     # Initialize model

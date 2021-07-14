@@ -26,7 +26,6 @@ def fig_2_setup():
     R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
 
     # Heatmaps
-    # TODO: Change once determined by SVC
     factors = perform_CMTF(tensor, matrix)
 
     colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]

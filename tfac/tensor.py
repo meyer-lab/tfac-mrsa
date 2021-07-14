@@ -108,8 +108,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     # Remove completely missing columns
     unfold = unfold[:, np.all(np.isfinite(unfold), axis=0)]
     U, S, _ = np.linalg.svd(unfold)
-    U = U @ np.diag(S)
-    factors[1] = U[:, :rank]
+    factors[1] = (U @ np.diag(S))[:, :rank]
 
     cp_init = tl.cp_tensor.CPTensor((None, factors))
 
@@ -127,7 +126,7 @@ def perform_CMTF(tOrig, mOrig, r=2):
     # Pre-unfold
     unfolded = [tl.unfold(tOrig, i) for i in range(tOrig.ndim)]
 
-    uniqueInfoM = np.unique(np.isfinite(mOrig), axis=1, return_inverse=True)
+    missingM = np.all(np.isfinite(mOrig), axis=1)
     unfolded[0] = np.hstack((unfolded[0], mOrig))
 
     R2X_last = -np.inf
@@ -146,7 +145,7 @@ def perform_CMTF(tOrig, mOrig, r=2):
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
         # Solve for the glycan matrix fit
-        tFac.mFactor = censored_lstsq(tFac.factors[0], mOrig, uniqueInfoM)
+        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None)[0].T
 
         if ii % 2 == 0:
             R2X_last = tFac.R2X

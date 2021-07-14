@@ -3,6 +3,7 @@ Tensor decomposition methods
 """
 
 import numpy as np
+from scipy.sparse.linalg import svds
 import tensorly as tl
 from tensorly.tenalg import khatri_rao
 from tensorly.decomposition._cp import initialize_cp
@@ -106,14 +107,14 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
 
     # Remove completely missing columns
     unfold = unfold[:, np.all(np.isfinite(unfold), axis=0)]
-    U = np.linalg.svd(unfold)[0]
-    factors[1] = U[:, :rank]
+    U, S, _ = np.linalg.svd(unfold)
+    factors[1] = (U @ np.diag(S))[:, :rank]
 
     cp_init = tl.cp_tensor.CPTensor((None, factors))
 
     # Solve for the mFactor
-    U = np.linalg.svd(matrix[np.all(np.isfinite(matrix), axis=1), :].T)[0]
-    cp_init.mFactor = U[:, :rank]
+    cp_init.mFactor, S, _ = svds(matrix[np.all(np.isfinite(matrix), axis=1), :].T, k=rank)
+    cp_init.mFactor = cp_init.mFactor @ np.diag(S)
 
     return cp_init
 
@@ -125,7 +126,7 @@ def perform_CMTF(tOrig, mOrig, r=6):
     # Pre-unfold
     unfolded = [tl.unfold(tOrig, i) for i in range(tOrig.ndim)]
 
-    uniqueInfoM = np.unique(np.isfinite(mOrig), axis=1, return_inverse=True)
+    missingM = np.all(np.isfinite(mOrig), axis=1)
     unfolded[0] = np.hstack((unfolded[0], mOrig))
 
     R2X_last = -np.inf
@@ -144,7 +145,7 @@ def perform_CMTF(tOrig, mOrig, r=6):
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
         # Solve for the glycan matrix fit
-        tFac.mFactor = censored_lstsq(tFac.factors[0], mOrig, uniqueInfoM)
+        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None)[0].T
 
         if ii % 2 == 0:
             R2X_last = tFac.R2X

@@ -95,20 +95,33 @@ def obj_func(space, clf_name, data, labels, exhaustive):
 
 def main(parser):
     # Reads parser arguments
-    data = pd.read_pickle(parser.data)
-    labels = pd.read_pickle(parser.labels)
     exhaustive = parser.exhaustive
     max_evals = parser.max_evals
 
-    # Reduces data to only 40-factor decomposition
-    data = data[0].factors[0]
-    data = pd.DataFrame(data)
+    # Imports data
+    slices, _, _, pat_info = form_missing_tensor()
+    pat_info = pat_info.T.reset_index()
 
-    # Casts labels to int and removes samples with unknown outcomes
-    labels = labels.reset_index(drop=True)
-    labels = labels.loc[labels != 'Unknown']
-    labels = labels.astype(int)
-    data = data.loc[labels.index, :]
+    tensor = np.stack(
+            (slices[0], slices[1])
+        ).T
+    matrix = slices[2].T
+    matrix = matrix[pat_info.index, :]
+    tensor = tensor[pat_info.index, :, :]
+    pat_info = pat_info.reset_index(drop=True)
+
+    if parser.drop:
+        cohorts = pat_info.loc[:, 'cohort']
+        cohorts = cohorts.loc[cohorts != 2]
+
+        tensor = np.stack(
+            (slices[0][:, cohorts.index], slices[1][:, cohorts.index])
+        ).T
+        matrix = slices[2][:, cohorts.index].T
+        pat_info = pat_info.loc[cohorts.index]
+
+    pat_info = pat_info.reset_index(drop=True)
+    labels = pat_info.loc[:, 'status']
 
     # Runs for each classifier
     for clf_name in CLASSIFIERS.keys():
@@ -150,10 +163,10 @@ def _read_args():
     )
     parser.add_argument(
         '-d',
-        '--data',
-        dest='data',
-        type=str,
-        help='Data pickle file path',
+        '--drop',
+        dest='drop',
+        action='store_true',
+        help='Pass to remove cohort 2 from analyses',
     )
     parser.add_argument(
         '-e',
@@ -161,13 +174,6 @@ def _read_args():
         dest='exhaustive',
         action='store_true',
         help='Enables exhaustive feature search',
-    )
-    parser.add_argument(
-        '-l',
-        '--labels',
-        dest='labels',
-        type=str,
-        help='Label pickle file path',
     )
     parser.add_argument(
         '-m',

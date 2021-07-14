@@ -3,6 +3,7 @@ Tensor decomposition methods
 """
 
 import numpy as np
+from scipy.sparse.linalg import svds
 import tensorly as tl
 from tensorly.tenalg import khatri_rao
 from tensorly.decomposition._cp import initialize_cp
@@ -37,16 +38,16 @@ def calcR2X(tFac, tIn=None, mIn=None):
 
 def reorient_factors(tFac):
     """ This function ensures that factors are negative on at most one direction. """
-    # Flip the subjects to be positive
-    subjMeans = np.sign(np.mean(tFac.factors[0], axis=0))
-    tFac.factors[0] *= subjMeans[np.newaxis, :]
-    tFac.factors[1] *= subjMeans[np.newaxis, :]
-    tFac.mFactor *= subjMeans[np.newaxis, :]
+    # Flip the types to be positive
+    tMeans = np.sign(np.mean(tFac.factors[2], axis=0))
+    tFac.factors[1] *= tMeans[np.newaxis, :]
+    tFac.factors[2] *= tMeans[np.newaxis, :]
 
-    # Flip the receptors to be positive
+    # Flip the cytokines to be positive
     rMeans = np.sign(np.mean(tFac.factors[1], axis=0))
+    tFac.factors[0] *= rMeans[np.newaxis, :]
     tFac.factors[1] *= rMeans[np.newaxis, :]
-    tFac.factors[2] *= rMeans[np.newaxis, :]
+    tFac.mFactor *= rMeans[np.newaxis, :]
     return tFac
 
 
@@ -106,19 +107,20 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
 
     # Remove completely missing columns
     unfold = unfold[:, np.all(np.isfinite(unfold), axis=0)]
-    U = np.linalg.svd(unfold)[0]
+    U, S, _ = np.linalg.svd(unfold)
+    U = U @ np.diag(S)
     factors[1] = U[:, :rank]
 
     cp_init = tl.cp_tensor.CPTensor((None, factors))
 
     # Solve for the mFactor
-    U = np.linalg.svd(matrix[np.all(np.isfinite(matrix), axis=1), :].T)[0]
-    cp_init.mFactor = U[:, :rank]
+    cp_init.mFactor, S, _ = svds(matrix[np.all(np.isfinite(matrix), axis=1), :].T, k=rank)
+    cp_init.mFactor = cp_init.mFactor @ np.diag(S)
 
     return cp_init
 
 
-def perform_CMTF(tOrig, mOrig, r=6):
+def perform_CMTF(tOrig, mOrig, r=2):
     """ Perform CMTF decomposition. """
     tFac = initialize_cp(tOrig, mOrig, r)
 
@@ -151,7 +153,7 @@ def perform_CMTF(tOrig, mOrig, r=6):
             tFac.R2X = calcR2X(tFac, tOrig, mOrig)
             assert tFac.R2X > 0.0
 
-        if tFac.R2X - R2X_last < 1e-3:
+        if tFac.R2X - R2X_last < 1e-4:
             break
 
     tFac = cp_normalize(tFac)

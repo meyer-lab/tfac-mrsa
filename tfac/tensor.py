@@ -2,6 +2,7 @@
 Tensor decomposition methods
 """
 
+from copy import deepcopy
 import numpy as np
 from scipy.sparse.linalg import svds
 import tensorly as tl
@@ -62,6 +63,31 @@ def cp_normalize(tFac):
         tFac.factors[i] /= scales
 
     return tFac
+
+
+def sort_factors(tFac):
+    """ Sort the components from the largest variance to the smallest. """
+    tensor = deepcopy(tFac)
+
+    # Variance separated by component
+    norm = np.copy(tFac.weights)
+    for factor in tFac.factors:
+        norm *= np.sum(np.square(factor), axis=0)
+
+    # Add the variance of the matrix
+    if hasattr(tFac, 'mFactor'):
+        norm += np.sum(np.square(tFac.factors[0]), axis=0) * np.sum(np.square(tFac.mFactor), axis=0)
+
+    order = np.flip(np.argsort(norm))
+    tensor.weights = tensor.weights[order]
+    tensor.factors = [fac[:, order] for fac in tensor.factors]
+    np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor))
+
+    if hasattr(tFac, 'mFactor'):
+        tensor.mFactor = tensor.mFactor[:, order]
+        np.testing.assert_allclose(buildMat(tFac), buildMat(tensor))
+
+    return tensor
 
 
 def censored_lstsq(A: np.ndarray, B: np.ndarray, uniqueInfo) -> np.ndarray:
@@ -157,6 +183,7 @@ def perform_CMTF(tOrig, mOrig, r=6):
 
     tFac = cp_normalize(tFac)
     tFac = reorient_factors(tFac)
+    tFac = sort_factors(tFac)
 
     print(tFac.R2X)
 

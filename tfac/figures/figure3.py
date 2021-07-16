@@ -19,10 +19,12 @@ def serum_vs_plasma_setup():
         pears.append([cytokines[i], pearsonr(test.iloc[i, :].to_numpy(dtype=float), test.iloc[i + 38, :].to_numpy(dtype=float))[0]])
     pears = pd.DataFrame(pears).sort_values(1)
 
-    ser = pd.DataFrame(tensor_slices[0], index=cytokines, columns=patInfo.columns).iloc[:, :148].dropna(axis=1).T
-    ser["Outcome"] = patInfo.loc["status"]
-    plas = pd.DataFrame(tensor_slices[1], index=cytokines, columns=patInfo.columns).iloc[:, :148].dropna(axis=1).T
-    plas["Outcome"] = patInfo.loc["status"]
+    ser = pd.DataFrame(tensor_slices[0], index=cytokines, columns=patInfo.columns).T
+    ser["Outcome"] = patInfo.T["status"]
+    ser = ser[ser["Outcome"].isin([0, 1])].dropna()
+    plas = pd.DataFrame(tensor_slices[1], index=cytokines, columns=patInfo.columns).T
+    plas["Outcome"] = patInfo.T["status"]
+    plas = plas[plas["Outcome"].isin([0, 1])].dropna()
     plas["Outcome"] += 2
     cyto = pd.concat([ser, plas])
     out0 = cyto[cyto["Outcome"] == 0]

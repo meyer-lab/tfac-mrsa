@@ -39,16 +39,16 @@ def calcR2X(tFac, tIn=None, mIn=None):
 
 def reorient_factors(tFac):
     """ This function ensures that factors are negative on at most one direction. """
-    # Flip the subjects to be positive
-    subjMeans = np.sign(np.mean(tFac.factors[0], axis=0))
-    tFac.factors[0] *= subjMeans[np.newaxis, :]
-    tFac.factors[1] *= subjMeans[np.newaxis, :]
-    tFac.mFactor *= subjMeans[np.newaxis, :]
+    # Flip the types to be positive
+    tMeans = np.sign(np.mean(tFac.factors[2], axis=0))
+    tFac.factors[1] *= tMeans[np.newaxis, :]
+    tFac.factors[2] *= tMeans[np.newaxis, :]
 
-    # Flip the receptors to be positive
+    # Flip the cytokines to be positive
     rMeans = np.sign(np.mean(tFac.factors[1], axis=0))
+    tFac.factors[0] *= rMeans[np.newaxis, :]
     tFac.factors[1] *= rMeans[np.newaxis, :]
-    tFac.factors[2] *= rMeans[np.newaxis, :]
+    tFac.mFactor *= rMeans[np.newaxis, :]
     return tFac
 
 
@@ -145,7 +145,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     return cp_init
 
 
-def perform_CMTF(tOrig, mOrig, r=6):
+def perform_CMTF(tOrig, mOrig, r=2):
     """ Perform CMTF decomposition. """
     tFac = initialize_cp(tOrig, mOrig, r)
 
@@ -178,7 +178,7 @@ def perform_CMTF(tOrig, mOrig, r=6):
             tFac.R2X = calcR2X(tFac, tOrig, mOrig)
             assert tFac.R2X > 0.0
 
-        if tFac.R2X - R2X_last < 1e-3:
+        if tFac.R2X - R2X_last < 1e-4:
             break
 
     tFac = cp_normalize(tFac)

@@ -46,9 +46,12 @@ def form_missing_tensor(variance1: float = 1.0):
             temp.loc["type"][col] += "1Plasma"
         if np.isfinite(temp[col][76]):
             temp.loc["type"][col] += "2RNAseq"
-    df = get_C1C2_patient_info().set_index("sid").T.drop("stype")
-    df_c3_info = get_C3_patient_info().set_index("sid").T
-    patInfo = pd.concat([df, df_c3_info], axis=1)
+
+    c1_c2_info = get_C1C2_patient_info().set_index("sid").T.drop("stype")
+    c3_info = get_C3_patient_info().set_index("sid").T
+    c1_info = c1_c2_info.loc[:, c1_c2_info.loc['cohort'] != 2]
+
+    patInfo = pd.concat([c1_info, c3_info], axis=1)
     temp = temp.append(patInfo).sort_values(by=["cohort", "type", "status"], axis=1)
     patInfo = temp.loc[["type", "status", "cohort"]]
     # Assign data to matrices
@@ -74,8 +77,6 @@ def full_import():
     # Import cytokines
     dfCyto_c1 = import_C1_cyto()
     dfCyto_c1 = dfCyto_c1.set_index("sid")
-    dfCyto_c2 = import_C2_cyto()
-    dfCyto_c2 = dfCyto_c2.set_index("sid")
     dfCyto_c3_serum, dfCyto_c3_plasma = import_C3_cyto()
     # Import RNAseq
     dfExp_c1 = importCohort1Expression()
@@ -83,19 +84,17 @@ def full_import():
 
     # Modify cytokines
     dfCyto_c1.columns = dfCyto_c3_serum.columns
-    dfCyto_c2.columns = dfCyto_c3_serum.columns
     # Fix limit of detection error - bring to next lowest value
     dfCyto_c1["IL-12(p70)"] = [val * 123000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
     # normalize separately and extract cytokines
     # Make initial data slices
     patInfo = get_C1C2_patient_info()
     dfCyto_c1["type"] = patInfo[patInfo["cohort"] == 1].stype.to_list()
-    dfCyto_c2["type"] = patInfo[patInfo["cohort"] == 2].stype.to_list()
     dfCyto_serum = pd.concat(
-        [dfCyto_c1[dfCyto_c1["type"] == "Serum"].T.drop("type"), dfCyto_c2[dfCyto_c2["type"] == "Serum"].T.drop("type"), dfCyto_c3_serum.T], axis=1
+        [dfCyto_c1[dfCyto_c1["type"] == "Serum"].T.drop("type"), dfCyto_c3_serum.T], axis=1
     ).astype('float')
     dfCyto_plasma = pd.concat(
-        [dfCyto_c1[dfCyto_c1["type"] == "Plasma"].T.drop("type"), dfCyto_c2[dfCyto_c2["type"] == "Plasma"].T.drop("type"), dfCyto_c3_plasma.T], axis=1
+        [dfCyto_c1[dfCyto_c1["type"] == "Plasma"].T.drop("type"), dfCyto_c3_plasma.T], axis=1
     ).astype('float')
     cyto_list = [dfCyto_serum, dfCyto_plasma]
     for idx, df in enumerate(cyto_list):
@@ -131,13 +130,6 @@ def import_C1_cyto():
     coh1 = coh1[coh1["cohort"] == 1]
     coh1 = pd.concat([coh1.iloc[:, 3], coh1.iloc[:, -38:]], axis=1).sort_values(by="sid")
     return coh1
-
-
-def import_C2_cyto():
-    coh2 = pd.read_csv("tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv")
-    coh2 = coh2[coh2["cohort"] == 2]
-    coh2 = pd.concat([coh2.iloc[:, 3], coh2.iloc[:, -38:]], axis=1).sort_values(by="sid")
-    return coh2
 
 
 def import_C3_cyto():

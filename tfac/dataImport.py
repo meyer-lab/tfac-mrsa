@@ -87,7 +87,7 @@ def full_import():
         df -= df.mean(axis=0)
         df = df.sub(df.mean(axis=1), axis=0)
         cyto_list[idx] = df
-    cytokines = dfCyto_serum.index.to_list()
+    cytokines = dfCyto_serum.columns.to_list()
 
     # Removes duplicate genes from cohort 1 data. There are only a few (approx. 10) out of ~50,000, 
     # they are possibly different isoforms. The ones similar to cohort 3 are kept.

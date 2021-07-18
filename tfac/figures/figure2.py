@@ -14,8 +14,8 @@ def fig_2_setup():
     """Import and organize R2X and heatmaps"""
     # R2X
     tensor_slices, cytokines, _, patInfo = form_missing_tensor()
-    tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
-    matrix = tensor_slices[2].T
+    tensor = np.stack((tensor_slices[0], tensor_slices[1]), axis=-1)
+    matrix = tensor_slices[2]
     components = 12
     AllR2X = []
     # Run factorization at each component number up to chosen limit

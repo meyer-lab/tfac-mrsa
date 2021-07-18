@@ -66,7 +66,7 @@ def form_missing_tensor(variance1: float = 1.0):
     expVar = np.linalg.norm(np.nan_to_num(expNumpy))
     expNumpy /= expVar * variance1
     tensor_slices = [serumNumpy.T, plasmaNumpy.T, expNumpy.T]
-    return tensor_slices, cytokines, geneIDs, patInfo
+    return tensor_slices, cytokines, geneIDs, patInfo.T
 
 
 def full_import():

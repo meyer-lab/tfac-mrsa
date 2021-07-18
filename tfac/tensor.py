@@ -158,7 +158,7 @@ def perform_CMTF(tOrig, mOrig, r=5):
     # Precalculate the missingness patterns
     uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
 
-    for ii in range(2000):
+    for ii in range(200):
         # Solve for the glycan matrix fit
         tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None)[0].T
 
@@ -173,8 +173,7 @@ def perform_CMTF(tOrig, mOrig, r=5):
         R2X_last = tFac.R2X
         tFac.R2X = calcR2X(tFac, tOrig, mOrig)
 
-        if tFac.R2X - R2X_last < 1e-4:
-            print(ii)
+        if tFac.R2X - R2X_last < 1e-5:
             break
 
     tFac = cp_normalize(tFac)

@@ -128,24 +128,22 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     """
     factors = [np.ones((tensor.shape[i], rank)) for i in range(tensor.ndim)]
 
-    # SVD init mode 1
-    unfold = tl.unfold(tensor, 1)
+    # SVD init mode 0
+    unfold = tl.unfold(tensor, 0)
+    unfold = np.hstack((unfold, matrix))
+    nans = np.isnan(unfold)
+    unfold = np.nan_to_num(unfold)
 
-    # Remove completely missing columns
-    unfold = unfold[:, np.all(np.isfinite(unfold), axis=0)]
-    U, S, _ = np.linalg.svd(unfold)
-    factors[1] = (U @ np.diag(S))[:, :rank]
+    for _ in range(100):
+        u, s, vt = svds(unfold, k=rank)
+        unfold[nans] = (u @ np.diag(s) @ vt)[nans]
 
-    cp_init = tl.cp_tensor.CPTensor((None, factors))
+    factors[0] = u
 
-    # Solve for the mFactor
-    cp_init.mFactor, S, _ = svds(matrix[np.all(np.isfinite(matrix), axis=1), :].T, k=rank)
-    cp_init.mFactor = cp_init.mFactor @ np.diag(S)
-
-    return cp_init
+    return tl.cp_tensor.CPTensor((None, factors))
 
 
-def perform_CMTF(tOrig, mOrig, r=2):
+def perform_CMTF(tOrig, mOrig, r=5):
     """ Perform CMTF decomposition. """
     tFac = initialize_cp(tOrig, mOrig, r)
 
@@ -155,30 +153,28 @@ def perform_CMTF(tOrig, mOrig, r=2):
     missingM = np.all(np.isfinite(mOrig), axis=1)
     unfolded[0] = np.hstack((unfolded[0], mOrig))
 
-    R2X_last = -np.inf
-    tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+    tFac.R2X = -np.inf
 
     # Precalculate the missingness patterns
     uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
 
     for ii in range(2000):
+        # Solve for the glycan matrix fit
+        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None)[0].T
+
         # PARAFAC on all modes
-        for m in range(len(tFac.factors)):
+        for m in (1, 2, 0):
             kr = khatri_rao(tFac.factors, skip_matrix=m)
             if m == 0:
                 kr = np.vstack((kr, tFac.mFactor))
 
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
-        # Solve for the glycan matrix fit
-        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None)[0].T
-
-        if ii % 2 == 0:
-            R2X_last = tFac.R2X
-            tFac.R2X = calcR2X(tFac, tOrig, mOrig)
-            assert tFac.R2X > 0.0
+        R2X_last = tFac.R2X
+        tFac.R2X = calcR2X(tFac, tOrig, mOrig)
 
         if tFac.R2X - R2X_last < 1e-4:
+            print(ii)
             break
 
     tFac = cp_normalize(tFac)

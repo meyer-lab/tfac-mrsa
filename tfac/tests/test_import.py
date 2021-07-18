@@ -37,4 +37,4 @@ def test_formMissing():
 
     assert isinstance(geneIDs, list)
     assert tensor_slices[0].shape == tensor_slices[1].shape
-    assert tensor_slices[0].shape[0] == tensor_slices[2].shape[0]
+    assert tensor_slices[0].shape[1] == tensor_slices[2].shape[1]

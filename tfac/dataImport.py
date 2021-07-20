@@ -8,6 +8,32 @@ from sklearn.preprocessing import scale
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
+def get_scaled_tensors(scaling):
+    """
+    Creates scaled CMTF tensor and matrix.
+
+    Parameters:
+        scaling (float): Ratio of variance between RNA and cytokine
+            data
+    
+    Returns:
+        tensor (np.array): CMTF data tensor
+        matrix (np.array): CMTF data matrix
+        labels (pandas.Series): Patient outcome labels
+    """
+    slices, _, _, pat_info = form_missing_tensor(scaling)
+    pat_info = pat_info.T.reset_index()
+
+    tensor = np.stack(
+            (slices[0], slices[1])
+        ).T
+    matrix = slices[2].T
+    labels = pat_info.loc[:, 'status']
+    labels = labels.loc[labels != 'Unknown'].astype(int)
+    
+    return tensor, matrix, labels
+
+
 def import_deconv():
     """ Imports and returns cell deconvolution data. """
     return (

@@ -1,37 +1,84 @@
 """
-This creates Figure 4 - Cytokine weights.
+Runs hyperparameter optimization for a Logistic Regression model that 
+uses CMTF components to classify MRSA persistance. Generates a figure
+depicting model accuracy against scaling and component count.
 """
-import pandas as pd
-import seaborn as sns
-from .figureCommon import subplotLabel, getSetup
-from ..dataImport import form_MRSA_tensor
-from ..explore_factors import label_points
+import matplotlib.pyplot as plt
+import numpy as np
+
+from .figureCommon import getSetup
+from ..predict import run_scaling_analyses
+
+OPTIMAL_COMPONENTS = 9
+OPTIMAL_SCALING = 2 ** 5
 
 
-def fig_4_setup():
-    patient_matrices, _, _, _ = pickle.load(open("MRSA_pickle.p", "rb"))
-    patient_mats_applied = apply_parafac2_projections(patient_matrices)
-    _, cytos, _ = form_MRSA_tensor(1, 1)
-    cytoA = patient_mats_applied[1][1][0].T[8]
-    cytoB = patient_mats_applied[1][1][0].T[32]
-    cyto_df = pd.DataFrame([cytoA, cytoB, cytos]).T
-    cyto_df.index = cytos
-    cyto_df.columns = ["Component A", "Component B", "Cytokines"]
-    return cyto_df
+def plot_results(by_scaling, by_components):
+    """
+    Plots accuracy of model with regards to variance scaling and CMTF
+    component parameters.
+
+    Parameters:
+        by_scaling (pandas.Series): Model accuracy with regards to
+            variance scaling
+        by_components (pandas.Series): Model accuracy with regards to
+            number of CMTF components
+
+    Returns:
+        fig (matplotlib.pyplot.Figure): Figure containing plots of 
+            scaling and CMTF component analyses
+    """
+    # Sets up plotting space
+    fig_size = (8, 4)
+    layout = (1, 2)
+    axs, fig = getSetup(
+        fig_size,
+        layout
+    )
+
+    # Model Performance v. Scaling
+
+    axs[0].semilogx(by_scaling.index, by_scaling, base=2)
+    axs[0].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
+    axs[0].set_xlabel('Variance Scaling (RNA/Cytokine)', fontsize=12)
+    axs[0].set_ylim([0.5, 0.8])
+    axs[0].set_xticks(np.logspace(-7, 7, base=2, num=8))
+    axs[0].text(0.02, 0.9, 'A', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
+
+    # Best Scaling v. CMTF Components
+
+    axs[1].plot(by_components.index, by_components)
+    axs[1].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
+    axs[1].set_xlabel('CMTF Components', fontsize=12)
+    axs[1].set_xticks(by_components.index)
+    axs[1].set_ylim([0.5, 0.8])
+    axs[1].text(0.52, 0.9, 'B', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
+
+    return fig
 
 
 def makeFigure():
-    """ Get a list of the axis objects and create a figure. """
-    df = fig_4_setup()
-    # Get list of axis objects
-    ax, f = getSetup((15, 8), (1, 1))
-    b = sns.scatterplot(data=df, x="Component A", y="Component B", ax=ax[0])  # blue
-    b.set_xlabel("Component A", fontsize=20)
-    b.set_ylabel("Component B", fontsize=20)
-    b.tick_params(labelsize=14)
-    label_points(df, "Cytokines", ax[0])
+    """
+    Generates Figure 4.
 
-    # Add subplot labels
-    subplotLabel(ax)
+    Parameters:
+        None
 
-    return f
+    Returns:
+        fig (matplotlib.pyplot.Figure): Figure containing plots of 
+            scaling and CMTF component analyses    
+    """
+    cs = 10
+    l1_ratios = 5
+    splits = 10
+
+    by_scaling, by_components = run_scaling_analyses(
+        cs,
+        l1_ratios,
+        splits,
+        OPTIMAL_SCALING,
+        OPTIMAL_COMPONENTS
+    )
+    fig = plot_results(by_scaling, by_components)
+
+    return fig

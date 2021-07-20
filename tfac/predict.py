@@ -13,7 +13,7 @@ def run_model(model, data, labels):
     and labels.
 
     Parameters:
-        model (sklearn.linear_model.LogisticRegressionCV): 
+        model (sklearn.linear_model.LogisticRegressionCV):
             Logistic Regression model
         data (pandas.DataFrame): DataFrame of CMTF components
         labels (pandas.Series): Labels for provided data
@@ -38,12 +38,12 @@ def evaluate_scaling(model, n_components):
     values.
 
     Parameters:
-        model (sklearn.linear_model.LogisticRegressionCV): 
+        model (sklearn.linear_model.LogisticRegressionCV):
             Logistic Regression model
         n_components (int): Number of components to use in CMTF
-        
+
     Returns:
-        by_scaling (pandas.Series): Model accuracy over a range of 
+        by_scaling (pandas.Series): Model accuracy over a range of
             variance scaling values
     """
     scaling_array = np.logspace(-7, 7, base=2, num=29)
@@ -70,12 +70,12 @@ def evaluate_components(model, var_scaling):
     counts.
 
     Parameters:
-        model (sklearn.linear_model.LogisticRegressionCV): 
+        model (sklearn.linear_model.LogisticRegressionCV):
             Logistic Regression model
         var_scaling (float): Variance scaling (RNA/cytokine)
-        
+
     Returns:
-        by_scaling (pandas.Series): Model accuracy over a range of 
+        by_scaling (pandas.Series): Model accuracy over a range of
             CMTF component counts
     """
     cmtf_components = np.arange(1, 11)
@@ -123,9 +123,9 @@ def run_scaling_analyses(cs, l1_ratios, splits, var_scaling, n_components):
         random_state=42
     )
     model = LogisticRegressionCV(
-        Cs=cs, 
+        Cs=cs,
         cv=skf,
-        max_iter=100000, 
+        max_iter=100000,
         l1_ratios=l1_ratios,
         solver='saga',
         penalty='elasticnet',

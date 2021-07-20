@@ -15,7 +15,7 @@ def get_scaled_tensors(scaling: float = 1.0):
     Parameters:
         scaling (float): Ratio of variance between RNA and cytokine
             data
-    
+
     Returns:
         tensor (np.array): CMTF data tensor
         matrix (np.array): CMTF data matrix
@@ -25,12 +25,12 @@ def get_scaled_tensors(scaling: float = 1.0):
     pat_info = pat_info.T.reset_index()
 
     tensor = np.stack(
-            (slices[0], slices[1])
-        ).T
+        (slices[0], slices[1])
+    ).T
     matrix = slices[2].T
     labels = pat_info.loc[:, 'status']
     labels = labels.loc[labels != 'Unknown'].astype(int)
-    
+
     return tensor, matrix, labels
 
 

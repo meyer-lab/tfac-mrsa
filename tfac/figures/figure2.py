@@ -16,7 +16,7 @@ def fig_2_setup():
     tensor_slices, cytokines, _, patInfo = form_missing_tensor()
     tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
     matrix = tensor_slices[2].T
-    components = 12
+    components = 3
     AllR2X = []
     # Run factorization at each component number up to chosen limit
     for component in range(1, components + 1):

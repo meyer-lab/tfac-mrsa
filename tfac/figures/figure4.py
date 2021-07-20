@@ -9,7 +9,6 @@ import numpy as np
 from .figureCommon import getSetup
 from ..predict import run_scaling_analyses
 
-OPTIMAL_COMPONENTS = 9
 OPTIMAL_SCALING = 2 ** 5
 
 
@@ -76,8 +75,7 @@ def makeFigure():
         cs,
         l1_ratios,
         splits,
-        OPTIMAL_SCALING,
-        OPTIMAL_COMPONENTS
+        OPTIMAL_SCALING
     )
     fig = plot_results(by_scaling, by_components)
 

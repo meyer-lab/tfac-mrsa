@@ -6,7 +6,6 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import pearsonr
 from tfac.dataImport import form_missing_tensor
-from tfac.predict import SVC_predict
 from .figureCommon import subplotLabel, getSetup
 
 

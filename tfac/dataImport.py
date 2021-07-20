@@ -1,17 +1,43 @@
 """Data import and processing for the MRSA data"""
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import scale
 
 
-path_here = dirname(dirname(__file__))
+PATH_HERE = dirname(dirname(abspath(__file__)))
+
+
+def get_scaled_tensors(scaling: float = 1.0):
+    """
+    Creates scaled CMTF tensor and matrix.
+
+    Parameters:
+        scaling (float): Ratio of variance between RNA and cytokine
+            data
+    
+    Returns:
+        tensor (np.array): CMTF data tensor
+        matrix (np.array): CMTF data matrix
+        labels (pandas.Series): Patient outcome labels
+    """
+    slices, _, _, pat_info = form_missing_tensor(scaling)
+    pat_info = pat_info.T.reset_index()
+
+    tensor = np.stack(
+            (slices[0], slices[1])
+        ).T
+    matrix = slices[2].T
+    labels = pat_info.loc[:, 'status']
+    labels = labels.loc[labels != 'Unknown'].astype(int)
+    
+    return tensor, matrix, labels
 
 
 def import_deconv():
     """ Imports and returns cell deconvolution data. """
     return (
-        pd.read_csv(join(path_here, "tfac/data/mrsa/deconvo_cibersort_APMB.csv"), delimiter=",", index_col="sample")
+        pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/deconvo_cibersort_APMB.csv"), delimiter=",", index_col="sample")
         .sort_index()
         .drop(["gender", "cell_type"], axis=1)
     )
@@ -19,13 +45,13 @@ def import_deconv():
 
 def get_C1C2_patient_info():
     """ Return specific patient information for cohorts 1 and 2. """
-    dataCohort = pd.read_csv("tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv")
+    dataCohort = pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv"))
     return dataCohort[["sid", "status", "stype", "cohort"]].sort_values("sid")
 
 
 def get_C3_patient_info():
     """ Return specific patient information for cohort 3. """
-    c3 = pd.read_csv("tfac/data/mrsa/metadata_cohort3.csv")
+    c3 = pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/metadata_cohort3.csv"))
     known = c3[c3["status"].str.contains("0|1")].astype(int)
     unknown = c3[~c3["status"].str.contains("0|1")]
     c3 = pd.concat([known, unknown])
@@ -126,7 +152,7 @@ def full_import():
 
 def import_C1_cyto():
     """ Import cytokine data from clinical data set. """
-    coh1 = pd.read_csv("tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv")
+    coh1 = pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv"))
     coh1 = coh1[coh1["cohort"] == 1]
     coh1 = pd.concat([coh1.iloc[:, 3], coh1.iloc[:, -38:]], axis=1).sort_values(by="sid")
     return coh1
@@ -134,7 +160,7 @@ def import_C1_cyto():
 
 def import_C3_cyto():
     """Imports the cohort 3 cytokine data, giving separate dataframes for serum and plasma data. They overlap on many paitents."""
-    dfCyto_c3 = pd.read_csv("tfac/data/mrsa/CYTOKINES.csv")
+    dfCyto_c3 = pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/CYTOKINES.csv"))
     dfCyto_c3 = dfCyto_c3.set_index("sample ID")
     dfCyto_c3 = dfCyto_c3.rename_axis("sid")
     dfCyto_c3_serum = dfCyto_c3[dfCyto_c3["sample type"] == "serum"].copy()
@@ -146,7 +172,7 @@ def import_C3_cyto():
 
 def importCohort1Expression():
     """ Import expression data. """
-    df = pd.read_table(join(path_here, "tfac/data/mrsa/expression_counts_cohort1.txt.xz"), compression="xz")
+    df = pd.read_table(join(PATH_HERE, "tfac/data/mrsa/expression_counts_cohort1.txt.xz"), compression="xz")
     df.drop(["Chr", "Start", "End", "Strand", "Length"], inplace=True, axis=1)
     nodecimals = [val[: val.index(".")] for val in df["Geneid"]]
     df["Geneid"] = nodecimals
@@ -155,7 +181,7 @@ def importCohort1Expression():
 
 def importCohort3Expression():
     """ Imports RNAseq data for cohort 3, sorted by patient ID. """
-    dfExp_c3 = pd.read_csv("tfac/data/mrsa/Genes_cohort3.csv", index_col=0)
+    dfExp_c3 = pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/Genes_cohort3.csv"), index_col=0)
     return dfExp_c3.reindex(sorted(dfExp_c3.columns), axis=1)
 
 

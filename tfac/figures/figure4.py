@@ -1,8 +1,3 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-
-
 """
 Runs hyperparameter optimization for a Logistic Regression model that 
 uses CMTF components to classify MRSA persistance. Generates a figure
@@ -14,11 +9,8 @@ import sys
 
 sys.path.append(os.path.join(sys.path[0], '..'))
 
+import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.model_selection import RepeatedStratifiedKFold
-from tqdm import tqdm
 
 from figureCommon import getSetup
 from predict import run_scaling_analyses

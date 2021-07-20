@@ -4,7 +4,6 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import cross_val_predict, GridSearchCV, KFold, RepeatedStratifiedKFold
 from sklearn.svm import SVC
-from tqdm import tqdm
 
 from dataImport import get_scaled_tensors
 from tensor import perform_CMTF
@@ -55,7 +54,7 @@ def evaluate_scaling(model, n_components):
         dtype=float
     )
 
-    for scaling in tqdm(scaling_array):
+    for scaling in scaling_array:
         tensor, matrix, labels = get_scaled_tensors(scaling)
         data = perform_CMTF(tensor, matrix, n_components)
         data = data[1][0]
@@ -88,7 +87,7 @@ def evaluate_components(model, var_scaling):
     )
 
     tensor, matrix, labels = get_scaled_tensors(var_scaling)
-    for n_components in tqdm(cmtf_components):
+    for n_components in cmtf_components:
         data = perform_CMTF(tensor, matrix, n_components)
         data = data[1][0]
         data = data[labels.index, :]

@@ -3,12 +3,6 @@ Runs hyperparameter optimization for a Logistic Regression model that
 uses CMTF components to classify MRSA persistance. Generates a figure
 depicting model accuracy against scaling and component count.
 """
-import argparse
-import os
-import sys
-
-sys.path.append(os.path.join(sys.path[0], '..'))
-
 import matplotlib.pyplot as plt
 import numpy as np
 

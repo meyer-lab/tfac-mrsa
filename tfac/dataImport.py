@@ -8,7 +8,7 @@ from sklearn.preprocessing import scale
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def get_scaled_tensors(scaling):
+def get_scaled_tensors(scaling: float = 1.0):
     """
     Creates scaled CMTF tensor and matrix.
 

@@ -1,12 +1,10 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.metrics import balanced_accuracy_score
-from sklearn.model_selection import cross_val_predict, GridSearchCV, KFold, RepeatedStratifiedKFold
-from sklearn.svm import SVC
+from sklearn.model_selection import RepeatedStratifiedKFold
 
-from dataImport import get_scaled_tensors
-from tensor import perform_CMTF
+from .dataImport import get_scaled_tensors
+from .tensor import perform_CMTF
 
 
 def run_model(model, data, labels):
@@ -130,25 +128,11 @@ def run_scaling_analyses(cs, l1_ratios, splits, var_scaling, n_components):
         max_iter=100000, 
         l1_ratios=l1_ratios,
         solver='saga',
-        penalty='elasticnet'
+        penalty='elasticnet',
+        n_jobs=10
     )
 
     by_scaling = evaluate_scaling(model, n_components)
     by_components = evaluate_components(model, var_scaling)
 
     return by_scaling, by_components
-
-
-def SVC_predict(X, y):
-    """ Perform the prediction with a SVC model. Performs nested cross-validation. """
-    p_grid = {"C": [1, 10, 100], "gamma": [0.01, 0.1, 1.0]}
-    CV = KFold(n_splits=10, shuffle=True)
-
-    svm = SVC(kernel="rbf")
-    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=CV, refit=True)
-
-    nested_pred = cross_val_predict(clf, X, y, cv=CV, n_jobs=-1)
-    nested_score = balanced_accuracy_score(y, nested_pred)
-    clf.fit(X, y)
-
-    return nested_pred, nested_score, clf.best_estimator_

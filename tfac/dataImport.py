@@ -137,8 +137,8 @@ def full_import():
     dfExp_c3.sort_values("Geneid", inplace=True)
     dfExp = pd.concat([dfExp_c1, dfExp_c3], axis=1, join="inner")
     # Remove those with very few reads on average
-    dfExp["Mean"] = np.mean(dfExp.to_numpy(), axis=1)
-    dfExp = dfExp[dfExp["Mean"] > 2].drop("Mean", axis=1)
+    # TODO: Decide if this is right.
+    dfExp = dfExp[np.mean(dfExp.to_numpy(), axis=1) > 1.0]
     # Store info for later
     pats = dfExp.columns.astype(int)
     genes = dfExp.index

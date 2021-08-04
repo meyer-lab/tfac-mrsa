@@ -92,7 +92,7 @@ def evaluate_components(var_scaling):
     return by_components
 
 
-def run_scaling_analyses(cs, l1_ratios, splits, var_scaling):
+def run_scaling_analyses(cs, l1_ratios, var_scaling):
     """
     Evaluates model accuracy with regards to variance scaling and
     CMTF component count.
@@ -102,8 +102,6 @@ def run_scaling_analyses(cs, l1_ratios, splits, var_scaling):
             logarithmically-spaced between 1E-4 and 1E4
         l1_ratios (int): Number of l1-ratios to test;
             linearly-spaced between 0 and 1 (inclusive)
-        splits (int): Number of cross-validation splits to use when
-            evaluating model accuracy
 
     Returns:
         by_scaling (pandas.Series): Model accuracy with regards to

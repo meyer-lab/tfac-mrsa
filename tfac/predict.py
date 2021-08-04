@@ -38,9 +38,9 @@ def evaluate_scaling():
 
     Parameters:
         n_components (int): Number of components to use in CMTF
-        
+
     Returns:
-        by_scaling (pandas.Series): Model accuracy over a range of 
+        by_scaling (pandas.Series): Model accuracy over a range of
             variance scaling values
     """
     by_scaling = pd.Series(
@@ -67,12 +67,12 @@ def evaluate_components(var_scaling):
     counts.
 
     Parameters:
-        model (sklearn.linear_model.LogisticRegressionCV): 
+        model (sklearn.linear_model.LogisticRegressionCV):
             Logistic Regression model
         var_scaling (float): Variance scaling (RNA/cytokine)
-        
+
     Returns:
-        by_scaling (pandas.Series): Model accuracy over a range of 
+        by_scaling (pandas.Series): Model accuracy over a range of
             CMTF component counts
     """
     by_components = pd.Series(

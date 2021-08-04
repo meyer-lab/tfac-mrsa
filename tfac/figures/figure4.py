@@ -1,5 +1,5 @@
 """
-Runs hyperparameter optimization for a Logistic Regression model that 
+Runs hyperparameter optimization for a Logistic Regression model that
 uses CMTF components to classify MRSA persistance. Generates a figure
 depicting model accuracy against scaling and component count.
 """
@@ -24,7 +24,7 @@ def plot_results(by_scaling, by_components):
             number of CMTF components
 
     Returns:
-        fig (matplotlib.pyplot.Figure): Figure containing plots of 
+        fig (matplotlib.pyplot.Figure): Figure containing plots of
             scaling and CMTF component analyses
     """
     # Sets up plotting space
@@ -64,8 +64,8 @@ def makeFigure():
         None
 
     Returns:
-        fig (matplotlib.pyplot.Figure): Figure containing plots of 
-            scaling and CMTF component analyses    
+        fig (matplotlib.pyplot.Figure): Figure containing plots of
+            scaling and CMTF component analyses
     """
     cs = 10
     l1_ratios = 5

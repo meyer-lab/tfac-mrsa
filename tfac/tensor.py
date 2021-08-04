@@ -134,16 +134,15 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     nans = np.isnan(unfold)
     unfold = np.nan_to_num(unfold)
 
-    for _ in range(100):
+    for _ in range(10):
         u, s, vt = svds(unfold, k=rank)
         unfold[nans] = (u @ np.diag(s) @ vt)[nans]
 
     factors[0] = u
-
     return tl.cp_tensor.CPTensor((None, factors))
 
 
-def perform_CMTF(tOrig, mOrig, r=5):
+def perform_CMTF(tOrig, mOrig, r=9):
     """ Perform CMTF decomposition. """
     tFac = initialize_cp(tOrig, mOrig, r)
 

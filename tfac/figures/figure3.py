@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import pearsonr
 from tfac.dataImport import form_missing_tensor
-from .figureCommon import subplotLabel, getSetup
+from .figureCommon import getSetup
 
 
 def serum_vs_plasma_setup():

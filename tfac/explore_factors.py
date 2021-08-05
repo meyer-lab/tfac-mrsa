@@ -1,6 +1,5 @@
 """Functions for exploring components to MRSA parafac2 decomposition"""
 import copy
-import numpy as np
 import pandas as pd
 import gseapy as gp
 from pybiomart import Server

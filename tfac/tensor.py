@@ -172,13 +172,13 @@ def perform_CMTF(tOrig, mOrig, r=9):
         R2X_last = tFac.R2X
         tFac.R2X = calcR2X(tFac, tOrig, mOrig)
 
-        if tFac.R2X - R2X_last < 1e-5:
+        if tFac.R2X - R2X_last < 1e-9:
             break
 
     tFac = cp_normalize(tFac)
     tFac = reorient_factors(tFac)
     tFac = sort_factors(tFac)
 
-    print(tFac.R2X)
+    print("R2X: " + str(tFac.R2X))
 
     return tFac

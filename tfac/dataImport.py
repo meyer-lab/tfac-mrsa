@@ -1,5 +1,6 @@
 """Data import and processing for the MRSA data"""
 from os.path import join, dirname, abspath
+
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import scale
@@ -95,6 +96,8 @@ def form_missing_tensor(variance1: float = 1.0):
     expVar = np.linalg.norm(np.nan_to_num(expNumpy))
     expNumpy /= expVar * variance1
     tensor_slices = [serumNumpy, plasmaNumpy, expNumpy]
+
+    # TODO: Combine slices into tensor and matrix
     return tensor_slices, cytokines, geneIDs, patInfo
 
 
@@ -102,16 +105,16 @@ def full_import():
     """ Imports raw cytokine and RNAseq data for all 3 cohorts. Performs normalization and fixes bad values. """
     # Import cytokines
     dfCyto_c1 = import_C1_cyto()
-    dfCyto_c1 = dfCyto_c1.set_index("sid")
+    dfCyto_c1 = dfCyto_c1.set_index("sid")  # TODO: Move to import function
     dfCyto_c3_serum, dfCyto_c3_plasma = import_C3_cyto()
     # Import RNAseq
-    dfExp_c1 = importCohort1Expression()
+    dfExp_c1 = importCohort1Expression()  # TODO: Combine these
     dfExp_c3 = importCohort3Expression()
 
     # Modify cytokines
-    dfCyto_c1.columns = dfCyto_c3_serum.columns
+    dfCyto_c1.columns = dfCyto_c3_serum.columns  # TODO: Move to import function
     # Fix limit of detection error - bring to next lowest value
-    dfCyto_c1["IL-12(p70)"] = [val * 123000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]
+    dfCyto_c1["IL-12(p70)"] = [val * 123000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]  # TODO: Move to import function
     # normalize separately and extract cytokines
     # Make initial data slices
     patInfo = get_C1C2_patient_info()
@@ -143,13 +146,17 @@ def full_import():
     pats = dfExp.columns.astype(int)
     genes = dfExp.index
     # Normalize
-    dfExp = scale(dfExp, axis=0)
-    dfExp = scale(dfExp, axis=1)
+
+    dfExp[:] = scale(dfExp, axis=0)
+    dfExp[:] = scale(dfExp, axis=1)
+    # dfExp = scale(dfExp, axis=0)
+    # dfExp = scale(dfExp, axis=1)
     dfExp = pd.DataFrame(dfExp, index=genes, columns=pats)
     geneIDs = dfExp.index.to_list()
     return cyto_list, cytokines, dfExp, geneIDs
 
 
+# Combine C1 and C3 cyto import funcs--keep data separate
 def import_C1_cyto():
     """ Import cytokine data from clinical data set. """
     coh1 = pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv"))
@@ -170,6 +177,7 @@ def import_C3_cyto():
     return dfCyto_c3_serum, dfCyto_c3_plasma
 
 
+# Remove
 def importCohort1Expression():
     """ Import expression data. """
     df = pd.read_table(join(PATH_HERE, "tfac/data/mrsa/expression_counts_cohort1.txt.xz"), compression="xz")

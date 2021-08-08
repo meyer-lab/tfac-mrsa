@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from sklearn.svm import SVC
-from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_score
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.model_selection import RepeatedStratifiedKFold
 
 from .dataImport import get_scaled_tensors
 from .tensor import perform_CMTF
@@ -25,9 +25,11 @@ def run_model(data, labels):
         random_state=42
     )
 
-    model = SVC()
-    score = cross_val_score(model, data, labels, cv=skf, n_jobs=10)
-    return np.mean(score)
+    model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=10, cv=skf, max_iter=100000)
+    model.fit(data, labels)
+
+    scores = np.mean(model.scores_[1], axis=0)
+    return np.amax(scores)
 
 
 def evaluate_scaling():
@@ -54,7 +56,7 @@ def evaluate_scaling():
         data = data[labels.index, :]
 
         score = run_model(data, labels)
-        print(score)
+        print(f"Score: {score}")
         by_scaling.loc[scaling] = score
 
     return by_scaling

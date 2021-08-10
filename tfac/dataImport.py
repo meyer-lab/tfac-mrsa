@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import scale
 
-
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
@@ -38,12 +37,12 @@ def get_scaled_tensors(scaling: float = 1.0):
 # NEW IMPORTS
 
 
-def import_patient_metadata():
+def import_patient_metadata(drop_validation=False):
     """
     Returns patient meta data, including cohort and outcome.
 
     Parameters:
-        None
+        drop_validation (bool, default:False): drop validation samples
 
     Returns:
         patient_data (pandas.DataFrame): Patient outcomes and cohorts
@@ -53,6 +52,10 @@ def import_patient_metadata():
         delimiter=',',
         index_col=0
     )
+
+    if drop_validation:
+        patient_data = patient_data.loc[patient_data['status'] != 'Unknown']
+
     return patient_data
 
 
@@ -145,13 +148,43 @@ def import_rna(trim_low=True, scale_rna=True):
     return rna
 
 
-def form_tensor(variance_scaling: float = 1.0):
+def add_missing_columns(data, patients):
+    """
+    Adds patients that do not appear in data as empty columns (all NaNs).
+    
+    Parameters:
+        data (pandas.DataFrame): cytokine/RNA data
+        patients (iterable): patients that must appear in data
+        
+    Returns:
+        data (pandas.DataFrame): cytokine/RNA data with missing columns
+            added; sorted by patient numbers
+    """
+    missing = patients.difference(data.columns)
+    data = pd.concat(
+        [
+            data,
+            pd.DataFrame(
+                data=np.nan,
+                index=data.index,
+                columns=missing
+            )
+        ],
+        axis=1
+    )
+    data = data.sort_index(axis=1)
+
+    return data
+
+
+def form_tensor(variance_scaling: float = 1.0, drop_validation=False):
     """
     Forms a tensor of cytokine data and a matrix of RNA expression data for
     CMTF decomposition.
 
     Parameters:
         variance_scaling (float, default:1.0): RNA/cytokine variance scaling
+        drop_validation (bool, default:False): drop validation samples
 
     Returns:
         tensor (numpy.array): tensor of cytokine data
@@ -159,53 +192,20 @@ def form_tensor(variance_scaling: float = 1.0):
     """
     plasma_cyto, serum_cyto = import_cytokines()
     rna = import_rna()
-    patient_data = import_patient_metadata()
-
+    patient_data = import_patient_metadata(drop_validation=drop_validation)
     patients = set(patient_data.index)
-    missing_serum = patients.difference(serum_cyto.columns)
-    missing_plasma = patients.difference(plasma_cyto.columns)
-    missing_rna = patients.difference(rna.columns)
 
-    serum_cyto = pd.concat(
-        [
-            serum_cyto,
-            pd.DataFrame(
-                data=np.nan,
-                index=serum_cyto.index,
-                columns=missing_serum
-            )
-        ],
-        axis=1
-    )
-    plasma_cyto = pd.concat(
-        [
-            plasma_cyto,
-            pd.DataFrame(
-                data=np.nan,
-                index=plasma_cyto.index,
-                columns=missing_plasma
-            )
-        ],
-        axis=1
-    )
-    rna = pd.concat(
-        [
-            rna,
-            pd.DataFrame(
-                data=np.nan,
-                index=rna.index,
-                columns=missing_rna
-            )
-        ],
-        axis=1
-    )
+    if drop_validation:
+        serum_cyto = serum_cyto.loc[:, set(serum_cyto.columns) & set(patients)]
+        plasma_cyto = plasma_cyto.loc[:, set(plasma_cyto.columns) & set(patients)]
+        rna = rna.loc[:, set(rna.columns) & set(patients)]
 
-    serum_cyto = serum_cyto.sort_index(axis=1)
-    plasma_cyto = plasma_cyto.sort_index(axis=1)
-    rna = rna.sort_index(axis=1)
+    serum_cyto = add_missing_columns(serum_cyto, patients)
+    plasma_cyto = add_missing_columns(plasma_cyto, patients)
+    rna = add_missing_columns(rna, patients)
 
     cyto_var = np.linalg.norm(serum_cyto.fillna(0)) + \
-               np.linalg.norm(plasma_cyto.fillna(0))
+        np.linalg.norm(plasma_cyto.fillna(0))
     serum_cyto /= cyto_var
     plasma_cyto /= cyto_var
 
@@ -296,7 +296,8 @@ def full_import():
     # Modify cytokines
     dfCyto_c1.columns = dfCyto_c3_serum.columns  # TODO: Move to import function
     # Fix limit of detection error - bring to next lowest value
-    dfCyto_c1["IL-12(p70)"] = [val * 123000000 if val < 1 else val for val in dfCyto_c1["IL-12(p70)"]]  # TODO: Move to import function
+    dfCyto_c1["IL-12(p70)"] = [val * 123000000 if val < 1 else val for val in
+                               dfCyto_c1["IL-12(p70)"]]  # TODO: Move to import function
     # normalize separately and extract cytokines
     # Make initial data slices
     patInfo = get_C1C2_patient_info()

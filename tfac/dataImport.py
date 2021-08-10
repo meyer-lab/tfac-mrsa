@@ -186,6 +186,7 @@ def form_tensor(variance_scaling: float = 1.0, drop_validation=False):
     rna /= rna_var
     rna /= variance_scaling
     matrix = rna.to_numpy(dtype=float)
+    matrix = matrix.T
 
     tensor = np.stack(
         (serum_cyto, plasma_cyto)

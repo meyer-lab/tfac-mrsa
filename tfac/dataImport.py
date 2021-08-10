@@ -48,8 +48,10 @@ def import_patient_metadata():
     Returns:
         patient_data (pandas.DataFrame): Patient outcomes and cohorts
     """
-    patient_data = pd.read_pickle(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'patient_metadata.pkl')
+    patient_data = pd.read_csv(
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'patient_metadata.txt'),
+        delimiter=',',
+        index_col=0
     )
     return patient_data
 
@@ -65,11 +67,15 @@ def import_cytokines(scale_cyto=True):
         plasma_cyto (pandas.DataFrame): plasma cytokine data
         serum_cyto (pandas.DataFrame): serum cytokine data
     """
-    plasma_cyto = pd.read_pickle(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'plasma_cytokines.pkl')
+    plasma_cyto = pd.read_csv(
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'plasma_cytokines.txt'),
+        delimiter=',',
+        index_col=0
     )
-    serum_cyto = pd.read_pickle(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'serum_cytokines.pkl')
+    serum_cyto = pd.read_csv(
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'serum_cytokines.txt'),
+        delimiter=',',
+        index_col=0
     )
     patient_data = import_patient_metadata()
 
@@ -118,8 +124,8 @@ def import_rna(trim_low=True, scale_rna=True):
     Returns:
         rna (pandas.DataFrame): RNA expression counts
     """
-    rna = pd.read_table(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.txt.xz'),
+    rna = pd.read_csv(
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.txt.zip'),
         delimiter=',',
         index_col=0
     )
@@ -134,7 +140,9 @@ def import_rna(trim_low=True, scale_rna=True):
         rna.columns = columns
         rna = rna.apply(scale, axis=0)
 
-    return rna.T
+    rna = rna.T.sort_index()
+
+    return rna
 
 
 def form_tensor(variance_scaling: float = 1.0):
@@ -202,7 +210,8 @@ def form_tensor(variance_scaling: float = 1.0):
     plasma_cyto /= cyto_var
 
     rna_var = np.linalg.norm(rna.fillna(0))
-    rna /= rna_var * variance_scaling
+    rna /= rna_var
+    rna /= variance_scaling
     matrix = rna.to_numpy(dtype=float)
 
     tensor = np.stack(

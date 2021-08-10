@@ -118,8 +118,10 @@ def import_rna(trim_low=True, scale_rna=True):
     Returns:
         rna (pandas.DataFrame): RNA expression counts
     """
-    rna = pd.read_pickle(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.pkl')
+    rna = pd.read_table(
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.txt.xz'),
+        delimiter=',',
+        index_col=0
     )
 
     if trim_low:

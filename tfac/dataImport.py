@@ -8,35 +8,6 @@ from sklearn.preprocessing import scale
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def get_scaled_tensors(scaling: float = 1.0):
-    """
-    Creates scaled CMTF tensor and matrix.
-
-    Parameters:
-        scaling (float): Ratio of variance between RNA and cytokine
-            data
-
-    Returns:
-        tensor (np.array): CMTF data tensor
-        matrix (np.array): CMTF data matrix
-        labels (pandas.Series): Patient outcome labels
-    """
-    slices, _, _, pat_info = form_missing_tensor(scaling)
-    pat_info = pat_info.T.reset_index()
-
-    tensor = np.stack(
-        (slices[0], slices[1])
-    ).T
-    matrix = slices[2].T
-    labels = pat_info.loc[:, 'status']
-    labels = labels.loc[labels != 'Unknown'].astype(int)
-
-    return tensor, matrix, labels
-
-
-# NEW IMPORTS
-
-
 def import_patient_metadata(drop_validation=False):
     """
     Returns patient meta data, including cohort and outcome.
@@ -189,6 +160,8 @@ def form_tensor(variance_scaling: float = 1.0, drop_validation=False):
     Returns:
         tensor (numpy.array): tensor of cytokine data
         matrix (numpy.array): matrix of RNA expression data
+        patient_data (pandas.DataFrame): patient data, including status, data
+            types, and cohort
     """
     plasma_cyto, serum_cyto = import_cytokines()
     rna = import_rna()
@@ -218,7 +191,7 @@ def form_tensor(variance_scaling: float = 1.0, drop_validation=False):
         (serum_cyto, plasma_cyto)
     ).T
 
-    return tensor, matrix
+    return tensor, matrix, patient_data
 
 
 # OLD IMPORTS

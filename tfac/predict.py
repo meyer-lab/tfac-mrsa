@@ -77,7 +77,7 @@ def evaluate_components(var_scaling):
             CMTF component counts
     """
     by_components = pd.Series(
-        index=np.arange(1, 11).tolist(),
+        index=np.arange(1, 13).tolist(),
         dtype=float
     )
 
@@ -93,7 +93,7 @@ def evaluate_components(var_scaling):
     return by_components
 
 
-def run_scaling_analyses(cs, l1_ratios, var_scaling):
+def run_scaling_analyses(var_scaling):
     """
     Evaluates model accuracy with regards to variance scaling and
     CMTF component count.
@@ -101,8 +101,6 @@ def run_scaling_analyses(cs, l1_ratios, var_scaling):
     Parameters:
         cs (int): Number of C (regularization coefficients) to test;
             logarithmically-spaced between 1E-4 and 1E4
-        l1_ratios (int): Number of l1-ratios to test;
-            linearly-spaced between 0 and 1 (inclusive)
 
     Returns:
         by_scaling (pandas.Series): Model accuracy with regards to
@@ -110,9 +108,6 @@ def run_scaling_analyses(cs, l1_ratios, var_scaling):
         by_components (pandas.Series): Model accuracy with regards to
             number of CMTF components
     """
-    cs = np.logspace(-4, 4, cs)
-    l1_ratios = np.linspace(0, 1, l1_ratios)
-
     by_scaling = evaluate_scaling()
     by_components = evaluate_components(var_scaling)
 

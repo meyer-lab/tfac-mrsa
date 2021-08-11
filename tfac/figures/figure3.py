@@ -5,25 +5,33 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.stats import pearsonr
-from tfac.dataImport import form_missing_tensor
+from tfac.dataImport import form_tensor, import_cytokines
 from .figureCommon import getSetup
 
 
 def serum_vs_plasma_setup():
-    tensor_slices, cytokines, _, patInfo = form_missing_tensor()
-    test = pd.concat([pd.DataFrame(tensor_slices[0]), pd.DataFrame(tensor_slices[1])])
+    tensor, _, patInfo = form_tensor()
+    plasma, _ = import_cytokines()
+    cytokines = plasma.index
+
+    patInfo = patInfo.T
+    tensor = tensor.T
+    serum_slice = tensor[0, :, :]
+    plasma_slice = tensor[1, :, :]
+
+    test = pd.concat([pd.DataFrame(serum_slice), pd.DataFrame(plasma_slice)])
     test = test.dropna(axis=1)
     pears = []
     for i in range(38):
         pears.append([cytokines[i], pearsonr(test.iloc[i, :].to_numpy(dtype=float), test.iloc[i + 38, :].to_numpy(dtype=float))[0]])
     pears = pd.DataFrame(pears).sort_values(1)
 
-    ser = pd.DataFrame(tensor_slices[0], index=cytokines, columns=patInfo.columns).T
+    ser = pd.DataFrame(serum_slice, index=cytokines, columns=patInfo.columns).T
     ser["Outcome"] = patInfo.T["status"]
-    ser = ser[ser["Outcome"].isin([0, 1])].dropna()
-    plas = pd.DataFrame(tensor_slices[1], index=cytokines, columns=patInfo.columns).T
+    ser = ser[ser["Outcome"].isin(['0', '1'])].dropna().astype(float)
+    plas = pd.DataFrame(plasma_slice, index=cytokines, columns=patInfo.columns).T
     plas["Outcome"] = patInfo.T["status"]
-    plas = plas[plas["Outcome"].isin([0, 1])].dropna()
+    plas = plas[plas["Outcome"].isin(['0', '1'])].dropna().astype(float)
     plas["Outcome"] += 2
     cyto = pd.concat([ser, plas])
     out0 = cyto[cyto["Outcome"] == 0]

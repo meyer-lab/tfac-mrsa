@@ -6,16 +6,18 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import gridspec, pyplot as plt
 from string import ascii_lowercase
-from ..dataImport import form_missing_tensor
+from ..dataImport import form_tensor, import_cytokines
 from ..tensor import perform_CMTF
 
 
 def fig_2_setup():
     """Import and organize R2X and heatmaps"""
     # R2X
-    tensor_slices, cytokines, _, patInfo = form_missing_tensor()
-    tensor = np.stack((tensor_slices[0], tensor_slices[1])).T
-    matrix = tensor_slices[2].T
+    tensor, matrix, patInfo = form_tensor()
+    plasma, _ = import_cytokines()
+    cytokines = plasma.index
+    patInfo = patInfo.T
+
     components = 12
     AllR2X = []
     # Run factorization at each component number up to chosen limit

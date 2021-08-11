@@ -134,7 +134,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     nans = np.isnan(unfold)
     unfold = np.nan_to_num(unfold)
 
-    for _ in range(10):
+    for _ in range(20):
         u, s, vt = svds(unfold, k=rank)
         unfold[nans] = (u @ np.diag(s) @ vt)[nans]
 

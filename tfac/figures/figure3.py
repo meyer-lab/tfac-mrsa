@@ -5,13 +5,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.stats import pearsonr
-from tfac.dataImport import form_tensor, import_cytokines, form_missing_tensor
+from tfac.dataImport import form_tensor, import_cytokines
 from .figureCommon import getSetup
 
 
 def serum_vs_plasma_setup():
-    tensor_slices, cytokines, _, old_patInfo = form_missing_tensor()
-    tensor, matrix, patInfo = form_tensor()
+    tensor, _, patInfo = form_tensor()
     plasma, _ = import_cytokines()
     cytokines = plasma.index
 

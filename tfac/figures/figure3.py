@@ -28,10 +28,10 @@ def serum_vs_plasma_setup():
 
     ser = pd.DataFrame(serum_slice, index=cytokines, columns=patInfo.columns).T
     ser["Outcome"] = patInfo.T["status"]
-    ser = ser[ser["Outcome"].isin(['0', '1'])].dropna().astype(int)
+    ser = ser[ser["Outcome"].isin(['0', '1'])].dropna().astype(float)
     plas = pd.DataFrame(plasma_slice, index=cytokines, columns=patInfo.columns).T
     plas["Outcome"] = patInfo.T["status"]
-    plas = plas[plas["Outcome"].isin(['0', '1'])].dropna().astype(int)
+    plas = plas[plas["Outcome"].isin(['0', '1'])].dropna().astype(float)
     plas["Outcome"] += 2
     cyto = pd.concat([ser, plas])
     out0 = cyto[cyto["Outcome"] == 0]

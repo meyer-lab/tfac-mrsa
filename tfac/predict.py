@@ -25,7 +25,9 @@ def run_model(data, labels):
         random_state=42
     )
 
-    # TODO: Remove validation samples here since you're passing in the labels. Clearly Unknown should be left out of training.
+    labels = labels.reset_index(drop=True)
+    labels = labels.loc[labels != 'Unknown']
+    data = data[labels.index, :]
 
     model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=-1, cv=skf, max_iter=100000)
     model.fit(data, labels)
@@ -40,7 +42,7 @@ def evaluate_scaling():
     values.
 
     Parameters:
-        n_components (int): Number of components to use in CMTF
+        None
 
     Returns:
         by_scaling (pandas.Series): Model accuracy over a range of
@@ -70,8 +72,6 @@ def evaluate_components(var_scaling):
     counts.
 
     Parameters:
-        model (sklearn.linear_model.LogisticRegressionCV):
-            Logistic Regression model
         var_scaling (float): Variance scaling (RNA/cytokine)
 
     Returns:
@@ -96,16 +96,13 @@ def evaluate_components(var_scaling):
     return by_components
 
 
-def run_scaling_analyses(cs, l1_ratios, var_scaling):
+def run_scaling_analyses(var_scaling):
     """
     Evaluates model accuracy with regards to variance scaling and
     CMTF component count.
 
     Parameters:
-        cs (int): Number of C (regularization coefficients) to test;
-            logarithmically-spaced between 1E-4 and 1E4
-        l1_ratios (int): Number of l1-ratios to test;
-            linearly-spaced between 0 and 1 (inclusive)
+        var_scaling (float): Variance scaling (Cytokine/RNA)
 
     Returns:
         by_scaling (pandas.Series): Model accuracy with regards to
@@ -113,9 +110,6 @@ def run_scaling_analyses(cs, l1_ratios, var_scaling):
         by_components (pandas.Series): Model accuracy with regards to
             number of CMTF components
     """
-    cs = np.logspace(-4, 4, cs)
-    l1_ratios = np.linspace(0, 1, l1_ratios)
-
     by_scaling = evaluate_scaling()
     by_components = evaluate_components(var_scaling)
 

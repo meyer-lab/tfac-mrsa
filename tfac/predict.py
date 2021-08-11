@@ -27,6 +27,8 @@ def run_model(data, labels):
 
     if isinstance(labels, pd.Series):
         labels = labels.reset_index(drop=True)
+    else:
+        labels = pd.Series(labels)
 
     labels = labels[labels != 'Unknown']
     data = data[labels.index, :]

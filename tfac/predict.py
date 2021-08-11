@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold
 
-from .dataImport import get_scaled_tensors
+from .dataImport import form_tensor
 from .tensor import perform_CMTF
 
 
@@ -25,11 +25,19 @@ def run_model(data, labels):
         random_state=42
     )
 
-    model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=10, cv=skf, max_iter=100000)
+    if isinstance(labels, pd.Series):
+        labels = labels.reset_index(drop=True)
+    else:
+        labels = pd.Series(labels)
+
+    labels = labels[labels != 'Unknown']
+    data = data[labels.index, :]
+
+    model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=-1, cv=skf, max_iter=100000)
     model.fit(data, labels)
 
-    scores = np.mean(model.scores_[1], axis=0)
-    return np.amax(scores)
+    scores = np.mean(list(model.scores_.values())[0], axis=0)
+    return np.max(scores)
 
 
 def evaluate_scaling():
@@ -38,7 +46,7 @@ def evaluate_scaling():
     values.
 
     Parameters:
-        n_components (int): Number of components to use in CMTF
+        None
 
     Returns:
         by_scaling (pandas.Series): Model accuracy over a range of
@@ -50,13 +58,13 @@ def evaluate_scaling():
     )
 
     for scaling, _ in by_scaling.items():
-        tensor, matrix, labels = get_scaled_tensors(scaling)
+        tensor, matrix, patient_data = form_tensor(scaling)
+        labels = patient_data.loc[:, 'status']
+
         data = perform_CMTF(tensor, matrix)
         data = data[1][0]
-        data = data[labels.index, :]
 
         score = run_model(data, labels)
-        print(f"Score: {score}")
         by_scaling.loc[scaling] = score
 
     return by_scaling
@@ -68,8 +76,6 @@ def evaluate_components(var_scaling):
     counts.
 
     Parameters:
-        model (sklearn.linear_model.LogisticRegressionCV):
-            Logistic Regression model
         var_scaling (float): Variance scaling (RNA/cytokine)
 
     Returns:
@@ -81,11 +87,11 @@ def evaluate_components(var_scaling):
         dtype=float
     )
 
-    tensor, matrix, labels = get_scaled_tensors(var_scaling)
+    tensor, matrix, patient_data = form_tensor(var_scaling)
+    labels = patient_data.loc[:, 'status']
     for n_components, _ in by_components.items():
         data = perform_CMTF(tensor, matrix, n_components)
         data = data[1][0]
-        data = data[labels.index, :]
 
         score = run_model(data, labels)
         by_components.loc[n_components] = score
@@ -99,8 +105,7 @@ def run_scaling_analyses(var_scaling):
     CMTF component count.
 
     Parameters:
-        cs (int): Number of C (regularization coefficients) to test;
-            logarithmically-spaced between 1E-4 and 1E4
+        var_scaling (float): Variance scaling (Cytokine/RNA)
 
     Returns:
         by_scaling (pandas.Series): Model accuracy with regards to

@@ -67,7 +67,6 @@ def makeFigure():
         fig (matplotlib.pyplot.Figure): Figure containing plots of
             scaling and CMTF component analyses
     """
-
     by_scaling, by_components = run_scaling_analyses(
         OPTIMAL_SCALING
     )

@@ -25,8 +25,10 @@ def run_model(data, labels):
         random_state=42
     )
 
-    labels = labels.reset_index(drop=True)
-    labels = labels.loc[labels != 'Unknown']
+    if isinstance(labels, pd.Series):
+        labels = labels.reset_index(drop=True)
+
+    labels = labels[labels != 'Unknown']
     data = data[labels.index, :]
 
     model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=-1, cv=skf, max_iter=100000)

@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold
 
-from .dataImport import form_tensor, import_patient_metadata
+from .dataImport import form_tensor
 from .tensor import perform_CMTF
 
 
@@ -24,6 +24,8 @@ def run_model(data, labels):
         n_splits=10,
         random_state=42
     )
+
+    # TODO: Remove validation samples here since you're passing in the labels. Clearly Unknown should be left out of training.
 
     model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=10, cv=skf, max_iter=100000)
     model.fit(data, labels)
@@ -50,8 +52,7 @@ def evaluate_scaling():
     )
 
     for scaling, _ in by_scaling.items():
-        tensor, matrix, patient_data = \
-            form_tensor(scaling, drop_validation=True)
+        tensor, matrix, patient_data = form_tensor(scaling)
         labels = patient_data.loc[:, 'status']
 
         data = perform_CMTF(tensor, matrix)
@@ -82,8 +83,7 @@ def evaluate_components(var_scaling):
         dtype=float
     )
 
-    tensor, matrix, patient_data = \
-        form_tensor(var_scaling, drop_validation=True)
+    tensor, matrix, patient_data = form_tensor(var_scaling)
     labels = patient_data.loc[:, 'status']
     for n_components, _ in by_components.items():
         data = perform_CMTF(tensor, matrix, n_components)

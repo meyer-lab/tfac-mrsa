@@ -8,12 +8,9 @@ from sklearn.preprocessing import scale
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def import_patient_metadata(drop_validation=False):
+def import_patient_metadata():
     """
     Returns patient meta data, including cohort and outcome.
-
-    Parameters:
-        drop_validation (bool, default:False): drop validation samples
 
     Returns:
         patient_data (pandas.DataFrame): Patient outcomes and cohorts
@@ -23,9 +20,6 @@ def import_patient_metadata(drop_validation=False):
         delimiter=',',
         index_col=0
     )
-
-    if drop_validation:
-        patient_data = patient_data.loc[patient_data['status'] != 'Unknown']
 
     return patient_data
 
@@ -148,14 +142,13 @@ def add_missing_columns(data, patients):
     return data
 
 
-def form_tensor(variance_scaling: float = 1.0, drop_validation=False):
+def form_tensor(variance_scaling: float = 1.0):
     """
     Forms a tensor of cytokine data and a matrix of RNA expression data for
     CMTF decomposition.
 
     Parameters:
         variance_scaling (float, default:1.0): RNA/cytokine variance scaling
-        drop_validation (bool, default:False): drop validation samples
 
     Returns:
         tensor (numpy.array): tensor of cytokine data
@@ -165,13 +158,8 @@ def form_tensor(variance_scaling: float = 1.0, drop_validation=False):
     """
     plasma_cyto, serum_cyto = import_cytokines()
     rna = import_rna()
-    patient_data = import_patient_metadata(drop_validation=drop_validation)
+    patient_data = import_patient_metadata()
     patients = set(patient_data.index)
-
-    if drop_validation:
-        serum_cyto = serum_cyto.loc[:, set(serum_cyto.columns) & set(patients)]
-        plasma_cyto = plasma_cyto.loc[:, set(plasma_cyto.columns) & set(patients)]
-        rna = rna.loc[:, set(rna.columns) & set(patients)]
 
     serum_cyto = add_missing_columns(serum_cyto, patients)
     plasma_cyto = add_missing_columns(plasma_cyto, patients)

@@ -82,7 +82,9 @@ def evaluate_components(var_scaling):
         dtype=float
     )
 
-    tensor, matrix, labels = get_scaled_tensors(var_scaling)
+    tensor, matrix, patient_data = \
+        form_tensor(var_scaling, drop_validation=True)
+    labels = patient_data.loc[:, 'status']
     for n_components, _ in by_components.items():
         data = perform_CMTF(tensor, matrix, n_components)
         data = data[1][0]

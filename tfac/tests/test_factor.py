@@ -1,7 +1,6 @@
 """
 Test that we can factor the data.
 """
-import numpy as np
 from ..dataImport import form_tensor
 from ..tensor import perform_CMTF
 

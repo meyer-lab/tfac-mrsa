@@ -134,7 +134,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     nans = np.isnan(unfold)
     unfold = np.nan_to_num(unfold)
 
-    for _ in range(20):
+    for _ in range(10):
         u, s, vt = svds(unfold, k=rank)
         unfold[nans] = (u @ np.diag(s) @ vt)[nans]
 
@@ -169,10 +169,11 @@ def perform_CMTF(tOrig, mOrig, r=9):
 
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
-        R2X_last = tFac.R2X
-        tFac.R2X = calcR2X(tFac, tOrig, mOrig)
+        if ii % 3 == 0:
+            R2X_last = tFac.R2X
+            tFac.R2X = calcR2X(tFac, tOrig, mOrig)
 
-        if tFac.R2X - R2X_last < 1e-9:
+        if tFac.R2X - R2X_last < 1e-6:
             break
 
     tFac = cp_normalize(tFac)

@@ -1,5 +1,6 @@
 """Data import and processing for the MRSA data"""
 from os.path import join, dirname, abspath
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,7 @@ from sklearn.preprocessing import scale
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
+@lru_cache
 def import_patient_metadata():
     """
     Returns patient meta data, including cohort and outcome.
@@ -24,6 +26,7 @@ def import_patient_metadata():
     return patient_data
 
 
+@lru_cache
 def import_cytokines(scale_cyto=True):
     """
     Return plasma and serum cytokine data.
@@ -81,6 +84,7 @@ def scale_cytokines(cyto):
     return cyto
 
 
+@lru_cache
 def import_rna(trim_low=True, scale_rna=True):
     """
     Return RNA expression data.
@@ -95,7 +99,8 @@ def import_rna(trim_low=True, scale_rna=True):
     rna = pd.read_csv(
         join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.txt.zip'),
         delimiter=',',
-        index_col=0
+        index_col=0,
+        engine="c"
     )
 
     if trim_low:

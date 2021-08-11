@@ -27,10 +27,10 @@ def run_model(data, labels):
 
     # TODO: Remove validation samples here since you're passing in the labels. Clearly Unknown should be left out of training.
 
-    model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=10, cv=skf, max_iter=100000)
+    model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=-1, cv=skf, max_iter=100000)
     model.fit(data, labels)
 
-    scores = np.mean(model.scores_[1], axis=0)
+    scores = np.mean(list(model.scores_.values())[0], axis=0)
     return np.max(scores)
 
 

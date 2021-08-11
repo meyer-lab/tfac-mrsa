@@ -92,7 +92,6 @@ def evaluate_components(var_scaling):
     for n_components, _ in by_components.items():
         data = perform_CMTF(tensor, matrix, n_components)
         data = data[1][0]
-        data = data[labels.index, :]
 
         score = run_model(data, labels)
         by_components.loc[n_components] = score

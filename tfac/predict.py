@@ -30,7 +30,7 @@ def run_model(data, labels):
     model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=10, cv=skf, max_iter=100000)
     model.fit(data, labels)
 
-    scores = np.mean(model.scores_['1'], axis=0)
+    scores = np.mean(model.scores_[1], axis=0)
     return np.max(scores)
 
 

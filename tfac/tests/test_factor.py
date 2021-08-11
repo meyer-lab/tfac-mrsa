@@ -9,6 +9,6 @@ def test_CMTF():
     """ Test that we can form the missing tensor. """
     tensor, matrix, _ = form_tensor()
 
-    tFac = perform_CMTF(tensor, matrix, r=3)
+    tFac = perform_CMTF(tensor, matrix, r=2)
 
     assert tFac.R2X > 0.0

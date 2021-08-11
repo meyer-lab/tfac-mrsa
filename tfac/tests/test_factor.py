@@ -2,13 +2,13 @@
 Test that we can factor the data.
 """
 import numpy as np
-from ..dataImport import get_scaled_tensors
+from ..dataImport import form_tensor
 from ..tensor import perform_CMTF
 
 
 def test_CMTF():
     """ Test that we can form the missing tensor. """
-    tensor, matrix, _ = get_scaled_tensors()
+    tensor, matrix, _ = form_tensor()
 
     tFac = perform_CMTF(tensor, matrix, r=3)
 

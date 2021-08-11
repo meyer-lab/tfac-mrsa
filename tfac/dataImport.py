@@ -198,6 +198,15 @@ def form_tensor(variance_scaling: float = 1.0, drop_validation=False):
 # OLD IMPORTS
 
 
+def import_deconv():
+    """ Imports and returns cell deconvolution data. """
+    return (
+        pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/deconvo_cibersort_APMB.csv"), delimiter=",", index_col="sample")
+        .sort_index()
+        .drop(["gender", "cell_type"], axis=1)
+    )
+
+
 def get_C1C2_patient_info():
     """ Return specific patient information for cohorts 1 and 2. """
     dataCohort = pd.read_csv(join(PATH_HERE, "tfac/data/mrsa/mrsa_s1s2_clin+cyto_073018.csv"))

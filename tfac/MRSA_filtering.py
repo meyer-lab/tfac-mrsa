@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np 
 
-def export_mrsa_inputfile(PathToFile, OutputPath):
+def export_mrsa_inputfile(OutputPath):
     """Select top 10% genes per component and export csv file to run clusterProfiler in R"""
-    d = pd.read_csv(PathToFile)
+    d = pd.read_csv('tfac/data/mrsa/cmtf_components_genes.csv')
     d = pd.melt(frame=d, id_vars="Unnamed: 0", value_vars=d.columns[1:], var_name="Components", value_name="Weights")
 
     dfs = []

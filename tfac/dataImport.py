@@ -121,11 +121,11 @@ def import_rna(trim_low=True, scale_rna=True):
 def add_missing_columns(data, patients):
     """
     Adds patients that do not appear in data as empty columns (all NaNs).
-    
+
     Parameters:
         data (pandas.DataFrame): cytokine/RNA data
         patients (iterable): patients that must appear in data
-        
+
     Returns:
         data (pandas.DataFrame): cytokine/RNA data with missing columns
             added; sorted by patient numbers

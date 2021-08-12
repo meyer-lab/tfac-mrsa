@@ -18,7 +18,7 @@ def fig_S1_setup():
     patInfo = patInfo.T
     serum_slice = tensor[0, :, :]
     plasma_slice = tensor[1, :, :]
-    
+
     test = pd.concat([pd.DataFrame(serum_slice), pd.DataFrame(plasma_slice)])
     test = test.dropna(axis=1)
     pears = []

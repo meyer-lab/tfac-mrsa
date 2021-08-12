@@ -23,9 +23,3 @@ ggplot(xxSimp, aes(x=Components, y=Description, colour=p.adjust)) + geom_point(a
 OutputPath = '/Users/foo/Desktop/MRSA_GO_BP.png'
 ggsave(OutputPath, units='cm', width=20, height=15)
 ```
-
-
-
-
-
-

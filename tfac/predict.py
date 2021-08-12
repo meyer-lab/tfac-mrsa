@@ -83,7 +83,7 @@ def evaluate_components(var_scaling):
             CMTF component counts
     """
     by_components = pd.Series(
-        index=np.arange(1, 11).tolist(),
+        index=np.arange(1, 13).tolist(),
         dtype=float
     )
 

@@ -1,10 +1,90 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold
 
-from .dataImport import form_tensor
+from .dataImport import form_tensor, import_patient_metadata
 from .tensor import perform_CMTF
+
+
+def predict_unknown(data, labels):
+    """
+    """
+    c, l1_ratio = fit_lr_params(data, labels)
+    model = LogisticRegression(
+        C=c,
+        l1_ratio=l1_ratio,
+        max_iter=100000,
+        solver='saga',
+        penalty='elasticnet',
+    )
+
+    train_labels = labels.loc[labels != 'Unknown']
+    test_labels = labels.loc[labels == 'Unknown']
+
+    if isinstance(data, pd.Series):
+        train_data = data.loc[train_labels.index]
+        test_data = data.loc[test_labels.index]
+        train_data = train_data.values.reshape(-1, 1)
+        test_data = test_data.values.reshape(-1, 1)
+    else:
+        train_data = data.loc[train_labels.index, :]
+        test_data = data.loc[test_labels.index, :]
+
+    model.fit(train_data, train_labels)
+    predicted = model.predict(test_data)
+    predictions = pd.Series(predicted)
+    predictions.index = test_labels.index
+
+    return predictions
+
+
+def predict_known(data, labels):
+    """
+    """
+    c, l1_ratio = fit_lr_params(data, labels)
+    model = LogisticRegression(
+        C=c,
+        l1_ratio=l1_ratio,
+        max_iter=100000,
+        solver='saga',
+        penalty='elasticnet',
+    )
+
+    predictions = pd.Series(
+        index=labels.index,
+    )
+
+    skf = RepeatedStratifiedKFold(
+        n_splits=10,
+        random_state=42
+    )
+
+    labels = labels.loc[labels != 'Unknown']
+    if isinstance(data, pd.Series):
+        data = data.loc[labels.index]
+    else:
+        data = data.loc[labels.index, :]
+
+    for train_index, test_index in skf.split(data, labels):
+        train_data, train_out = data.iloc[train_index], labels.iloc[train_index]
+        test_data, test_out = data.iloc[test_index], labels.iloc[test_index]
+        train_out = train_out.values.ravel()
+
+        if isinstance(train_data, pd.Series):
+            train_data = train_data.values.reshape(-1, 1)
+            test_data = test_data.values.reshape(-1, 1)
+
+        model.fit(train_data, train_out)
+        predicted = model.predict(test_data)
+        predictions.loc[test_out.index] = predicted
+
+    return predictions
+
+
+def fit_lr_params(data, labels):
+    cv_model, _ = run_model(data, labels)
+    return cv_model.C_[0], cv_model.l1_ratio_[0]
 
 
 def run_model(data, labels):
@@ -25,19 +105,23 @@ def run_model(data, labels):
         random_state=42
     )
 
-    if isinstance(labels, pd.Series):
-        labels = labels.reset_index(drop=True)
-    else:
+    if not isinstance(labels, pd.Series):
         labels = pd.Series(labels)
 
-    labels = labels[labels != 'Unknown']
-    data = data[labels.index, :]
+    known_out = labels != 'Unknown'
+    labels = labels.loc[known_out]
+
+    if isinstance(data, pd.Series):
+        data = data.loc[known_out]
+        data = data.values.reshape(-1, 1)
+    else:
+        data = data.loc[known_out, :]
 
     model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=-1, cv=skf, max_iter=100000)
     model.fit(data, labels)
 
     scores = np.mean(list(model.scores_.values())[0], axis=0)
-    return np.max(scores)
+    return model, np.max(scores)
 
 
 def evaluate_scaling():

@@ -54,11 +54,6 @@ def import_cytokines(scale_cyto=True):
     c1_plasma = set(cohort_1) & set(plasma_cyto.index)
     c1_serum = set(cohort_1) & set(serum_cyto.index)
 
-    plasma_p70 = [val * 123000000 if val < 1 else val for val in plasma_cyto.loc[c1_plasma, 'IL-12(p70)']]
-    serum_p70 = [val * 123000000 if val < 1 else val for val in serum_cyto.loc[c1_serum, 'IL-12(p70)']]
-    plasma_cyto.loc[c1_plasma, 'IL-12(p70)'] = plasma_p70
-    serum_cyto.loc[c1_serum, 'IL-12(p70)'] = serum_p70
-
     if scale_cyto:
         plasma_cyto = scale_cytokines(plasma_cyto)
         serum_cyto = scale_cytokines(serum_cyto)

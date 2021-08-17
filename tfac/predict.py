@@ -11,28 +11,20 @@ from .tensor import perform_CMTF
 def predict_unknown(data, labels):
     """
     """
-    c, l1_ratio = fit_lr_params(data, labels)
-    model = LogisticRegression(
-        C=c,
-        l1_ratio=l1_ratio,
-        max_iter=100000,
-        solver='saga',
-        penalty='elasticnet',
-    )
-
     train_labels = labels.loc[labels != 'Unknown']
     test_labels = labels.loc[labels == 'Unknown']
 
     if isinstance(data, pd.Series):
         train_data = data.loc[train_labels.index]
         test_data = data.loc[test_labels.index]
-        train_data = train_data.values.reshape(-1, 1)
+        # train_data = train_data.values.reshape(-1, 1)
         test_data = test_data.values.reshape(-1, 1)
     else:
         train_data = data.loc[train_labels.index, :]
         test_data = data.loc[test_labels.index, :]
 
-    model.fit(train_data, train_labels)
+    model, _ = run_model(train_data, train_labels)
+
     predicted = model.predict(test_data)
     predictions = pd.Series(predicted)
     predictions.index = test_labels.index
@@ -113,7 +105,7 @@ def run_model(data, labels):
     labels = labels.loc[known_out]
 
     if isinstance(data, pd.Series):
-        data = data.loc[known_out]
+        data = data[known_out]
         data = data.values.reshape(-1, 1)
     else:
         data = data.loc[known_out, :]
@@ -125,7 +117,7 @@ def run_model(data, labels):
         n_jobs=-1,
         cv=skf,
         max_iter=100000,
-        scoring='balanced_accuracy_score'
+        scoring='balanced_accuracy'
     )
     model.fit(data, labels)
 

@@ -7,8 +7,8 @@ manubot==0.5.1
 pandoc-fignos==2.4.0
 pandoc-eqnos==2.5.0
 pandoc-tablenos==2.3.0
-panflute==1.12.5
-matplotlib==3.4.2
+panflute==2.1.0
+matplotlib==3.4.3
 seaborn==0.11.1
 svgutils==0.3.4
 tensorly==0.6.0

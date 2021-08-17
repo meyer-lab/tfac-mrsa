@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 from .dataImport import form_tensor, import_patient_metadata
@@ -117,7 +118,15 @@ def run_model(data, labels):
     else:
         data = data.loc[known_out, :]
 
-    model = LogisticRegressionCV(l1_ratios=[0.0, 0.5, 0.8, 1.0], solver="saga", penalty="elasticnet", n_jobs=-1, cv=skf, max_iter=100000)
+    model = LogisticRegressionCV(
+        l1_ratios=[0.0, 0.5, 0.8, 1.0],
+        solver="saga",
+        penalty="elasticnet",
+        n_jobs=-1,
+        cv=skf,
+        max_iter=100000,
+        scoring='balanced_accuracy_score'
+    )
     model.fit(data, labels)
 
     scores = np.mean(list(model.scores_.values())[0], axis=0)

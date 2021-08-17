@@ -120,7 +120,8 @@ def import_rna(trim_low=True, scale_rna=True):
 
 def add_missing_columns(data, patients):
     """
-    Adds patients that do not appear in data as empty columns (all NaNs).
+    Adds patients that do not appear in data as empty columns (all NaNs);
+    removes any patients in data not present in patients.
 
     Parameters:
         data (pandas.DataFrame): cytokine/RNA data
@@ -130,6 +131,10 @@ def add_missing_columns(data, patients):
         data (pandas.DataFrame): cytokine/RNA data with missing columns
             added; sorted by patient numbers
     """
+    # Remove patients who are missing outcome labels
+    shared = set(data.columns) & set(patients)
+    data = data.loc[:, shared]
+
     missing = patients.difference(data.columns)
     data = pd.concat(
         [
@@ -147,7 +152,7 @@ def add_missing_columns(data, patients):
     return data
 
 
-def form_tensor(variance_scaling: float = 1.0):
+def form_tensor(variance_scaling: float = 1.0, drop_rna_only=True):
     """
     Forms a tensor of cytokine data and a matrix of RNA expression data for
     CMTF decomposition.
@@ -164,6 +169,9 @@ def form_tensor(variance_scaling: float = 1.0):
     plasma_cyto, serum_cyto = import_cytokines()
     rna = import_rna()
     patient_data = import_patient_metadata()
+
+    if drop_rna_only:
+        patient_data = patient_data.loc[patient_data['type'] != '2RNAseq']
     patients = set(patient_data.index)
 
     serum_cyto = add_missing_columns(serum_cyto, patients)

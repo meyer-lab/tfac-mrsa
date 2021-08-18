@@ -121,16 +121,20 @@ def run_model(data, labels):
         random_state=42
     )
 
-    known_out = labels != 'Unknown'
-    labels = labels[known_out]
+    if isinstance(labels, pd.Series):
+        labels = labels.reset_index(drop=True)
+    else:
+        labels = pd.Series(labels)
+
+    labels = labels[labels != 'Unknown']
 
     if isinstance(data, pd.Series):
-        data = data[known_out]
+        data = data.iloc[labels.index]
         data = data.values.reshape(-1, 1)
     elif isinstance(data, pd.DataFrame):
-        data = data.loc[known_out, :]
+        data = data.iloc[labels.index, :]
     else:
-        data = data[known_out, :]
+        data = data[labels.index, :]
 
     model = LogisticRegressionCV(
         l1_ratios=[0.0, 0.5, 0.8, 1.0],

@@ -16,6 +16,11 @@ def fig_2_setup():
     tensor, matrix, patInfo = form_tensor()
     plasma, _ = import_cytokines()
     cytokines = plasma.index
+
+    patInfo.loc[:, 'sorted'] = range(patInfo.shape[0])
+    patInfo = patInfo.sort_values(['cohort', 'type', 'status'])
+    tensor = tensor[patInfo.loc[:, 'sorted'], :]
+    patInfo = patInfo.drop('sorted', axis=1)
     patInfo = patInfo.T
 
     components = 12
@@ -119,8 +124,8 @@ def makeFigure():
     # Outcome bar
     outs = pd.DataFrame(patInfo.loc["status"]).set_index("status")
     outs["Outcome"] = 0
-    outs[outs.index == 0] = 2
-    outs[outs.index == 1] = 1
+    outs[outs.index == "0"] = 2
+    outs[outs.index == "1"] = 1
     outs[outs.index == "Unknown"] = 0
 
     sns.heatmap(

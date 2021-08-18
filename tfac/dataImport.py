@@ -131,6 +131,7 @@ def add_missing_columns(data, patients):
         data (pandas.DataFrame): cytokine/RNA data with missing columns
             added; sorted by patient numbers
     """
+    # Remove patients who are missing outcome labels
     shared = set(data.columns) & set(patients)
     data = data.loc[:, shared]
 

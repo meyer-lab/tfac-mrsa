@@ -3,12 +3,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from tfac.figures.figureCommon import getSetup
-from tfac.dataImport import form_tensor, import_cytokines, import_rna
+from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
+from tfac.dataImport import form_tensor, import_cytokines
 from tfac.predict import predict_known, predict_unknown
 from tfac.tensor import perform_CMTF
-
-OPTIMAL_SCALING = 32
 
 
 def makeFigure():
@@ -35,7 +33,7 @@ def get_data_types():
     tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
     patient_data = patient_data.loc[:, ['status', 'type']]
 
-    components = perform_CMTF(tensor, matrix, 9)
+    components = perform_CMTF(tensor, matrix)
     components = components[1][0]
 
     data_types = [

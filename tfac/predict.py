@@ -127,8 +127,10 @@ def run_model(data, labels):
     if isinstance(data, pd.Series):
         data = data[known_out]
         data = data.values.reshape(-1, 1)
-    else:
+    elif isinstance(data, pd.DataFrame):
         data = data.loc[known_out, :]
+    else:
+        data = data[known_out, :]
 
     model = LogisticRegressionCV(
         l1_ratios=[0.0, 0.5, 0.8, 1.0],

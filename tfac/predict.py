@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
 
-from .dataImport import form_tensor, import_patient_metadata
+from .dataImport import form_tensor
 from .tensor import perform_CMTF
 
 
@@ -30,15 +30,7 @@ def predict_unknown(data, labels):
         train_data = data.loc[train_labels.index, :]
         test_data = data.loc[test_labels.index, :]
 
-    _, c, l1_ratio = run_model(train_data, train_labels)
-    model = LogisticRegression(
-        C=c,
-        l1_ratio=l1_ratio,
-        solver="saga",
-        penalty="elasticnet",
-        n_jobs=-1,
-        max_iter=100000,
-    )
+    _, model = run_model(train_data, train_labels)
 
     if isinstance(data, pd.Series):
         train_data = train_data.values.reshape(-1, 1)
@@ -70,15 +62,7 @@ def predict_known(data, labels):
     else:
         data = data.loc[labels.index, :]
 
-    _, c, l1_ratio = run_model(data, labels)
-    model = LogisticRegression(
-        C=c,
-        l1_ratio=l1_ratio,
-        solver="saga",
-        penalty="elasticnet",
-        n_jobs=-1,
-        max_iter=100000,
-    )
+    _, model = run_model(data, labels)
     skf = StratifiedKFold(
         n_splits=10,
         shuffle=True,
@@ -148,7 +132,17 @@ def run_model(data, labels):
     model.fit(data, labels)
 
     scores = np.mean(list(model.scores_.values())[0], axis=0)
-    return np.max(scores), model.C_[0], model.l1_ratio_[0]
+
+    model = LogisticRegression(
+        C=model.C_[0],
+        l1_ratio=model.l1_ratio_[0],
+        solver="saga",
+        penalty="elasticnet",
+        n_jobs=-1,
+        max_iter=100000,
+    )
+
+    return np.max(scores), model
 
 
 def evaluate_scaling():
@@ -175,7 +169,7 @@ def evaluate_scaling():
         data = perform_CMTF(tensor, matrix)
         data = data[1][0]
 
-        score, _, _ = run_model(data, labels)
+        score, _ = run_model(data, labels)
         by_scaling.loc[scaling] = score
 
     return by_scaling
@@ -204,27 +198,7 @@ def evaluate_components(var_scaling):
         data = perform_CMTF(tensor, matrix, n_components)
         data = data[1][0]
 
-        score, _, _ = run_model(data, labels)
+        score, _ = run_model(data, labels)
         by_components.loc[n_components] = score
 
     return by_components
-
-
-def run_scaling_analyses(var_scaling):
-    """
-    Evaluates model accuracy with regards to variance scaling and
-    CMTF component count.
-
-    Parameters:
-        var_scaling (float): Variance scaling (Cytokine/RNA)
-
-    Returns:
-        by_scaling (pandas.Series): Model accuracy with regards to
-            variance scaling
-        by_components (pandas.Series): Model accuracy with regards to
-            number of CMTF components
-    """
-    by_scaling = evaluate_scaling()
-    by_components = evaluate_components(var_scaling)
-
-    return by_scaling, by_components

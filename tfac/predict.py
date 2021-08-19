@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import classification_report
+from sklearn.svm import SVC
 
 from .dataImport import form_tensor
 from .tensor import perform_CMTF
@@ -120,29 +123,16 @@ def run_model(data, labels):
     else:
         data = data[labels.index, :]
 
-    model = LogisticRegressionCV(
-        l1_ratios=[0.0, 0.5, 0.8, 1.0],
-        solver="saga",
-        penalty="elasticnet",
-        n_jobs=-1,
-        cv=skf,
-        max_iter=100000,
-        scoring='balanced_accuracy'
+    tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+                         'C': [1, 10, 100, 1000]},
+                        {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+
+    clf = GridSearchCV(
+        SVC(), tuned_parameters, scoring='balanced_accuracy', cv=skf, n_jobs=-1, verbose=True
     )
-    model.fit(data, labels)
+    clf.fit(data, labels)
 
-    scores = np.mean(list(model.scores_.values())[0], axis=0)
-
-    model = LogisticRegression(
-        C=model.C_[0],
-        l1_ratio=model.l1_ratio_[0],
-        solver="saga",
-        penalty="elasticnet",
-        n_jobs=-1,
-        max_iter=100000,
-    )
-
-    return np.max(scores), model
+    return clf.best_score_, clf.best_estimator_
 
 
 def evaluate_scaling():

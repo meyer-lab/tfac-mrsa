@@ -3,7 +3,7 @@ import numpy as np
 
 from .dataImport import form_tensor, import_rna
 from .tensor import perform_CMTF
-from .figures.figure4 import OPTIMAL_SCALING
+from .figures.figureCommon import OPTIMAL_SCALING
 
 
 def export_mrsa_inputfile(OutputPath):

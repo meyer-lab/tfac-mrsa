@@ -1,16 +1,17 @@
 import pandas as pd
 import numpy as np
 
-from tfac.dataImport import form_tensor, import_rna
-from tfac.tensor import perform_CMTF
+from .dataImport import form_tensor, import_rna
+from .tensor import perform_CMTF
+from .figures.figure4 import OPTIMAL_SCALING
 
 
 def export_mrsa_inputfile(OutputPath):
     """Select top 10% genes per component and export csv file to run clusterProfiler in R"""
-    tensor, matrix, _ = form_tensor(32)
+    tensor, matrix, _ = form_tensor(OPTIMAL_SCALING)
     rna = import_rna()
 
-    d = perform_CMTF(tensor, matrix, 9)
+    d = perform_CMTF(tensor, matrix)
     d = pd.DataFrame(d.mFactor)
     d.columns = range(1, 10)
     d.loc[:, 'ID'] = rna.index

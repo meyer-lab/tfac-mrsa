@@ -152,13 +152,14 @@ def add_missing_columns(data, patients):
     return data
 
 
-def form_tensor(variance_scaling: float = 1.0, drop_rna_only=True):
+def form_tensor(variance_scaling: float = 1.0, drop_rna_only=False):
     """
     Forms a tensor of cytokine data and a matrix of RNA expression data for
     CMTF decomposition.
 
     Parameters:
         variance_scaling (float, default:1.0): RNA/cytokine variance scaling
+        drop_rna_only (bool, default:False): drop RNA-only samples from CMTF
 
     Returns:
         tensor (numpy.array): tensor of cytokine data

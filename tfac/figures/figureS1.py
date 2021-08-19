@@ -10,7 +10,7 @@ from .figureCommon import getSetup
 
 
 def fig_S1_setup():
-    tensor, matrix, patInfo = form_tensor()
+    tensor, _, patInfo = form_tensor()
     plasma, _ = import_cytokines()
     cytokines = plasma.index
 

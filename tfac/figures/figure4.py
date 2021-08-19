@@ -6,10 +6,8 @@ depicting model accuracy against scaling and component count.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .figureCommon import getSetup
-from ..predict import run_scaling_analyses
-
-OPTIMAL_SCALING = 2 ** 5
+from .figureCommon import getSetup, OPTIMAL_SCALING
+from ..predict import evaluate_scaling, evaluate_components
 
 
 def plot_results(by_scaling, by_components):
@@ -67,9 +65,6 @@ def makeFigure():
         fig (matplotlib.pyplot.Figure): Figure containing plots of
             scaling and CMTF component analyses
     """
-    by_scaling, by_components = run_scaling_analyses(
-        OPTIMAL_SCALING
-    )
-    fig = plot_results(by_scaling, by_components)
-
-    return fig
+    by_scaling = evaluate_scaling()
+    by_components = evaluate_components(OPTIMAL_SCALING)
+    return plot_results(by_scaling, by_components)

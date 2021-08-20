@@ -1,4 +1,5 @@
 from matplotlib.patches import Patch
+from os.path import abspath, dirname, join
 import pandas as pd
 import seaborn as sns
 
@@ -7,14 +8,54 @@ from tfac.dataImport import form_tensor, import_cytokines
 from tfac.predict import predict_known, predict_unknown
 from tfac.tensor import perform_CMTF
 
+PATH_HERE = dirname(dirname(abspath(__file__)))
+
 
 def makeFigure():
     data_types, patient_data = get_data_types()
     train_samples = run_cv(data_types, patient_data)
     validation_samples = run_unknown(data_types, patient_data)
+    export_results(train_samples, validation_samples)
     fig = plot_results(train_samples, validation_samples)
 
     return fig
+
+
+def export_results(train_samples, validation_samples):
+    """
+    Reformats prediction DataFrames and saves as .csv.
+
+    Parameters:
+        train_samples (pandas.Series): predictions for training samples
+        validation_samples (pandas.Series): predictions for validation samples
+
+    Returns:
+        None
+    """
+    validation_samples = validation_samples.loc[:, 'CMTF']
+    train_samples = train_samples.loc[:, 'CMTF']
+
+    validation_samples = validation_samples.replace(0, 'ARMB')
+    validation_samples = validation_samples.replace(1, 'APMB')
+    train_samples = train_samples.replace(0, 'ARMB')
+    train_samples = train_samples.replace(1, 'APMB')
+
+    validation_samples.to_csv(
+        join(
+            PATH_HERE,
+            '..',
+            'output',
+            'validation_predictions.txt'
+        )
+     )
+    train_samples.to_csv(
+        join(
+            PATH_HERE,
+            '..',
+            'output',
+            'train_predictions.txt'
+        )
+    )
 
 
 def get_data_types():

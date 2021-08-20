@@ -134,7 +134,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     nans = np.isnan(unfold)
     unfold = np.nan_to_num(unfold)
 
-    for _ in range(20):
+    for _ in range(10):
         u, s, vt = svds(unfold, k=rank)
         unfold[nans] = (u @ np.diag(s) @ vt)[nans]
 
@@ -157,7 +157,7 @@ def perform_CMTF(tOrig, mOrig, r=9):
     # Precalculate the missingness patterns
     uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
 
-    for ii in range(200):
+    for ii in range(500):
         # Solve for the glycan matrix fit
         tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None)[0].T
 

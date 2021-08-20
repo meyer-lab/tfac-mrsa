@@ -32,13 +32,13 @@ def export_results(train_samples, validation_samples):
     Returns:
         None
     """
-    validation_samples = validation_samples.loc[:, 'CMTF']
-    train_samples = train_samples.loc[:, 'CMTF']
+    validation_samples = validation_samples.loc[:, 'CMTF'].astype(str)
+    train_samples = train_samples.loc[:, 'CMTF'].astype(str)
 
-    validation_samples = validation_samples.replace(0, 'ARMB')
-    validation_samples = validation_samples.replace(1, 'APMB')
-    train_samples = train_samples.replace(0, 'ARMB')
-    train_samples = train_samples.replace(1, 'APMB')
+    validation_samples = validation_samples.replace('0', 'ARMB')
+    validation_samples = validation_samples.replace('1', 'APMB')
+    train_samples = train_samples.replace('0', 'ARMB')
+    train_samples = train_samples.replace('1', 'APMB')
 
     validation_samples.to_csv(
         join(

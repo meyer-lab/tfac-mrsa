@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report
 from sklearn.svm import SVC
 
 from .dataImport import form_tensor
@@ -123,12 +122,10 @@ def run_model(data, labels):
     else:
         data = data[labels.index, :]
 
-    tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-                         'C': [1, 10, 100, 1000]},
-                        {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+    tuned_parameters = [{'n_estimators': [100, 110, 120, 130, 140, 150]}]
 
     clf = GridSearchCV(
-        SVC(), tuned_parameters, scoring='balanced_accuracy', cv=skf, n_jobs=-1, verbose=True
+        RandomForestClassifier(), tuned_parameters, scoring='balanced_accuracy', cv=skf, n_jobs=-1, verbose=True
     )
     clf.fit(data, labels)
 

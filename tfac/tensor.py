@@ -4,10 +4,10 @@ Tensor decomposition methods
 
 from copy import deepcopy
 import numpy as np
-from scipy.sparse.linalg import svds
 import tensorly as tl
 from tensorly.tenalg import khatri_rao
 from tensorly.decomposition._cp import initialize_cp
+from .soft_impute import SoftImpute
 
 
 tl.set_backend('numpy')
@@ -131,14 +131,11 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     # SVD init mode 0
     unfold = tl.unfold(tensor, 0)
     unfold = np.hstack((unfold, matrix))
-    nans = np.isnan(unfold)
-    unfold = np.nan_to_num(unfold)
 
-    for _ in range(20):
-        u, s, vt = svds(unfold, k=rank)
-        unfold[nans] = (u @ np.diag(s) @ vt)[nans]
+    si = SoftImpute(J=rank, verbose=True)
+    si.fit(unfold)
 
-    factors[0] = u
+    factors[0] = si.u
     return tl.cp_tensor.CPTensor((None, factors))
 
 

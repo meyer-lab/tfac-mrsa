@@ -10,7 +10,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 '''
-from __future__ import print_function
 import numpy as np
 
 
@@ -23,12 +22,12 @@ def frob(Uold, Dsqold, Vold, U, Dsq, V):
     return num / max(denom, 1e-9)
 
 class SoftImpute:
-    def __init__(self, J=2, thresh=1e-05, lambda_=0, maxit=100, random_state=None, verbose=False):
+    def __init__(self, J=2, thresh=1e-05, lambda_=0, maxit=100, verbose=False):
         self.J = J
         self.thresh = thresh
         self.lambda_ = lambda_
         self.maxit = maxit
-        self.rs = np.random.RandomState(random_state)
+        self.rs = np.random.RandomState(1)
         self.verbose = verbose
         self.u = None
         self.d = None
@@ -84,15 +83,3 @@ class SoftImpute:
         self.d = Dsq[:self.J]
         self.v = V[:,:self.J]
         return self
-
-    def suv(self, vd):
-        res = self.u.dot(vd.T)
-        return res
-
-    def predict(self, X, copyto=False):
-        vd = self.v * np.outer(np.ones(self.v.shape[0]), self.d)
-        X_imp = self.suv(vd)
-        if copyto:
-            np.copyto(X, X_imp, where=np.isnan(X))
-        else:
-            return X_imp

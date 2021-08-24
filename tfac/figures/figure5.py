@@ -47,7 +47,7 @@ def export_results(train_samples, validation_samples):
             'output',
             'validation_predictions.txt'
         )
-     )
+    )
     train_samples.to_csv(
         join(
             PATH_HERE,

@@ -86,7 +86,7 @@ def get_predictions():
     data = pd.DataFrame(
         components,
         index=patient_data.index,
-        columns=list(range(1, 10))
+        columns=list(range(1, components.shape[1] + 1))
     )
     predicted = pd.DataFrame(
         index=patient_data.index

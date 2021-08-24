@@ -142,7 +142,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     return tl.cp_tensor.CPTensor((None, factors))
 
 
-def perform_CMTF(tOrig, mOrig, r=9):
+def perform_CMTF(tOrig, mOrig, r=10):
     """ Perform CMTF decomposition. """
     tFac = initialize_cp(tOrig, mOrig, r)
 

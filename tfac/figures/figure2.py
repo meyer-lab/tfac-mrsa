@@ -7,13 +7,14 @@ import seaborn as sns
 from matplotlib import gridspec, pyplot as plt
 from string import ascii_lowercase
 from ..dataImport import form_tensor, import_cytokines
+from .figureCommon import OPTIMAL_SCALING
 from ..tensor import perform_CMTF
 
 
 def fig_2_setup():
     """Import and organize R2X and heatmaps"""
     # R2X
-    tensor, matrix, patInfo = form_tensor()
+    tensor, matrix, patInfo = form_tensor(OPTIMAL_SCALING)
     plasma, _ = import_cytokines()
     cytokines = plasma.index
 

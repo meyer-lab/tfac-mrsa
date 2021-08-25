@@ -102,7 +102,7 @@ def run_model(data, labels):
     """
     skf = RepeatedStratifiedKFold(
         n_splits=10,
-        random_state=42
+        n_repeats=15
     )
 
     if isinstance(labels, pd.Series):

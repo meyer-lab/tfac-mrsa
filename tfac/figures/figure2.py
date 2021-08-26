@@ -20,7 +20,7 @@ def fig_2_setup():
 
     patInfo.loc[:, 'sorted'] = range(patInfo.shape[0])
     patInfo = patInfo.sort_values(['cohort', 'type', 'status'])
-    tensor = tensor[patInfo.loc[:, 'sorted'], :]
+    sortIDX = patInfo.loc[:, 'sorted']
     patInfo = patInfo.drop('sorted', axis=1)
     patInfo = patInfo.T
 
@@ -37,7 +37,7 @@ def fig_2_setup():
     factors = perform_CMTF(tensor, matrix)
 
     colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
-    subs = pd.DataFrame(factors.factors[0], columns=colnames, index=[str(x) for x in patInfo.columns])
+    subs = pd.DataFrame(factors.factors[0][sortIDX, :], columns=colnames, index=[str(x) for x in patInfo.columns])
     cytos = pd.DataFrame(factors.factors[1], columns=colnames, index=cytokines)
     sour = pd.DataFrame(factors.factors[2], columns=colnames, index=["Serum", "Plasma"])
 
@@ -64,8 +64,8 @@ def makeFigure():
     ax16 = plt.subplot(gs[15])
     ax18 = plt.subplot(gs[17])
     # Determine scale
-    vmin = min(subs.values.min(), cytos.values.min(), sour.values.min()) * .6
-    vmax = max(subs.values.max(), cytos.values.max(), sour.values.max()) * .6
+    vmin = min(subs.values.min(), cytos.values.min(), sour.values.min())
+    vmax = max(subs.values.max(), cytos.values.max(), sour.values.max())
     # Plot main graphs
     sns.set(rc={'axes.facecolor': 'whitesmoke'})
     sns.scatterplot(data=R2X, x="Number of Components", y="R2X", ax=ax1)

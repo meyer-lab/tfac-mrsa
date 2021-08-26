@@ -166,6 +166,9 @@ def perform_CMTF(tOrig, mOrig, r=9):
 
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
+            if m == 0:
+                tFac.factors[m] = tl.qr(tFac.factors[m])[0]
+
         if ii % 3 == 0:
             R2X_last = tFac.R2X
             tFac.R2X = calcR2X(tFac, tOrig, mOrig)

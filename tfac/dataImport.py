@@ -48,16 +48,9 @@ def import_cytokines(scale_cyto=True):
         delimiter=',',
         index_col=0
     )
-    patient_data = import_patient_metadata()
 
-    cohort_1 = patient_data.loc[patient_data['cohort'] == 1].index
-    c1_plasma = set(cohort_1) & set(plasma_cyto.index)
-    c1_serum = set(cohort_1) & set(serum_cyto.index)
-
-    plasma_p70 = [val * 123000000 if val < 1 else val for val in plasma_cyto.loc[c1_plasma, 'IL-12(p70)']]
-    serum_p70 = [val * 123000000 if val < 1 else val for val in serum_cyto.loc[c1_serum, 'IL-12(p70)']]
-    plasma_cyto.loc[c1_plasma, 'IL-12(p70)'] = plasma_p70
-    serum_cyto.loc[c1_serum, 'IL-12(p70)'] = serum_p70
+    plasma_cyto['IL-12(p70)'] = np.clip(plasma_cyto['IL-12(p70)'], 1.0, np.inf)
+    serum_cyto['IL-12(p70)'] = np.clip(serum_cyto['IL-12(p70)'], 1.0, np.inf)
 
     if scale_cyto:
         plasma_cyto = scale_cytokines(plasma_cyto)
@@ -79,8 +72,6 @@ def scale_cytokines(cyto):
     """
     cyto = cyto.transform(np.log)
     cyto -= cyto.mean(axis=0)
-    cyto = cyto.sub(cyto.mean(axis=1), axis=0)
-
     return cyto
 
 
@@ -104,8 +95,7 @@ def import_rna(trim_low=True, scale_rna=True):
     )
 
     if trim_low:
-        high_means = rna.mean(axis=0) > 1.0
-        rna = rna.loc[:, high_means]
+        rna = rna.loc[:, rna.mean(axis=0) > 1.0]
 
     if scale_rna:
         columns = rna.columns

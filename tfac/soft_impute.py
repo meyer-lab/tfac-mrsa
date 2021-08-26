@@ -23,7 +23,7 @@ def frob(Uold, Dsqold, Vold, U, Dsq, V):
 
 
 class SoftImpute:
-    def __init__(self, J=2, thresh=1e-05, lambda_=0, maxit=100, verbose=False):
+    def __init__(self, J=2, thresh=1e-05, lambda_=0.1, maxit=100, verbose=False):
         self.J = J
         self.thresh = thresh
         self.lambda_ = lambda_

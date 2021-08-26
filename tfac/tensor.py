@@ -111,7 +111,7 @@ def censored_lstsq(A: np.ndarray, B: np.ndarray, uniqueInfo) -> np.ndarray:
         uu = np.squeeze(unique[:, i])
 
         Bx = B[uu, :]
-        X[:, uI] = np.linalg.lstsq(A[uu, :], Bx[:, uI], rcond=-1)[0]
+        X[:, uI] = np.linalg.lstsq(A[uu, :], Bx[:, uI], rcond=None)[0]
     return X.T
 
 
@@ -156,10 +156,12 @@ def perform_CMTF(tOrig, mOrig, r=9):
 
     for ii in range(200):
         # Solve for the glycan matrix fit
-        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=-1)[0].T
+        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None)[0].T
+        Q, R = tl.qr(tFac.mFactor)
+        tFac.mFactor = Q @ np.diag(np.diag(R))
 
         # PARAFAC on all modes
-        for m in (1, 2, 0):
+        for m in (1, 2, 1, 2):
             kr = khatri_rao(tFac.factors, skip_matrix=m)
             if m == 0:
                 kr = np.vstack((kr, tFac.mFactor))
@@ -167,8 +169,8 @@ def perform_CMTF(tOrig, mOrig, r=9):
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
             if m == 0:
-                u, _, v = np.linalg.svd(tFac.factors[m], full_matrices=False)
-                tFac.factors[m] = u @ v
+                Q, R = tl.qr(tFac.factors[m])
+                tFac.factors[m] = Q @ np.diag(np.diag(R))
 
         if ii % 10 == 0:
             R2X_last = tFac.R2X

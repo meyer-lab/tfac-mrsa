@@ -141,6 +141,8 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
 
 def perform_CMTF(tOrig, mOrig, r=9):
     """ Perform CMTF decomposition. """
+    assert mOrig.dtype == float
+    assert tOrig.dtype == float
     tFac = initialize_cp(tOrig, mOrig, r)
 
     # Pre-unfold

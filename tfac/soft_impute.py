@@ -23,10 +23,9 @@ def frob(Uold, Dsqold, Vold, U, Dsq, V):
 
 
 class SoftImpute:
-    def __init__(self, J=2, thresh=1e-05, lambda_=0, maxit=100, verbose=False):
+    def __init__(self, J=2, thresh=1e-05, maxit=100, verbose=False):
         self.J = J
         self.thresh = thresh
-        self.lambda_ = lambda_
         self.maxit = maxit
         self.rs = np.random.RandomState(1)
         self.verbose = verbose
@@ -52,10 +51,6 @@ class SoftImpute:
             V_old = V
             Dsq_old = Dsq
             B = U.T.dot(xfill)
-
-            if self.lambda_ > 0:
-                tmp = (Dsq / (Dsq + self.lambda_))
-                B = B * tmp
 
             Bsvd = np.linalg.svd(B.T, full_matrices=False)
             V = Bsvd[0]

@@ -167,7 +167,8 @@ def perform_CMTF(tOrig, mOrig, r=9):
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
             if m == 0:
-                tFac.factors[m] = tl.qr(tFac.factors[m])[0]
+                u, _, v = np.linalg.svd(tFac.factors[m], full_matrices=False)
+                tFac.factors[m] = u @ v
 
         if ii % 10 == 0:
             R2X_last = tFac.R2X

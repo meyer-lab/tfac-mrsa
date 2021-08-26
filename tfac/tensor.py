@@ -163,7 +163,7 @@ def perform_CMTF(tOrig, mOrig, r=9):
         tFac.mFactor = Q @ np.diag(np.diag(R))
 
         # PARAFAC on all modes
-        for m in (1, 2, 1, 2):
+        for m in (1, 2, 0):
             kr = khatri_rao(tFac.factors, skip_matrix=m)
             if m == 0:
                 kr = np.vstack((kr, tFac.mFactor))

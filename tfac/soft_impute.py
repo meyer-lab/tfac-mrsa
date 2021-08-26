@@ -27,7 +27,7 @@ class SoftImpute:
         self.J = J
         self.thresh = thresh
         self.maxit = maxit
-        self.rs = np.random.RandomState(0)
+        self.rs = np.random.RandomState(1)
         self.verbose = verbose
         self.u = None
         self.d = None

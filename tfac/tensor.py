@@ -111,7 +111,7 @@ def censored_lstsq(A: np.ndarray, B: np.ndarray, uniqueInfo) -> np.ndarray:
         uu = np.squeeze(unique[:, i])
 
         Bx = B[uu, :]
-        X[:, uI] = np.linalg.lstsq(A[uu, :], Bx[:, uI], rcond=None)[0]
+        X[:, uI] = np.linalg.lstsq(A[uu, :], Bx[:, uI], rcond=-1)[0]
     return X.T
 
 
@@ -156,7 +156,7 @@ def perform_CMTF(tOrig, mOrig, r=9):
 
     for ii in range(200):
         # Solve for the glycan matrix fit
-        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None)[0].T
+        tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=-1)[0].T
 
         # PARAFAC on all modes
         for m in (1, 2, 0):

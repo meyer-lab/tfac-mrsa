@@ -7,7 +7,7 @@ import matplotlib
 import svgutils.transform as st
 from matplotlib import gridspec, pyplot as plt
 
-OPTIMAL_SCALING = 32
+OPTIMAL_SCALING = 16
 
 
 matplotlib.rcParams["legend.labelspacing"] = 0.2

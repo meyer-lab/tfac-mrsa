@@ -32,8 +32,8 @@ def export_results(train_samples, validation_samples):
     Returns:
         None
     """
-    validation_samples = validation_samples.loc[:, 'CMTF'].astype(str)
-    train_samples = train_samples.loc[:, 'CMTF'].astype(str)
+    validation_samples = validation_samples.astype(str)
+    train_samples = train_samples.astype(str)
 
     validation_samples = validation_samples.replace('0', 'ARMB')
     validation_samples = validation_samples.replace('1', 'APMB')

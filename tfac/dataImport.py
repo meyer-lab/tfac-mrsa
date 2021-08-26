@@ -171,23 +171,15 @@ def form_tensor(variance_scaling: float = 1.0):
     patient_data = import_patient_metadata()
     patients = set(patient_data.index)
 
-    serum_cyto = add_missing_columns(serum_cyto, patients)
-    plasma_cyto = add_missing_columns(plasma_cyto, patients)
-    rna = add_missing_columns(rna, patients)
-
-    cyto_var = np.linalg.norm(serum_cyto.fillna(0)) + \
-        np.linalg.norm(plasma_cyto.fillna(0))
-    serum_cyto /= cyto_var
-    plasma_cyto /= cyto_var
-
-    rna_var = np.linalg.norm(rna.fillna(0))
-    rna /= rna_var
-    rna /= variance_scaling
-    matrix = rna.to_numpy(dtype=float)
-    matrix = matrix.T
+    serum_cyto = add_missing_columns(serum_cyto, patients).to_numpy(dtype=float)
+    plasma_cyto = add_missing_columns(plasma_cyto, patients).to_numpy(dtype=float)
+    rna = add_missing_columns(rna, patients).to_numpy(dtype=float)
 
     tensor = np.stack(
         (serum_cyto, plasma_cyto)
     ).T
 
-    return tensor, matrix, patient_data
+    tensor /= np.sum(np.square(np.nan_to_num(tensor)))
+    rna /= np.sum(np.square(np.nan_to_num(rna)))
+
+    return tensor * variance_scaling, rna.T, patient_data

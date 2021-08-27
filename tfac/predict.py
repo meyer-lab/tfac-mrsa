@@ -121,7 +121,7 @@ def run_model(data, labels):
         data = data[labels.index, :]
 
     model = LogisticRegressionCV(
-        l1_ratios=[0.0, 0.5, 0.8, 1.0],
+        l1_ratios=[0.8],
         solver="saga",
         penalty="elasticnet",
         n_jobs=-1,

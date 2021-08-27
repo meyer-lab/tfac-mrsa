@@ -132,7 +132,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     unfold = tl.unfold(tensor, 0)
     unfold = np.hstack((unfold, matrix))
 
-    si = SoftImpute(J=rank, verbose=True)
+    si = SoftImpute(J=rank)
     si.fit(unfold)
 
     factors[0] = si.u
@@ -174,11 +174,11 @@ def perform_CMTF(tOrig, mOrig, r=9):
                 Q, R = tl.qr(tFac.factors[m])
                 tFac.factors[m] = Q @ np.diag(np.diag(R))
 
-        if ii % 10 == 0:
+        if ii % 2 == 0:
             R2X_last = tFac.R2X
             tFac.R2X = calcR2X(tFac, tOrig, mOrig)
 
-        if tFac.R2X - R2X_last < 1e-5:
+        if tFac.R2X - R2X_last < 1e-9:
             break
 
     tFac = cp_normalize(tFac)

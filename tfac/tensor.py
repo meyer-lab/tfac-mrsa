@@ -132,7 +132,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     unfold = tl.unfold(tensor, 0)
     unfold = np.hstack((unfold, matrix))
 
-    si = SoftImpute(J=rank, verbose=True)
+    si = SoftImpute(J=rank)
     si.fit(unfold)
 
     factors[0] = si.u
@@ -159,6 +159,8 @@ def perform_CMTF(tOrig, mOrig, r=9):
     for ii in range(200):
         # Solve for the glycan matrix fit
         tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=-1)[0].T
+        Q, R = tl.qr(tFac.mFactor)
+        tFac.mFactor = Q @ np.diag(np.diag(R))
 
         # PARAFAC on all modes
         for m in (1, 2, 0):
@@ -169,14 +171,14 @@ def perform_CMTF(tOrig, mOrig, r=9):
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
             if m == 0:
-                u, _, v = np.linalg.svd(tFac.factors[m], full_matrices=False)
-                tFac.factors[m] = u @ v
+                Q, R = tl.qr(tFac.factors[m])
+                tFac.factors[m] = Q @ np.diag(np.diag(R))
 
-        if ii % 10 == 0:
+        if ii % 2 == 0:
             R2X_last = tFac.R2X
             tFac.R2X = calcR2X(tFac, tOrig, mOrig)
 
-        if tFac.R2X - R2X_last < 1e-5:
+        if tFac.R2X - R2X_last < 1e-9:
             break
 
     tFac = cp_normalize(tFac)

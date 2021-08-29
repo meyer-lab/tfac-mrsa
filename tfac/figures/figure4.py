@@ -55,7 +55,7 @@ def plot_results(by_scaling, by_components):
     axs[1].text(0.52, 0.9, 'B', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
 
     # R2X vs. Scaling
-    
+
     R2X = pd.DataFrame(
         index=np.logspace(-7, 7, base=2, num=29).tolist(), columns=["Total", "Tensor", "Matrix"], data=np.zeros((29, 3)),
         dtype=float
@@ -67,7 +67,7 @@ def plot_results(by_scaling, by_components):
         R2X.loc[scaling, "Total"] = calcR2X(tFac, tensor, matrix)
         R2X.loc[scaling, "Tensor"] = calcR2X(tFac, tIn=tensor)
         R2X.loc[scaling, "Matrix"] = calcR2X(tFac, mIn=matrix)
-        
+
     R2X.plot(ax=axs[2])
     axs[2].set_xscale("log")
     axs[2].set_ylabel("R2X")

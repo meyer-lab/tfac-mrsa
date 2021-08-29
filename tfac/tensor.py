@@ -171,14 +171,14 @@ def perform_CMTF(tOrig, mOrig, r=9):
             tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
 
             if m == 0:
-                Q, R = tl.qr(tFac.factors[m])
-                tFac.factors[m] = Q @ np.diag(np.diag(R))
+                Q, _ = tl.qr(tFac.factors[m])
+                tFac.factors[m] = Q
 
-        if ii % 2 == 0:
+        if ii % 20 == 0:
             R2X_last = tFac.R2X
             tFac.R2X = calcR2X(tFac, tOrig, mOrig)
 
-        if tFac.R2X - R2X_last < 1e-9:
+        if tFac.R2X - R2X_last < 1e-8
             break
 
     tFac = cp_normalize(tFac)

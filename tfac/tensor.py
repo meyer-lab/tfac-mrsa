@@ -81,11 +81,11 @@ def sort_factors(tFac):
     order = np.flip(np.argsort(norm))
     tensor.weights = tensor.weights[order]
     tensor.factors = [fac[:, order] for fac in tensor.factors]
-    #np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor))
+    np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor), atol=1e-9)
 
     if hasattr(tFac, 'mFactor'):
         tensor.mFactor = tensor.mFactor[:, order]
-        #np.testing.assert_allclose(buildMat(tFac), buildMat(tensor))
+        np.testing.assert_allclose(buildMat(tFac), buildMat(tensor), atol=1e-9)
 
     return tensor
 
@@ -126,7 +126,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     factors : CPTensor
         An initial cp tensor.
     """
-    factors = [np.random.randn(tensor.shape[i], rank) for i in range(tensor.ndim)]
+    factors = [np.ones((tensor.shape[i], rank)) for i in range(tensor.ndim)]
 
     # SVD init mode 0
     unfold = tl.unfold(tensor, 0)
@@ -161,7 +161,7 @@ def perform_CMTF(tOrig, mOrig, r=9):
     # Precalculate the missingness patterns
     uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
 
-    for ii in range(20):
+    for ii in range(40):
         tensor = np.nan_to_num(tOrig) + tl.cp_to_tensor(tFac) * np.isnan(tOrig)
         tFac = parafac(tensor, r, 200, init=tFac, verbose=False, fixed_modes=[0], mask=np.isfinite(tOrig))
 
@@ -176,18 +176,16 @@ def perform_CMTF(tOrig, mOrig, r=9):
 
         R2X_last = R2X
         R2X = calcR2X(tFac, tOrig, mOrig)
+        assert R2X > 0.0
 
         if R2X - R2X_last < 1e-6:
             print("ii: " + str(ii))
-            print(R2X - R2X_last)
             break
 
     tFac = cp_normalize(tFac)
     tFac = reorient_factors(tFac)
     tFac = sort_factors(tFac)
     tFac.R2X = R2X
-
-    assert tFac.R2X > 0.0
 
     print("R2X: " + str(tFac.R2X))
 

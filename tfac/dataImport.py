@@ -95,7 +95,7 @@ def import_rna(trim_low=True, scale_rna=True):
     )
 
     if trim_low:
-        rna = rna.loc[:, rna.mean(axis=0) > 1.0]
+        rna = rna.loc[:, rna.mean(axis=0) > 100]
 
     if scale_rna:
         columns = rna.columns

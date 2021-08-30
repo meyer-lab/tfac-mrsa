@@ -27,12 +27,14 @@ def calcR2X(tFac, tIn=None, mIn=None):
 
     if tIn is not None:
         tMask = np.isfinite(tIn)
-        vTop += np.sum(np.square(tl.cp_to_tensor(tFac) * tMask - np.nan_to_num(tIn)))
-        vBottom += np.sum(np.square(np.nan_to_num(tIn)))
+        tIn = np.nan_to_num(tIn)
+        vTop += np.linalg.norm(tl.cp_to_tensor(tFac) * tMask - tIn)**2.0
+        vBottom += np.linalg.norm(tIn)**2.0
     if mIn is not None:
         mMask = np.isfinite(mIn)
-        vTop += np.sum(np.square(buildMat(tFac) * mMask - np.nan_to_num(mIn)))
-        vBottom += np.sum(np.square(np.nan_to_num(mIn)))
+        mIn = np.nan_to_num(mIn)
+        vTop += np.linalg.norm(buildMat(tFac) * mMask - mIn)**2.0
+        vBottom += np.linalg.norm(mIn)**2.0
 
     return 1.0 - vTop / vBottom
 

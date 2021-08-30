@@ -181,7 +181,6 @@ def perform_CMTF(tOrig, mOrig, r=9):
         assert R2X > 0.0
 
         if R2X - R2X_last < 1e-6:
-            print("ii: " + str(ii))
             break
 
     tFac = cp_normalize(tFac)

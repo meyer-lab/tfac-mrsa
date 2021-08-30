@@ -6,7 +6,7 @@ from copy import deepcopy
 import numpy as np
 import tensorly as tl
 from tensorly.tenalg import khatri_rao
-from tensorly.decomposition._cp import initialize_cp
+from tensorly.decomposition._cp import initialize_cp, parafac
 from .soft_impute import SoftImpute
 
 
@@ -81,11 +81,11 @@ def sort_factors(tFac):
     order = np.flip(np.argsort(norm))
     tensor.weights = tensor.weights[order]
     tensor.factors = [fac[:, order] for fac in tensor.factors]
-    np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor))
+    #np.testing.assert_allclose(tl.cp_to_tensor(tFac), tl.cp_to_tensor(tensor))
 
     if hasattr(tFac, 'mFactor'):
         tensor.mFactor = tensor.mFactor[:, order]
-        np.testing.assert_allclose(buildMat(tFac), buildMat(tensor))
+        #np.testing.assert_allclose(buildMat(tFac), buildMat(tensor))
 
     return tensor
 
@@ -126,7 +126,7 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     factors : CPTensor
         An initial cp tensor.
     """
-    factors = [np.ones((tensor.shape[i], rank)) for i in range(tensor.ndim)]
+    factors = [np.random.randn(tensor.shape[i], rank) for i in range(tensor.ndim)]
 
     # SVD init mode 0
     unfold = tl.unfold(tensor, 0)
@@ -136,6 +136,11 @@ def initialize_cp(tensor: np.ndarray, matrix: np.ndarray, rank: int):
     si.fit(unfold)
 
     factors[0] = si.u
+
+    unfold = tl.unfold(tensor, 1)
+    unfold = unfold[:, np.all(np.isfinite(unfold), axis=0)]
+    factors[1] = np.linalg.svd(unfold)[0]
+    factors[1] = factors[1][:, :rank]
     return tl.cp_tensor.CPTensor((None, factors))
 
 
@@ -151,39 +156,38 @@ def perform_CMTF(tOrig, mOrig, r=9):
     missingM = np.all(np.isfinite(mOrig), axis=1)
     unfolded[0] = np.hstack((unfolded[0], mOrig))
 
-    tFac.R2X = -np.inf
+    R2X = -np.inf
 
     # Precalculate the missingness patterns
     uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
 
-    for ii in range(200):
+    for ii in range(20):
+        tensor = np.nan_to_num(tOrig) + tl.cp_to_tensor(tFac) * np.isnan(tOrig)
+        tFac = parafac(tensor, r, 200, init=tFac, verbose=False, fixed_modes=[0], mask=np.isfinite(tOrig))
+
         # Solve for the glycan matrix fit
         tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=-1)[0].T
-        Q, R = tl.qr(tFac.mFactor)
-        tFac.mFactor = Q @ np.diag(np.diag(R))
 
         # PARAFAC on all modes
-        for m in (1, 2, 0):
-            kr = khatri_rao(tFac.factors, skip_matrix=m)
-            if m == 0:
-                kr = np.vstack((kr, tFac.mFactor))
+        kr = khatri_rao(tFac.factors, skip_matrix=0)
+        kr = np.vstack((kr, tFac.mFactor))
 
-            tFac.factors[m] = censored_lstsq(kr, unfolded[m].T, uniqueInfo[m])
+        tFac.factors[0] = censored_lstsq(kr, unfolded[0].T, uniqueInfo[0])
 
-            if m == 0:
-                Q, R = tl.qr(tFac.factors[m])
-                tFac.factors[m] = Q @ np.diag(np.diag(R))
+        R2X_last = R2X
+        R2X = calcR2X(tFac, tOrig, mOrig)
 
-        if ii % 2 == 0:
-            R2X_last = tFac.R2X
-            tFac.R2X = calcR2X(tFac, tOrig, mOrig)
-
-        if tFac.R2X - R2X_last < 1e-9:
+        if R2X - R2X_last < 1e-6:
+            print("ii: " + str(ii))
+            print(R2X - R2X_last)
             break
 
     tFac = cp_normalize(tFac)
     tFac = reorient_factors(tFac)
     tFac = sort_factors(tFac)
+    tFac.R2X = R2X
+
+    assert tFac.R2X > 0.0
 
     print("R2X: " + str(tFac.R2X))
 

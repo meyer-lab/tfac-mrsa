@@ -153,28 +153,24 @@ def perform_CMTF(tOrig, mOrig, r=9):
     tFac = initialize_cp(tOrig, mOrig, r)
 
     # Pre-unfold
-    unfolded = [tl.unfold(tOrig, i) for i in range(tOrig.ndim)]
-
+    unfolded = np.hstack((tl.unfold(tOrig, 0), mOrig))
     missingM = np.all(np.isfinite(mOrig), axis=1)
-    unfolded[0] = np.hstack((unfolded[0], mOrig))
-
     R2X = -np.inf
 
     # Precalculate the missingness patterns
-    uniqueInfo = [np.unique(np.isfinite(B.T), axis=1, return_inverse=True) for B in unfolded]
+    uniqueInfo = np.unique(np.isfinite(unfolded.T), axis=1, return_inverse=True)
 
-    for ii in range(40):
+    for _ in range(40):
         tensor = np.nan_to_num(tOrig) + tl.cp_to_tensor(tFac) * np.isnan(tOrig)
         tFac = parafac(tensor, r, 200, init=tFac, verbose=False, fixed_modes=[0], mask=np.isfinite(tOrig))
 
         # Solve for the glycan matrix fit
         tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=-1)[0].T
 
-        # PARAFAC on all modes
+        # Solve for subjects factors
         kr = khatri_rao(tFac.factors, skip_matrix=0)
         kr = np.vstack((kr, tFac.mFactor))
-
-        tFac.factors[0] = censored_lstsq(kr, unfolded[0].T, uniqueInfo[0])
+        tFac.factors[0] = censored_lstsq(kr, unfolded.T, uniqueInfo)
 
         R2X_last = R2X
         R2X = calcR2X(tFac, tOrig, mOrig)

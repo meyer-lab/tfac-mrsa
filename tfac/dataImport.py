@@ -91,8 +91,10 @@ def import_rna(trim_low=True, scale_rna=True):
         join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.txt.zip'),
         delimiter=',',
         index_col=0,
-        engine="c"
+        engine="c",
+        dtype="float64"
     )
+    rna.index = rna.index.astype("int32")
 
     if trim_low:
         rna = rna.loc[:, rna.mean(axis=0) > 1.0]

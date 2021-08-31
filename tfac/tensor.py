@@ -162,7 +162,7 @@ def perform_CMTF(tOrig, mOrig, r=9):
 
     for _ in range(40):
         tensor = np.nan_to_num(tOrig) + tl.cp_to_tensor(tFac) * np.isnan(tOrig)
-        tFac = parafac(tensor, r, 500, tol=1e-9, init=tFac, fixed_modes=[0], mask=np.isfinite(tOrig), linesearch=True)
+        tFac = parafac(tensor, r, 200, init=tFac, verbose=False, fixed_modes=[0], mask=np.isfinite(tOrig))
 
         # Solve for the glycan matrix fit
         tFac.mFactor = np.linalg.lstsq(tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=-1)[0].T

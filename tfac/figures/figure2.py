@@ -125,8 +125,8 @@ def makeFigure():
     # Outcome bar
     outs = pd.DataFrame(patInfo.loc["status"]).set_index("status")
     outs["Outcome"] = 0
-    outs[outs.index == "0"] = 2
-    outs[outs.index == "1"] = 1
+    outs[outs.index == "0"] = 1
+    outs[outs.index == "1"] = 2
     outs[outs.index == "Unknown"] = 0
 
     sns.heatmap(

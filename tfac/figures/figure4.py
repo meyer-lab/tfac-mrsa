@@ -41,7 +41,7 @@ def plot_results(by_scaling, by_components):
     axs[0].semilogx(by_scaling.index, by_scaling, base=2)
     axs[0].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
     axs[0].set_xlabel('Variance Scaling (RNA/Cytokine)', fontsize=12)
-    axs[0].set_ylim([0.5, 0.8])
+    axs[0].set_ylim([0.5, 0.75])
     axs[0].set_xticks(np.logspace(-7, 7, base=2, num=8))
     axs[0].text(0.02, 0.9, 'A', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
 
@@ -51,8 +51,8 @@ def plot_results(by_scaling, by_components):
     axs[1].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
     axs[1].set_xlabel('CMTF Components', fontsize=12)
     axs[1].set_xticks(by_components.index)
-    axs[1].set_ylim([0.5, 0.8])
-    axs[1].text(0.52, 0.9, 'B', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
+    axs[1].set_ylim([0.5, 0.75])
+    axs[1].text(0.37, 0.9, 'B', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
 
     # R2X vs. Scaling
 
@@ -70,9 +70,10 @@ def plot_results(by_scaling, by_components):
 
     R2X.plot(ax=axs[2])
     axs[2].set_xscale("log")
-    axs[2].set_ylabel("R2X")
-    axs[2].set_xlabel("Tensor scaled")
+    axs[2].set_ylabel("R2X", fontsize=12)
+    axs[2].set_xlabel("Tensor scaled", fontsize=12)
     axs[2].set_ylim(0, 1.0)
+    axs[2].text(0.70, 0.9, 'C', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
 
     return fig
 

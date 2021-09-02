@@ -60,7 +60,7 @@ def plot_results(accuracies):
         layout
     )
 
-    labels = [re.sub('\d', '/', d_type[1:]) for d_type in accuracies.index]
+    labels = [re.sub(r'\d', '/', d_type[1:]) for d_type in accuracies.index]
     axs[0].bar(range(len(accuracies)), accuracies)
     axs[0].set_xticks(range(len(accuracies)))
     axs[0].set_xticklabels(labels, rotation=45, ha='right', fontsize=10)

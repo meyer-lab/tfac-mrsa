@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from .figureCommon import getSetup, OPTIMAL_SCALING
 from ..dataImport import form_tensor
+from ..predict import evaluate_components, evaluate_scaling
 from ..tensor import perform_CMTF, calcR2X
 
 
@@ -113,14 +114,9 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
 
 
 def makeFigure():
-    # r2x_v_components, r2x_v_scaling = get_r2x_results()
-    # acc_v_components = evaluate_components(OPTIMAL_SCALING)
-    # acc_v_scaling = evaluate_scaling()
-
-    r2x_v_components = pd.read_csv('r2x_v_components.csv', index_col=0)
-    r2x_v_scaling = pd.read_csv('r2x_v_scaling.csv', index_col=0)
-    acc_v_components = pd.read_csv('acc_v_components.csv', index_col=0)
-    acc_v_scaling = pd.read_csv('acc_v_scaling.csv', index_col=0)
+    r2x_v_components, r2x_v_scaling = get_r2x_results()
+    acc_v_components = evaluate_components(OPTIMAL_SCALING)
+    acc_v_scaling = evaluate_scaling()
 
     fig = plot_results(
         r2x_v_components,

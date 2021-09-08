@@ -183,9 +183,12 @@ def plot_results(cv_results, cv_probabilities, val_results):
         fpr, tpr, _ = roc_curve(actual, col)
         axs[1].plot(fpr, tpr)
 
+    axs[1].set_xlim(0, 1)
+    axs[1].set_ylim(0, 1)
     axs[1].legend(cv_probabilities.columns)
     axs[1].set_xlabel('False Positive Rate', fontsize=12)
     axs[1].set_ylabel('True Positive Rate', fontsize=12)
+    axs[1].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[1].text(
         0.49,
         0.96,

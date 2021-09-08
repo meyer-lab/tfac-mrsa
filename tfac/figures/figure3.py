@@ -133,7 +133,7 @@ def get_accuracies(cv_results):
 
 def plot_results(cv_results, cv_probabilities, val_results):
     """
-    Plots predictions as heatmaps.
+    Plots prediction model performance.
 
     Parameters:
         cv_results (pandas.DataFrame): predictions for samples with known

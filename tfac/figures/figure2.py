@@ -11,7 +11,16 @@ from ..tensor import perform_CMTF, calcR2X
 
 
 def get_r2x_results():
-    """Import and organize R2X and heatmaps"""
+    """
+    Calculates CMTF R2X with regards to the number of CMTF components and RNA/cytokine scaling.
+
+    Parameters:
+        None
+
+    Returns:
+        r2x_v_components (pandas.Series): R2X vs. number of CMTF components
+        r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
+    """
     # R2X v. Components
     tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
     components = 12
@@ -40,6 +49,18 @@ def get_r2x_results():
 
 
 def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scaling):
+    """
+    Plots prediction model performance.
+
+    Parameters:
+        r2x_v_components (pandas.Series): R2X vs. number of CMTF components
+        r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
+        acc_v_components (pandas.Series): accuracy vs. number of CMTF components
+        acc_v_scaling (pondas.Series): accuracy vs. RNA/cytokine scaling
+
+    Returns:
+        fig (matplotlib.Figure): figure depicting CMTF parameterization plots
+    """
     fig_size = (8, 8)
     layout = (2, 2)
     axs, fig = getSetup(

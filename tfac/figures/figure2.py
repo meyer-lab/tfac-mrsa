@@ -1,151 +1,149 @@
 """
-This creates Figure 2 - MRSA R2X
+Creates Figure 2 -- CMTF Plotting
 """
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from matplotlib import gridspec, pyplot as plt
-from string import ascii_lowercase
-from ..dataImport import form_tensor, import_cytokines
-from .figureCommon import OPTIMAL_SCALING
-from ..tensor import perform_CMTF
+from .figureCommon import getSetup, OPTIMAL_SCALING
+from ..dataImport import form_tensor
+from ..predict import evaluate_components, evaluate_scaling
+from ..tensor import perform_CMTF, calcR2X
 
 
-def fig_2_setup():
-    """Import and organize R2X and heatmaps"""
-    # R2X
-    tensor, matrix, patInfo = form_tensor(OPTIMAL_SCALING)
-    plasma, _ = import_cytokines()
-    cytokines = plasma.index
+def get_r2x_results():
+    """
+    Calculates CMTF R2X with regards to the number of CMTF components and RNA/cytokine scaling.
 
-    patInfo.loc[:, 'sorted'] = range(patInfo.shape[0])
-    patInfo = patInfo.sort_values(['cohort', 'type', 'status'])
-    sortIDX = patInfo.loc[:, 'sorted']
-    patInfo = patInfo.drop('sorted', axis=1)
-    patInfo = patInfo.T
+    Parameters:
+        None
 
+    Returns:
+        r2x_v_components (pandas.Series): R2X vs. number of CMTF components
+        r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
+    """
+    # R2X v. Components
+    tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
     components = 12
-    AllR2X = []
-    # Run factorization at each component number up to chosen limit
-    for component in range(1, components + 1):
-        print(f"Starting decomposition with {component} components.")
-        AllR2X.append(perform_CMTF(tensor, matrix, r=component).R2X)
 
-    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
+    r2x_v_components = pd.Series(
+        index=np.arange(1, components + 1)
+    )
+    for n_components in r2x_v_components.index:
+        print(f"Starting decomposition with {n_components} components.")
+        r2x_v_components.loc[n_components] = \
+            perform_CMTF(tensor, matrix, r=n_components).R2X
 
-    # Heatmaps
-    factors = perform_CMTF(tensor, matrix)
+    # R2X v. Scaling
+    r2x_v_scaling = pd.DataFrame(
+        index=np.logspace(-7, 7, base=2, num=29),
+        columns=["Total", "Tensor", "Matrix"]
+    )
+    for scaling in r2x_v_scaling.index:
+        tensor, matrix, _ = form_tensor(scaling)
+        t_fac = perform_CMTF(tOrig=tensor, mOrig=matrix)
+        r2x_v_scaling.loc[scaling, "Total"] = calcR2X(t_fac, tensor, matrix)
+        r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
+        r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)
 
-    colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
-    subs = pd.DataFrame(factors.factors[0][sortIDX, :], columns=colnames, index=[str(x) for x in patInfo.columns])
-    cytos = pd.DataFrame(factors.factors[1], columns=colnames, index=cytokines)
-    sour = pd.DataFrame(factors.factors[2], columns=colnames, index=["Serum", "Plasma"])
+    return r2x_v_components, r2x_v_scaling
 
-    return R2X, subs, cytos, sour, patInfo
+
+def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scaling):
+    """
+    Plots prediction model performance.
+
+    Parameters:
+        r2x_v_components (pandas.Series): R2X vs. number of CMTF components
+        r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
+        acc_v_components (pandas.Series): accuracy vs. number of CMTF components
+        acc_v_scaling (pondas.Series): accuracy vs. RNA/cytokine scaling
+
+    Returns:
+        fig (matplotlib.Figure): figure depicting CMTF parameterization plots
+    """
+    fig_size = (8, 8)
+    layout = (2, 2)
+    axs, fig = getSetup(
+        fig_size,
+        layout
+    )
+
+    # R2X v. Components
+
+    axs[0].plot(r2x_v_components.index, r2x_v_components)
+    axs[0].set_ylabel('R2X', fontsize=12)
+    axs[0].set_xlabel('Number of Components', fontsize=12)
+    axs[0].set_ylim(0, 1)
+    axs[0].text(
+        0.02,
+        0.95,
+        'A',
+        fontsize=16,
+        fontweight='bold',
+        transform=plt.gcf().transFigure
+    )
+
+    # R2X v. Scaling
+
+    r2x_v_scaling.plot(ax=axs[1])
+    axs[1].set_xscale("log")
+    axs[1].set_ylabel('R2X', fontsize=12)
+    axs[1].set_xlabel('Variance Scaling (Cytokine/RNA)', fontsize=12)
+    axs[1].set_ylim(0, 1)
+    axs[1].text(
+        0.52,
+        0.95,
+        'B',
+        fontsize=16,
+        fontweight='bold',
+        transform=plt.gcf().transFigure
+    )
+
+    # Accuracy v. Components
+
+    axs[2].plot(acc_v_components.index, acc_v_components)
+    axs[2].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
+    axs[2].set_xlabel('Number of Components', fontsize=12)
+    axs[2].set_xticks(acc_v_components.index)
+    axs[2].set_ylim([0.5, 0.75])
+    axs[2].text(
+        0.02,
+        0.45,
+        'C',
+        fontsize=16,
+        fontweight='bold',
+        transform=plt.gcf().transFigure
+    )
+
+    # Accuracy v. Scaling
+
+    axs[3].semilogx(acc_v_scaling.index, acc_v_scaling, base=2)
+    axs[3].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
+    axs[3].set_xlabel('Variance Scaling (Cytokine/RNA)', fontsize=12)
+    axs[3].set_ylim([0.5, 0.75])
+    axs[3].set_xticks(np.logspace(-7, 7, base=2, num=8))
+    axs[3].text(
+        0.52,
+        0.45,
+        'D',
+        fontsize=16,
+        fontweight='bold',
+        transform=plt.gcf().transFigure
+    )
+    
+    return fig
 
 
 def makeFigure():
-    """ Get a list of the axis objects and create a figure. """
-    # Get list of axis objects
-    R2X, subs, cytos, sour, patInfo = fig_2_setup()
-    f = plt.figure(figsize=(20, 7))
-    # Width corresponds to plots as such: [R2X, spacer, typecbar, spacer, cohortcbar, spacer, outcomecbar, spacer, type, cohort, outcome, subs, spacer, cbar, spacer, cyto, spacer, source]
-    gs = gridspec.GridSpec(1, 18, width_ratios=[35, 9, 1, 6, 1, 6, 1, 1.5, 1.5, 1.5, 1.5, 25, 1, 2, 12, 25, 8, 25], wspace=0)
-    # Create axes that will have plots
-    ax1 = plt.subplot(gs[0])
-    ax3 = plt.subplot(gs[2])
-    ax5 = plt.subplot(gs[4])
-    ax7 = plt.subplot(gs[6])
-    ax9 = plt.subplot(gs[8])
-    ax10 = plt.subplot(gs[9])
-    ax11 = plt.subplot(gs[10])
-    ax12 = plt.subplot(gs[11])
-    ax14 = plt.subplot(gs[13])
-    ax16 = plt.subplot(gs[15])
-    ax18 = plt.subplot(gs[17])
-    # Determine scale
-    vmin = min(subs.values.min(), cytos.values.min(), sour.values.min())
-    vmax = max(subs.values.max(), cytos.values.max(), sour.values.max())
-    # Plot main graphs
-    sns.set(rc={'axes.facecolor': 'whitesmoke'})
-    sns.scatterplot(data=R2X, x="Number of Components", y="R2X", ax=ax1)
-    ax1.set_ylim(0.0, 1.0)
-    ax1.grid(True, ls="--")
-    sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=ax14, vmin=vmin, vmax=vmax, ax=ax12)
-    sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax16)
-    sns.heatmap(sour, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax18)
-    ax18.set_yticklabels(["Serum", "Plasma"], rotation=0)
-    # Set up subject colorbars
-    outcome_colors = ["gray", "lightgreen", "brown"]
-    cohort_colors = ["deeppink", "orchid", "pink"]
-    type_colors = ["black", "orange", "purple", "green", "red", "yellow", "blue"]
-    outcome_cmap = sns.color_palette(outcome_colors)
-    cohort_cmap = sns.color_palette(cohort_colors)
-    type_cmap = sns.color_palette(type_colors)
-    # Data types bar
-    types = pd.DataFrame(patInfo.loc["type"]).set_index("type")
-    types["Type"] = 0
-    types[types.index == "0Serum"] = 6
-    types[types.index == "1Plasma"] = 5
-    types[types.index == "2RNAseq"] = 4
-    types[types.index == "0Serum1Plasma"] = 3
-    types[types.index == "0Serum2RNAseq"] = 2
-    types[types.index == "1Plasma2RNAseq"] = 1
-    types[types.index == "0Serum1Plasma2RNAseq"] = 0
+    r2x_v_components, r2x_v_scaling = get_r2x_results()
+    acc_v_components = evaluate_components(OPTIMAL_SCALING)
+    acc_v_scaling = evaluate_scaling()
 
-    sns.heatmap(
-        types, ax=ax9, cbar_ax=ax3, yticklabels=False, xticklabels=True, cmap=type_cmap
+    fig = plot_results(
+        r2x_v_components,
+        r2x_v_scaling,
+        acc_v_components,
+        acc_v_scaling
     )
-    ax9.set_xticklabels(types.columns, rotation=90)
-    colorbar = ax9.collections[0].colorbar
-    colorbar.set_ticks(np.linspace(.4, 5.6, 7))
-    ax3.yaxis.set_ticklabels(["All types", "Plasma/RNAseq", "Serum/RNAseq", "Serum/Plasma", "RNAseq", "Plasma", "Serum"], va="center")
-    ax3.yaxis.set_ticks_position('left')
-    ax3.yaxis.set_tick_params(rotation=60)
-    ax9.set_ylabel("")
 
-    # Cohort bar
-    cohort = pd.DataFrame(patInfo.loc["cohort"]).set_index("cohort")
-    cohort["Cohort"] = 0
-    cohort[cohort.index == 1] = 2
-    cohort[cohort.index == 2] = 1
-    cohort[cohort.index == 3] = 0
-
-    sns.heatmap(
-        cohort, ax=ax10, cbar_ax=ax5, yticklabels=False, xticklabels=True, cmap=cohort_cmap
-    )
-    ax10.set_xticklabels(cohort.columns, rotation=90)
-    colorbar = ax10.collections[0].colorbar
-    colorbar.set_ticks([.33, 1, 1.66])
-    ax5.yaxis.set_ticklabels(["Cohort 3", "Cohort 2", "Cohort 1"], va="center")
-    ax5.yaxis.set_ticks_position('left')
-    ax5.yaxis.set_tick_params(rotation=60)
-    ax10.set_ylabel("")
-
-    # Outcome bar
-    outs = pd.DataFrame(patInfo.loc["status"]).set_index("status")
-    outs["Outcome"] = 0
-    outs[outs.index == "0"] = 1
-    outs[outs.index == "1"] = 2
-    outs[outs.index == "Unknown"] = 0
-
-    sns.heatmap(
-        outs, ax=ax11, cbar_ax=ax7, yticklabels=False, xticklabels=True, cmap=outcome_cmap
-    )
-    ax11.set_xticklabels(outs.columns, rotation=90)
-    colorbar = ax11.collections[0].colorbar
-    colorbar.set_ticks([.33, 1, 1.66])
-    ax7.yaxis.set_ticklabels(["Unknown", "Resolver", "Persister"], va='center')
-    ax7.yaxis.set_ticks_position('left')
-    ax7.yaxis.set_tick_params(rotation=60)
-    ax11.set_ylabel("")
-    # Titles/labeling
-    ax1.set_title("R2X", fontsize=15)
-    ax12.set_title("Subjects", fontsize=15)
-    ax16.set_title("Cytokines", fontsize=15)
-    ax18.set_title("Source", fontsize=15)
-
-    for ii, ax in enumerate([ax1, ax12, ax16, ax18]):
-        ax.text(-0.2, 1.1, ascii_lowercase[ii], transform=ax.transAxes, fontsize=25, fontweight="bold", va="top")
-
-    return f
+    return fig

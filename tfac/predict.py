@@ -44,13 +44,15 @@ def predict_unknown(data, labels):
     return predictions
 
 
-def predict_known(data, labels):
+def predict_known(data, labels, method='predict'):
     """
     Predicts outcomes for all samples in data via cross-validation.
 
     Parameters:
         data (pandas.DataFrame): data to classify
         labels (pandas.Series): labels for samples in data
+        method (str, default: 'predict'): prediction method to use; accepts any
+            of ‘predict’, ‘predict_proba’, ‘predict_log_proba’, or ‘decision_function’
 
     Returns:
         predictions (pandas.Series): predictions for samples
@@ -77,11 +79,17 @@ def predict_known(data, labels):
         data,
         labels,
         cv=skf,
+        method=method,
         n_jobs=-1
     )
 
-    predictions = pd.Series(predictions)
-    predictions.index = labels.index
+    if len(predictions.shape) > 1:
+        predictions = predictions[:, -1]
+
+    predictions = pd.Series(
+        predictions,
+        index=labels.index
+    )
 
     return predictions
 

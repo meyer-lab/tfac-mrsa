@@ -1,10 +1,16 @@
+import warnings
+
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
+from sklearn.preprocessing import LabelEncoder
 
 from .dataImport import form_tensor
 from .tensor import perform_CMTF
+
+warnings.filterwarnings('ignore', category=UserWarning)
 
 
 def predict_unknown(data, labels):
@@ -94,6 +100,53 @@ def predict_known(data, labels, method='predict'):
     return predictions
 
 
+def predict_regression(data, labels):
+    """
+    Predicts value for all samples in data via cross-validation.
+
+    Parameters:
+        data (pandas.DataFrame): data to classify
+        labels (pandas.Series): labels for samples in data
+
+    Returns:
+        predictions (pandas.Series): predictions for samples
+    """
+    labels = labels.loc[labels != 'Unknown']
+
+    if isinstance(data, pd.Series):
+        data = data.loc[labels.index]
+    else:
+        data = data.loc[labels.index, :]
+
+    model = RandomForestRegressor()
+    skf = StratifiedKFold(
+        n_splits=5,
+        shuffle=True,
+        random_state=42
+    )
+
+    if isinstance(data, pd.Series):
+        data = data.values.reshape(-1, 1)
+
+    predictions = cross_val_predict(
+        model,
+        data,
+        labels,
+        cv=skf,
+        n_jobs=-1
+    )
+
+    if len(predictions.shape) > 1:
+        predictions = predictions[:, -1]
+
+    predictions = pd.Series(
+        predictions,
+        index=labels.index
+    )
+
+    return predictions
+
+
 def run_model(data, labels):
     """
     Runs provided LogisticRegressionCV model with the provided data
@@ -108,6 +161,7 @@ def run_model(data, labels):
             l1-ratio and C)
         model (sklearn.LogisticRegressionCV)
     """
+    encoder = LabelEncoder()
     skf = RepeatedStratifiedKFold(
         n_splits=10,
         n_repeats=15
@@ -135,7 +189,8 @@ def run_model(data, labels):
         n_jobs=-1,
         cv=skf,
         max_iter=100000,
-        scoring='balanced_accuracy'
+        scoring='balanced_accuracy',
+        multi_class='ovr'
     )
     model.fit(data, labels)
 

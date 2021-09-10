@@ -37,7 +37,7 @@ sid,status,cohort,type,age,gender,race
 4821,1,1,0Serum2RNAseq,59.0,0.0,3
 4859,1,1,0Serum2RNAseq,65.0,1.0,2
 4862,1,1,0Serum2RNAseq,60.0,0.0,2
-4864,0,1,0Serum2RNAseq,68.0,1.0,1=NKNR
+4864,0,1,0Serum2RNAseq,68.0,1.0,1
 4873,1,1,0Serum2RNAseq,83.0,1.0,2
 4878,0,1,0Serum2RNAseq,56.0,0.0,3
 4886,1,1,0Serum2RNAseq,61.0,1.0,3

@@ -207,7 +207,7 @@ def plot_results(cv_results, cv_probabilities, sex_predictions,
     axs[0].set_ylabel('Mean Accuracy over\n10-fold Cross-Validation', fontsize=12)
     axs[0].text(
         -2,
-        0.9,
+        1,
         'A',
         fontsize=16,
         fontweight='bold',
@@ -229,8 +229,8 @@ def plot_results(cv_results, cv_probabilities, sex_predictions,
     axs[1].set_ylabel('True Positive Rate', fontsize=12)
     axs[1].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[1].text(
-        -0.2,
-        0.9,
+        -0.25,
+        1,
         'B',
         fontsize=16,
         fontweight='bold',
@@ -252,7 +252,7 @@ def plot_results(cv_results, cv_probabilities, sex_predictions,
     axs[2].set_ylabel('Mean Accuracy over\n10-fold Cross-Validation', fontsize=12)
     axs[2].text(
         -2,
-        0.9,
+        1,
         'C',
         fontsize=16,
         fontweight='bold',
@@ -274,7 +274,7 @@ def plot_results(cv_results, cv_probabilities, sex_predictions,
     axs[3].set_ylabel('Mean Accuracy over\n10-fold Cross-Validation', fontsize=12)
     axs[3].text(
         -2,
-        0.9,
+        1,
         'D',
         fontsize=16,
         fontweight='bold',
@@ -305,7 +305,7 @@ def plot_results(cv_results, cv_probabilities, sex_predictions,
     age_ax.set_ylabel('Predicted Patient Age', fontsize=12)
     age_ax.text(
         -11,
-        93,
+        100,
         'E',
         fontsize=16,
         fontweight='bold',

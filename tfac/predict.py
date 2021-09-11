@@ -2,8 +2,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
+from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
 from sklearn.preprocessing import LabelEncoder
 
@@ -118,7 +117,7 @@ def predict_regression(data, labels):
     else:
         data = data.loc[labels.index, :]
 
-    model = RandomForestRegressor()
+    model = LinearRegression()
     skf = StratifiedKFold(
         n_splits=5,
         shuffle=True,

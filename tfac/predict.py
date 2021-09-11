@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
-from sklearn.preprocessing import LabelEncoder
 
 from .dataImport import form_tensor
 from .tensor import perform_CMTF
@@ -160,7 +159,6 @@ def run_model(data, labels):
             l1-ratio and C)
         model (sklearn.LogisticRegressionCV)
     """
-    encoder = LabelEncoder()
     skf = RepeatedStratifiedKFold(
         n_splits=10,
         n_repeats=15

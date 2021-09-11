@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
-
+import mygene
 from .dataImport import form_tensor, import_rna
 from .tensor import perform_CMTF
 from .figures.figureCommon import OPTIMAL_SCALING
 
-
-def export_mrsa_inputfile(OutputPath):
-    """Select top 10% genes per component and export csv file to run clusterProfiler in R"""
+path = "tfac/data/mrsa/"
+def export_mrsa_inputfile(export=False):
+    """ Select top 10% genes per component and export csv file to run clusterProfiler in R """
     tensor, matrix, _ = form_tensor(OPTIMAL_SCALING)
     rna = import_rna()
 
@@ -26,4 +26,24 @@ def export_mrsa_inputfile(OutputPath):
         c = c[(c["Weights"] >= up) | (c["Weights"] <= low)]
         dfs.append(c)
 
-    pd.concat(dfs).to_csv(OutputPath)
+    out = pd.concat(dfs)
+
+    if export:
+        out.to_csv(path + "MRSA_gsea_input_ENSEMBL.csv")
+
+    return out
+
+
+def translate_geneIDs(toID="entrezgene", export=False):
+    """ Translate gene accessions. In this case to ENTREZID by default. """
+    d = export_mrsa_inputfile()
+    mg = mygene.MyGeneInfo()
+    gg = mg.getgenes(d["ID"], fields=toID, as_dataframe=True)
+    d[str(toID)] = gg[toID].values
+    out = d.dropna()
+
+    if export:
+        out.to_csv(path + "MRSA_gsea_input_ENTREZ.csv")
+
+    return out[[toID, "Components"]]
+

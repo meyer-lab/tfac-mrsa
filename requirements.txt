@@ -15,3 +15,4 @@ tensorly==0.6.0
 scikit-learn==0.24.2
 pybiomart==0.2.0
 gseapy==0.10.5
+mygene

@@ -1,94 +1,139 @@
 """
-Runs hyperparameter optimization for a Logistic Regression model that
-uses CMTF components to classify MRSA persistance. Generates a figure
-depicting model accuracy against scaling and component count.
+Creates Figure 4 -- Validation Model and Predictions
 """
-import matplotlib.pyplot as plt
+from os.path import abspath, dirname, join
+
+from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
-from .figureCommon import getSetup, OPTIMAL_SCALING
-from ..dataImport import form_tensor
-from ..tensor import calcR2X, perform_CMTF
-from ..predict import evaluate_scaling, evaluate_components
+from .figureCommon import getSetup, get_data_types
+from ..dataImport import import_validation_patient_metadata
+from ..predict import predict_unknown
+
+PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def plot_results(by_scaling, by_components):
+def run_unknown(data_types, patient_data):
     """
-    Plots accuracy of model with regards to variance scaling and CMTF
-    component parameters.
+    Predicts samples with unknown outcomes.
 
     Parameters:
-        by_scaling (pandas.Series): Model accuracy with regards to
-            variance scaling
-        by_components (pandas.Series): Model accuracy with regards to
-            number of CMTF components
+        data_types (list[tuple]): data sources to predict
+        patient_data (pandas.DataFrame): patient metadata
 
     Returns:
-        fig (matplotlib.pyplot.Figure): Figure containing plots of
-            scaling and CMTF component analyses
+        predictions (pandas.Series): predictions for each data source
     """
-    # Sets up plotting space
+    weights = None
+    predictions = pd.DataFrame(
+        index=patient_data.index
+    )
+    predictions = predictions.loc[patient_data['status'] == 'Unknown']
+
+    for data_type in data_types:
+        source = data_type[0]
+        data = data_type[1]
+        labels = patient_data.loc[data.index, 'status']
+
+        if source == 'CMTF':
+            _predictions, coef = predict_unknown(
+                data, labels, return_coef=True
+            )
+            predictions.loc[_predictions.index, source] = _predictions
+            weights = coef
+        else:
+            _predictions = predict_unknown(data, labels)
+            predictions.loc[_predictions.index, source] = _predictions
+
+    validation_meta = import_validation_patient_metadata()
+    predictions.loc[:, 'Actual'] = validation_meta.loc[:, 'status']
+
+    return predictions, weights
+
+
+def plot_results(validation_predictions, weights):
+    """
+    Plots validation predictions and model coefficients for each component in 
+    CMTF factorization.
+
+    Parameters:
+        validation_predictions (pandas.DataFrame): predictions for validation
+            samples
+        weights (numpy.array): model weights associated with each component
+
+    Returns:
+        fig (matplotlib.Figure): bar plot depicting model coefficients for
+            each CMTF component
+    """
     fig_size = (8, 4)
-    layout = (1, 3)
+    layout = (2, 1)
     axs, fig = getSetup(
         fig_size,
         layout
     )
 
-    # Model Performance v. Scaling
-
-    axs[0].semilogx(by_scaling.index, by_scaling, base=2)
-    axs[0].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
-    axs[0].set_xlabel('Variance Scaling (RNA/Cytokine)', fontsize=12)
-    axs[0].set_ylim([0.5, 0.75])
-    axs[0].set_xticks(np.logspace(-7, 7, base=2, num=8))
-    axs[0].text(0.02, 0.9, 'A', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
-
-    # Best Scaling v. CMTF Components
-
-    axs[1].plot(by_components.index, by_components)
-    axs[1].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
-    axs[1].set_xlabel('CMTF Components', fontsize=12)
-    axs[1].set_xticks(by_components.index)
-    axs[1].set_ylim([0.5, 0.75])
-    axs[1].text(0.37, 0.9, 'B', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
-
-    # R2X vs. Scaling
-
-    R2X = pd.DataFrame(
-        index=np.logspace(-7, 7, base=2, num=29).tolist(), columns=["Total", "Tensor", "Matrix"], data=np.zeros((29, 3)),
-        dtype=float
+    # Validation Predictions
+    
+    validation_predictions = validation_predictions.fillna(-1).astype(int)
+    sns.heatmap(
+        validation_predictions.T,
+        ax=axs[0],
+        cbar=False,
+        cmap=['dimgrey', '#ffd2d2', '#9caeff'],
+        vmin=-1,
+        linewidths=1
     )
 
-    for scaling in R2X.index:
-        tensor, matrix, _ = form_tensor(scaling)
-        tFac = perform_CMTF(tOrig=tensor, mOrig=matrix)
-        R2X.loc[scaling, "Total"] = calcR2X(tFac, tensor, matrix)
-        R2X.loc[scaling, "Tensor"] = calcR2X(tFac, tIn=tensor)
-        R2X.loc[scaling, "Matrix"] = calcR2X(tFac, mIn=matrix)
+    axs[0].set_xticks(
+        np.arange(0.6, validation_predictions.shape[0], 1)
+    )
+    axs[0].set_xticklabels(
+        validation_predictions.index,
+        fontsize=10,
+        ha='center',
+        rotation=90
+    )
+    axs[0].set_yticklabels(
+        validation_predictions.columns,
+        fontsize=10,
+        rotation=0
+    )
+    axs[0].set_xlabel('Patient', fontsize=12)
 
-    R2X.plot(ax=axs[2])
-    axs[2].set_xscale("log")
-    axs[2].set_ylabel("R2X", fontsize=12)
-    axs[2].set_xlabel("Tensor scaled", fontsize=12)
-    axs[2].set_ylim(0, 1.0)
-    axs[2].text(0.70, 0.9, 'C', fontsize=16, fontweight='bold', transform=plt.gcf().transFigure)
+    legend_elements = [Patch(facecolor='dimgrey', edgecolor='dimgrey', label='Data Not Available'),
+                       Patch(facecolor='#ffd2d2', edgecolor='#ffd2d2', label='Persistor'),
+                       Patch(facecolor='#9caeff', edgecolor='#9caeff', label='Resolver')]
+    axs[0].legend(handles=legend_elements, loc=[1.02, 0.4])
+
+    # Feature Weight Plotting
+
+    axs[1].bar(
+        range(1, len(weights) + 1),
+        weights
+    )
+
+    axs[1].set_xlabel('Component', fontsize=12)
+    axs[1].set_ylabel('Model Coefficient', fontsize=12)
+    axs[1].set_xticks(np.arange(1, len(weights) + 1))
+    axs[1].set_xticklabels(np.arange(1, len(weights) + 1))
 
     return fig
 
 
 def makeFigure():
-    """
-    Generates Figure 4.
+    data_types, patient_data = get_data_types()
+    validation_predictions, weights = run_unknown(data_types, patient_data)
+    fig = plot_results(validation_predictions, weights)
 
-    Parameters:
-        None
+    validation_predictions.to_csv(
+        join(
+            PATH_HERE,
+            '..',
+            'output',
+            'validation_predictions.txt'
+        )
+    )
 
-    Returns:
-        fig (matplotlib.pyplot.Figure): Figure containing plots of
-            scaling and CMTF component analyses
-    """
-    by_scaling = evaluate_scaling()
-    by_components = evaluate_components(OPTIMAL_SCALING)
-    return plot_results(by_scaling, by_components)
+    return fig

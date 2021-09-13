@@ -6,6 +6,8 @@ from .tensor import perform_CMTF
 from .figures.figureCommon import OPTIMAL_SCALING
 
 path = "tfac/data/mrsa/"
+
+
 def export_mrsa_inputfile(export=False):
     """ Select top 10% genes per component and export csv file to run clusterProfiler in R """
     tensor, matrix, _ = form_tensor(OPTIMAL_SCALING)
@@ -46,4 +48,3 @@ def translate_geneIDs(toID="entrezgene", export=False):
         out.to_csv(path + "MRSA_gsea_input_ENTREZ.csv")
 
     return out[[toID, "Components"]]
-

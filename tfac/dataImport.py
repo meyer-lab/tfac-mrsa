@@ -27,6 +27,23 @@ def import_patient_metadata():
 
 
 @lru_cache
+def import_validation_patient_metadata():
+    """
+    Returns validation patient meta data, including cohort and outcome.
+
+    Returns:
+        patient_data (pandas.DataFrame): Validation patient outcomes and cohorts
+    """
+    patient_data = pd.read_csv(
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'validation_patient_metadata.txt'),
+        delimiter=',',
+        index_col=0
+    )
+
+    return patient_data
+
+
+@lru_cache
 def import_cytokines(scale_cyto=True):
     """
     Return plasma and serum cytokine data.

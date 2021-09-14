@@ -1,47 +1,15 @@
+"""
+Creates Figure 3 -- Model Performance Plotting
+"""
 import numpy as np
 from os.path import abspath, dirname, join
 import pandas as pd
 from sklearn.metrics import roc_curve
 
-from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
-from tfac.dataImport import form_tensor, import_cytokines
+from tfac.figures.figureCommon import getSetup, get_data_types
 from tfac.predict import predict_known, predict_unknown, predict_regression
-from tfac.tensor import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-
-
-def get_data_types():
-    """
-    Creates data for classification.
-
-    Parameters:
-        None
-
-    Returns:
-        data_types (list[tuple]): data sources and their names
-        patient_data (pandas.DataFrame): patient metadata
-    """
-    plasma_cyto, serum_cyto = import_cytokines()
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
-
-    components = perform_CMTF(tensor, matrix)
-    components = components[1][0]
-
-    data_types = [
-        ('Plasma Cytokines', plasma_cyto.T),
-        ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
-        ('Serum Cytokines', serum_cyto.T),
-        ('Serum IL-10', serum_cyto.loc['IL-10', :]),
-        ('CMTF', pd.DataFrame(
-            components,
-            index=patient_data.index,
-            columns=list(range(1, components.shape[1] + 1))
-        )
-        )
-    ]
-
-    return data_types, patient_data
 
 
 def run_unknown(data_types, patient_data):
@@ -314,8 +282,8 @@ def plot_results(cv_results, cv_probabilities, sex_predictions,
     return fig
 
 
-def export_results(train_samples, train_probabilities, validation_samples,
-                   sex_predictions, race_predictions, age_predictions):
+def export_results(train_samples, train_probabilities, sex_predictions,
+                   race_predictions, age_predictions):
     """
     Reformats prediction DataFrames and saves as .txt.
 
@@ -323,7 +291,6 @@ def export_results(train_samples, train_probabilities, validation_samples,
         train_samples (pandas.DataFrame): predictions for training samples
         train_probabilities (pandas.DataFrame): probabilities of persistence for
             training samples
-        validation_samples (pandas.DataFrame): predictions for validation samples
         sex_predictions (pandas.DataFrame): sex predictions for samples with
             known outcomes and sex
         race_predictions (pandas.DataFrame): race predictions for samples
@@ -336,21 +303,10 @@ def export_results(train_samples, train_probabilities, validation_samples,
     """
     train_samples = train_samples.astype(str)
     train_probabilities = train_probabilities.astype(str)
-    validation_samples = validation_samples.astype(str)
 
-    validation_samples = validation_samples.replace('0', 'ARMB')
-    validation_samples = validation_samples.replace('1', 'APMB')
     train_samples = train_samples.replace('0', 'ARMB')
     train_samples = train_samples.replace('1', 'APMB')
 
-    validation_samples.to_csv(
-        join(
-            PATH_HERE,
-            '..',
-            'output',
-            'validation_predictions.txt'
-        )
-    )
     train_samples.to_csv(
         join(
             PATH_HERE,
@@ -397,10 +353,9 @@ def makeFigure():
     data_types, patient_data = get_data_types()
     train_samples, train_probabilities, sex_predictions, race_predictions = \
         run_cv(data_types, patient_data)
-    validation_samples = run_unknown(data_types, patient_data)
     age_predictions = run_age_regression(data_types[-1][-1], patient_data)
 
-    export_results(train_samples, train_probabilities, validation_samples,
+    export_results(train_samples, train_probabilities,
                    sex_predictions, race_predictions, age_predictions)
 
     fig = plot_results(train_samples, train_probabilities,

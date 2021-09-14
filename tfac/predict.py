@@ -11,7 +11,7 @@ from .tensor import perform_CMTF
 warnings.filterwarnings('ignore', category=UserWarning)
 
 
-def predict_unknown(data, labels):
+def predict_unknown(data, labels, return_coef=False):
     """
     Trains a LogisticRegressionCV model using samples with known outcomes,
     then predicts samples with unknown outcomes.
@@ -19,6 +19,7 @@ def predict_unknown(data, labels):
     Parameters:
         data (pandas.DataFrame): data to classify
         labels (pandas.Series): labels for samples in data
+        return_coef (bool, default:False): return model coefficients
 
     Returns:
         predictions (pandas.Series): predictions for samples with unknown
@@ -45,7 +46,10 @@ def predict_unknown(data, labels):
     predictions = pd.Series(predicted)
     predictions.index = test_labels.index
 
-    return predictions
+    if return_coef:
+        return predictions, model.coef_[0]
+    else:
+        return predictions
 
 
 def predict_known(data, labels, method='predict'):

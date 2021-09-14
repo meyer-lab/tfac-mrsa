@@ -116,8 +116,10 @@ def plot_results(validation_predictions, weights):
 
     axs[1].set_xlabel('Component', fontsize=12)
     axs[1].set_ylabel('Model Coefficient', fontsize=12)
+    axs[1].set_yticks([0, -2, -4])
+    axs[1].set_yticklabels([0, -2, -4], fontsize=10)
     axs[1].set_xticks(np.arange(1, len(weights) + 1))
-    axs[1].set_xticklabels(np.arange(1, len(weights) + 1))
+    axs[1].set_xticklabels(np.arange(1, len(weights) + 1), fontsize=10)
 
     return fig
 

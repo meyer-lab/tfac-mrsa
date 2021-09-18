@@ -11,7 +11,7 @@ panflute==2.1.0
 matplotlib==3.4.3
 seaborn==0.11.2
 svgutils==0.3.4
-tensorly==0.6.0
+git+git://github.com/meyer-lab/tensorPack@master
 scikit-learn==0.24.2
 pybiomart==0.2.0
 gseapy==0.10.5

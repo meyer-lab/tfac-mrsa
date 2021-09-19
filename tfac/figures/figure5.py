@@ -6,7 +6,7 @@ import seaborn as sns
 from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
 from tfac.dataImport import form_tensor, import_cytokines
 from tfac.predict import predict_known, predict_unknown
-from tfac.tensor import perform_CMTF
+from tensorpac import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 

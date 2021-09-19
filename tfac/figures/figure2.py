@@ -7,7 +7,7 @@ import pandas as pd
 from .figureCommon import getSetup, OPTIMAL_SCALING
 from ..dataImport import form_tensor
 from ..predict import evaluate_components, evaluate_scaling
-from ..tensor import perform_CMTF, calcR2X
+from tensorpac import perform_CMTF, calcR2X
 
 
 def get_r2x_results():

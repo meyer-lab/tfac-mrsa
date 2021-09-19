@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import mygene
 from .dataImport import form_tensor, import_rna
-from tensorPack import perform_CMTF
+from tensorpac import perform_CMTF
 from .figures.figureCommon import OPTIMAL_SCALING
 
 path = "tfac/data/mrsa/"

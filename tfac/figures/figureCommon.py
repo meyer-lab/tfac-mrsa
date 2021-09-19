@@ -10,7 +10,7 @@ import svgutils.transform as st
 from matplotlib import gridspec, pyplot as plt
 
 from tfac.dataImport import import_cytokines, form_tensor
-from tfac.tensor import perform_CMTF
+from tensorpac import perform_CMTF
 
 OPTIMAL_SCALING = 32.0
 

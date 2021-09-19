@@ -111,3 +111,5 @@ venv.bak/
 output/*
 cache
 !output/figure1.svg
+
+.idea/

@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticR
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
 
 from .dataImport import form_tensor
-from .tensor import perform_CMTF
+from tensorpac import perform_CMTF
 
 warnings.filterwarnings('ignore', category=UserWarning)
 

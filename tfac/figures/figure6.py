@@ -6,7 +6,7 @@ import pandas as pd
 from tfac.dataImport import form_tensor
 from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
 from tfac.predict import predict_known
-from tfac.tensor import perform_CMTF
+from tensorpac import perform_CMTF
 
 
 def makeFigure():

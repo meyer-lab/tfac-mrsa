@@ -1,20 +1,21 @@
 """
-Creates Figure 3 -- Model Performance Plotting
+Creates Figure 3 -- Model Performance
 """
 import numpy as np
 from os.path import abspath, dirname, join
 import pandas as pd
-from sklearn.metrics import roc_curve
+from sklearn.metrics import r2_score, roc_curve
 
+from tfac.dataImport import import_validation_patient_metadata
 from tfac.figures.figureCommon import getSetup, get_data_types
-from tfac.predict import predict_known, predict_unknown, predict_regression
+from tfac.predict import predict_known, predict_validation, predict_regression
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def run_unknown(data_types, patient_data):
+def run_validation(data_types, patient_data):
     """
-    Predicts samples with unknown outcomes.
+    Predicts validation samples.
 
     Parameters:
         data_types (list[tuple]): data sources to predict
@@ -27,16 +28,22 @@ def run_unknown(data_types, patient_data):
         index=patient_data.index
     )
     predictions = predictions.loc[patient_data['status'] == 'Unknown']
+    probabilities = predictions.copy()
+    
+    validation_meta = import_validation_patient_metadata()
 
     for data_type in data_types:
         source = data_type[0]
         data = data_type[1]
         labels = patient_data.loc[data.index, 'status']
 
-        _predictions = predict_unknown(data, labels)
+        _predictions = predict_validation(data, labels)
+        _probabilities = predict_validation(data, labels, predict_proba=True)
         predictions.loc[_predictions.index, source] = _predictions
+        probabilities.loc[_probabilities.index, source] = _probabilities
 
-    return predictions
+    predictions.loc[:, 'Actual'] = validation_meta.loc[:, 'status']
+    return predictions, probabilities
 
 
 def run_cv(data_types, patient_data):
@@ -107,40 +114,44 @@ def run_age_regression(data, patient_data):
     return age_predictions
 
 
-def get_accuracies(cv_results):
+def get_accuracies(train_samples):
     """
     Calculates prediction accuracy for training samples with known outcomes.
 
     Parameters:
-        cv_results (pandas.DataFrame): predictions for training samples
+        train_samples (pandas.DataFrame): predictions for training samples
 
     Returns:
         accuracies (pandas.Series): model accuracy w/r to each model type
     """
-    d_types = cv_results.columns[:-1]
+    d_types = train_samples.columns[:-1]
     accuracies = pd.Series(
         index=d_types
     )
 
     for d_type in d_types:
-        col = cv_results.loc[:, d_type].dropna().astype(int)
-        actual = cv_results.loc[col.index, 'Actual'].astype(int)
+        col = train_samples.loc[:, d_type].dropna().astype(int)
+        actual = train_samples.loc[col.index, 'Actual'].astype(int)
         correct = [1 if col.loc[i] == actual.loc[i] else 0 for i in col.index]
         accuracies.loc[d_type] = np.mean(correct)
 
     return accuracies
 
 
-def plot_results(cv_results, cv_probabilities, sex_predictions,
+def plot_results(train_samples, train_probabilities, validation_samples,
+                 validation_probabilities, sex_predictions,
                  race_predictions, age_predictions):
     """
     Plots prediction model performance.
 
     Parameters:
-        cv_results (pandas.DataFrame): predictions for samples with known
-            outcomes
-        cv_probabilities (pandas.DataFrame): predicted probability of
-            persistence for samples with known outcomes
+        train_samples (pandas.DataFrame): predictions for training samples
+        train_probabilities (pandas.DataFrame): predicted probability of
+            persistence for training samples
+        validation_samples (pandas.DataFrame): predictions for validation
+            cohort samples
+        validation_probabilities (pandas.DataFrame): predicted probability 
+            of persistence for validation samples
         sex_predictions (pandas.DataFrame): sex predictions for samples with
             known outcomes and sex
         race_predictions (pandas.DataFrame): race predictions for samples
@@ -160,8 +171,8 @@ def plot_results(cv_results, cv_probabilities, sex_predictions,
 
     # Cross-validation Accuracies
 
-    cv_results = cv_results.loc[cv_results['Actual'] != 'Unknown']
-    accuracies = get_accuracies(cv_results)
+    train_samples = train_samples.loc[train_samples['Actual'] != 'Unknown']
+    accuracies = get_accuracies(train_samples)
     axs[0].bar(
         range(len(accuracies)),
         accuracies
@@ -171,119 +182,133 @@ def plot_results(cv_results, cv_probabilities, sex_predictions,
     ticks = [label.replace(' ', '\n') for label in accuracies.index]
     axs[0].set_xticks(range(len(accuracies)))
     axs[0].set_xticklabels(ticks, fontsize=10)
-    axs[0].set_title('Persistence Prediction Accuracy', fontsize=14)
-    axs[0].set_ylabel('Mean Accuracy over\n10-fold Cross-Validation', fontsize=12)
+    axs[0].set_ylabel('Prediction Accuracy', fontsize=10)
     axs[0].text(
-        -2,
+        -1.5,
         1,
         'A',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
     )
 
     # AUC-ROC Curves
 
-    for d_type in cv_probabilities.columns:
-        col = cv_probabilities.loc[:, d_type].dropna()
-        actual = cv_results.loc[col.index, 'Actual'].astype(int)
+    for d_type in train_probabilities.columns:
+        col = train_probabilities.loc[:, d_type].dropna()
+        actual = train_samples.loc[col.index, 'Actual'].astype(int)
         fpr, tpr, _ = roc_curve(actual, col)
         axs[1].plot(fpr, tpr)
 
     axs[1].set_xlim(0, 1)
     axs[1].set_ylim(0, 1)
-    axs[1].legend(cv_probabilities.columns)
-    axs[1].set_title('ROC Curves', fontsize=14)
-    axs[1].set_xlabel('False Positive Rate', fontsize=12)
-    axs[1].set_ylabel('True Positive Rate', fontsize=12)
+    axs[1].legend(train_probabilities.columns)
+    axs[1].set_xlabel('False Positive Rate', fontsize=10)
+    axs[1].set_ylabel('True Positive Rate', fontsize=10)
     axs[1].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[1].text(
-        -0.25,
+        -0.15,
         1,
         'B',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
     )
 
-    # Sex Predictions
+    # Validation Accuracies
 
-    sex_accuracies = get_accuracies(sex_predictions)
+    val_accuracies = get_accuracies(validation_samples)
     axs[2].bar(
-        range(len(sex_accuracies)),
-        sex_accuracies
+        range(len(val_accuracies)),
+        val_accuracies
     )
 
-    sex_ticks = [label.replace(' ', '\n') for label in sex_accuracies.index]
     axs[2].set_ylim(0, 1)
-    axs[2].set_xticks(range(len(sex_accuracies)))
-    axs[2].set_xticklabels(sex_ticks, fontsize=10)
-    axs[2].set_title('Sex Prediction Accuracy', fontsize=14)
-    axs[2].set_ylabel('Mean Accuracy over\n10-fold Cross-Validation', fontsize=12)
+    ticks = [label.replace(' ', '\n') for label in val_accuracies.index]
+    axs[2].set_xticks(range(len(val_accuracies)))
+    axs[2].set_xticklabels(ticks, fontsize=10)
+    axs[2].set_ylabel('Prediction Accuracy', fontsize=10)
     axs[2].text(
-        -2,
+        -1.5,
         1,
         'C',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
     )
 
-    # Race Predictions
+    # Validation AUC-ROC Curves
 
-    race_accuracies = get_accuracies(race_predictions)
-    axs[3].bar(
-        range(len(race_accuracies)),
-        race_accuracies
-    )
+    for d_type in validation_probabilities.columns:
+        col = validation_probabilities.loc[:, d_type].dropna()
+        actual = validation_samples.loc[col.index, 'Actual'].astype(int)
+        fpr, tpr, _ = roc_curve(actual, col)
+        axs[3].plot(fpr, tpr)
 
-    race_ticks = [label.replace(' ', '\n') for label in race_accuracies.index]
+    axs[3].set_xlim(0, 1)
     axs[3].set_ylim(0, 1)
-    axs[3].set_xticks(range(len(race_accuracies)))
-    axs[3].set_xticklabels(race_ticks, fontsize=10)
-    axs[3].set_title('Race Prediction Accuracy', fontsize=14)
-    axs[3].set_ylabel('Mean Accuracy over\n10-fold Cross-Validation', fontsize=12)
+    axs[3].legend(validation_probabilities.columns)
+    axs[3].set_xlabel('False Positive Rate', fontsize=10)
+    axs[3].set_ylabel('True Positive Rate', fontsize=10)
+    axs[3].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[3].text(
-        -2,
+        -0.15,
         1,
         'D',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
     )
 
-    # Age Predictions
+    # Metadata predictions
 
     axs[4].remove()
     axs[5].remove()
     gs = axs[4].get_gridspec()
-    age_ax = fig.add_subplot(gs[4:6])
+    meta_ax = fig.add_subplot(gs[4:6])
 
-    age_ax.scatter(
+    sex_accuracy = get_accuracies(sex_predictions.loc[:, ['CMTF', 'Actual']])
+    race_accuracy = get_accuracies(race_predictions.loc[:, ['CMTF', 'Actual']])
+    age_accuracy = r2_score(
         age_predictions.loc[:, 'Actual'],
         age_predictions.loc[:, 'CMTF']
     )
-    age_ax.plot(
-        [0, 100],
-        [0, 100],
-        color='k',
-        linestyle='--'
-    )
 
-    age_ax.set_xlim(0, 100)
-    age_ax.set_ylim(0, 100)
-    age_ax.set_title('CMTF Age Predictions', fontsize=14)
-    age_ax.set_xlabel('Actual Patient Age', fontsize=12)
-    age_ax.set_ylabel('Predicted Patient Age', fontsize=12)
-    age_ax.text(
-        -11,
-        100,
+    meta_performance = pd.DataFrame(
+        index=['Sex', 'Race', 'Age'],
+        columns=['Accuracy', 'Metric']
+    )
+    meta_performance.loc[:, 'Accuracy'] = \
+        [sex_accuracy.loc['CMTF'], race_accuracy.loc['CMTF'], age_accuracy]
+    meta_performance.loc[:, 'Metric'] = \
+        ['Balanced Accuracy', 'Balanced Accuracy', 'R-Squared']
+
+    table = meta_ax.table(
+        cellText=meta_performance.to_numpy(),
+        loc='center',
+        rowLabels=meta_performance.index,
+        colLabels=meta_performance.columns,
+        cellLoc='center',
+        rowLoc='center',
+        colWidths=[0.25, 0.25],
+        colColours=['#DAEBFE'] * meta_performance.shape[1],
+        rowColours=['#DAEBFE'] * meta_performance.shape[0]
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.5)
+    meta_ax.axis('off')
+
+    meta_ax.text(
+        0.175,
+        0.8,
         'E',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
     )
 
     return fig
 
 
-def export_results(train_samples, train_probabilities, sex_predictions,
-                   race_predictions, age_predictions):
+def export_results(train_samples, train_probabilities, validation_samples,
+                   validation_probabilities, sex_predictions, race_predictions,
+                   age_predictions):
     """
     Reformats prediction DataFrames and saves as .txt.
 
@@ -291,6 +316,9 @@ def export_results(train_samples, train_probabilities, sex_predictions,
         train_samples (pandas.DataFrame): predictions for training samples
         train_probabilities (pandas.DataFrame): probabilities of persistence for
             training samples
+        validation_samples (pandas.DataFrame): predictions for validation samples
+        validation_probabilities (pandas.DataFrame): probabilities of persistence
+            for validation samples
         sex_predictions (pandas.DataFrame): sex predictions for samples with
             known outcomes and sex
         race_predictions (pandas.DataFrame): race predictions for samples
@@ -323,6 +351,22 @@ def export_results(train_samples, train_probabilities, sex_predictions,
             'train_probabilities.txt'
         )
     )
+    validation_samples.to_csv(
+        join(
+            PATH_HERE,
+            '..',
+            'output',
+            'validation_predictions.txt'
+        )
+    )
+    validation_probabilities.to_csv(
+        join(
+            PATH_HERE,
+            '..',
+            'output',
+            'validation_probabilities.txt'
+        )
+    )
     sex_predictions.to_csv(
         join(
             PATH_HERE,
@@ -351,14 +395,17 @@ def export_results(train_samples, train_probabilities, sex_predictions,
 
 def makeFigure():
     data_types, patient_data = get_data_types()
+    validation_samples, validation_probabilities = run_validation(data_types, patient_data)
     train_samples, train_probabilities, sex_predictions, race_predictions = \
         run_cv(data_types, patient_data)
     age_predictions = run_age_regression(data_types[-1][-1], patient_data)
 
-    export_results(train_samples, train_probabilities,
-                   sex_predictions, race_predictions, age_predictions)
+    export_results(train_samples, train_probabilities, validation_samples,
+                   validation_probabilities, sex_predictions, race_predictions,
+                   age_predictions)
 
-    fig = plot_results(train_samples, train_probabilities,
-                       sex_predictions, race_predictions, age_predictions)
+    fig = plot_results(train_samples, train_probabilities, validation_samples,
+                       validation_probabilities, sex_predictions,
+                       race_predictions, age_predictions)
 
     return fig

@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
-from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
+from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict, cross_val_score
 
 from .dataImport import form_tensor
 from tensorpac import perform_CMTF
@@ -11,7 +11,7 @@ from tensorpac import perform_CMTF
 warnings.filterwarnings('ignore', category=UserWarning)
 
 
-def predict_unknown(data, labels, return_coef=False):
+def predict_validation(data, labels, predict_proba=False, return_coef=False):
     """
     Trains a LogisticRegressionCV model using samples with known outcomes,
     then predicts samples with unknown outcomes.
@@ -19,6 +19,8 @@ def predict_unknown(data, labels, return_coef=False):
     Parameters:
         data (pandas.DataFrame): data to classify
         labels (pandas.Series): labels for samples in data
+        predict_proba (bool, default: False): predict probability of positive
+            case
         return_coef (bool, default:False): return model coefficients
 
     Returns:
@@ -42,7 +44,13 @@ def predict_unknown(data, labels, return_coef=False):
         test_data = test_data.values.reshape(-1, 1)
 
     model.fit(train_data, train_labels)
-    predicted = model.predict(test_data)
+
+    if predict_proba:
+        predicted = model.predict_proba(test_data)
+        predicted = predicted[:, -1]
+    else:
+        predicted = model.predict(test_data)
+
     predictions = pd.Series(predicted)
     predictions.index = test_labels.index
 
@@ -130,7 +138,7 @@ def predict_regression(data, labels):
     if isinstance(data, pd.Series):
         data = data.values.reshape(-1, 1)
 
-    predictions = cross_val_predict(
+    predictions = cross_val_score(
         model,
         data,
         labels,

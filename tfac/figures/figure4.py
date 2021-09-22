@@ -10,12 +10,12 @@ import seaborn as sns
 
 from .figureCommon import getSetup, get_data_types
 from ..dataImport import import_validation_patient_metadata
-from ..predict import predict_unknown
+from ..predict import predict_validation
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def run_unknown(data_types, patient_data):
+def run_validation(data_types, patient_data):
     """
     Predicts samples with unknown outcomes.
 
@@ -38,13 +38,13 @@ def run_unknown(data_types, patient_data):
         labels = patient_data.loc[data.index, 'status']
 
         if source == 'CMTF':
-            _predictions, coef = predict_unknown(
+            _predictions, coef = predict_validation(
                 data, labels, return_coef=True
             )
             predictions.loc[_predictions.index, source] = _predictions
             weights = coef
         else:
-            _predictions = predict_unknown(data, labels)
+            _predictions = predict_validation(data, labels)
             predictions.loc[_predictions.index, source] = _predictions
 
     validation_meta = import_validation_patient_metadata()
@@ -126,7 +126,7 @@ def plot_results(validation_predictions, weights):
 
 def makeFigure():
     data_types, patient_data = get_data_types()
-    validation_predictions, weights = run_unknown(data_types, patient_data)
+    validation_predictions, weights = run_validation(data_types, patient_data)
     fig = plot_results(validation_predictions, weights)
 
     validation_predictions.to_csv(

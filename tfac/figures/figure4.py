@@ -1,55 +1,51 @@
 """
 Creates Figure 4 -- Validation Model and Predictions
 """
-from os.path import abspath, dirname
+from os.path import abspath, dirname, join
 
 from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from .figureCommon import getSetup, OPTIMAL_SCALING
-from ..dataImport import import_validation_patient_metadata, form_tensor
-from tensorpac import perform_CMTF
+from .figureCommon import getSetup, get_data_types
+from ..dataImport import import_validation_patient_metadata
+from ..predict import predict_validation
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def bootstrap_weights():
+def run_validation(data_types, patient_data):
     """
     Predicts samples with unknown outcomes.
 
     Parameters:
-        None
+        data_types (list[tuple]): data sources to predict
+        patient_data (pandas.DataFrame): patient metadata
 
     Returns:
-        weights (pandas.Series): bootstrapped coefficient weights
+        predictions (pandas.Series): predictions for each data source
     """
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
-    components = perform_CMTF(tensor, matrix)
-    components = components[1][0]
-    data = pd.DataFrame(
-        components,
-        index=patient_data.index,
-        columns=list(range(1, components.shape[1] + 1))
-    )
-
     weights = None
     predictions = pd.DataFrame(
         index=patient_data.index
     )
     predictions = predictions.loc[patient_data['status'] == 'Unknown']
 
-    labels = patient_data.loc[data.index, 'status']
+    for data_type in data_types:
+        source = data_type[0]
+        data = data_type[1]
+        labels = patient_data.loc[data.index, 'status']
 
-    #     _predictions, coef = predict_validation(
-    #         data, labels, return_coef=True
-    #     )
-    #     predictions.loc[_predictions.index, source] = _predictions
-    #     weights = coef
-    # else:
-    #     _predictions = predict_validation(data, labels)
-    #     predictions.loc[_predictions.index, source] = _predictions
+        if source == 'CMTF':
+            _predictions, coef = predict_validation(
+                data, labels, return_coef=True
+            )
+            predictions.loc[_predictions.index, source] = _predictions
+            weights = coef
+        else:
+            _predictions = predict_validation(data, labels)
+            predictions.loc[_predictions.index, source] = _predictions
 
     validation_meta = import_validation_patient_metadata()
     predictions.loc[:, 'Actual'] = validation_meta.loc[:, 'status']
@@ -129,7 +125,17 @@ def plot_results(validation_predictions, weights):
 
 
 def makeFigure():
-    weights = bootstrap_weights()
-    fig = plot_results(weights)
+    data_types, patient_data = get_data_types()
+    validation_predictions, weights = run_validation(data_types, patient_data)
+    fig = plot_results(validation_predictions, weights)
+
+    validation_predictions.to_csv(
+        join(
+            PATH_HERE,
+            '..',
+            'output',
+            'validation_predictions.txt'
+        )
+    )
 
     return fig

@@ -138,7 +138,7 @@ def predict_regression(data, labels):
     if isinstance(data, pd.Series):
         data = data.values.reshape(-1, 1)
 
-    predictions = cross_val_score(
+    predictions = cross_val_predict(
         model,
         data,
         labels,

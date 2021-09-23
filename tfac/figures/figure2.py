@@ -1,7 +1,6 @@
 """
 Creates Figure 2 -- CMTF Plotting
 """
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from .figureCommon import getSetup, OPTIMAL_SCALING

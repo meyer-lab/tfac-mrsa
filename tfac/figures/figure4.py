@@ -91,16 +91,14 @@ def plot_results(validation_predictions, weights):
     )
     axs[0].set_xticklabels(
         validation_predictions.index,
-        fontsize=10,
         ha='center',
         rotation=90
     )
     axs[0].set_yticklabels(
         validation_predictions.columns,
-        fontsize=10,
         rotation=0
     )
-    axs[0].set_xlabel('Patient', fontsize=12)
+    axs[0].set_xlabel('Patient')
 
     legend_elements = [Patch(facecolor='dimgrey', edgecolor='dimgrey', label='Data Not Available'),
                        Patch(facecolor='#ffd2d2', edgecolor='#ffd2d2', label='Persistor'),
@@ -114,12 +112,12 @@ def plot_results(validation_predictions, weights):
         weights
     )
 
-    axs[1].set_xlabel('Component', fontsize=12)
-    axs[1].set_ylabel('Model Coefficient', fontsize=12)
+    axs[1].set_xlabel('Component')
+    axs[1].set_ylabel('Model Coefficient')
     axs[1].set_yticks([0, -2, -4])
-    axs[1].set_yticklabels([0, -2, -4], fontsize=10)
+    axs[1].set_yticklabels([0, -2, -4])
     axs[1].set_xticks(np.arange(1, len(weights) + 1))
-    axs[1].set_xticklabels(np.arange(1, len(weights) + 1), fontsize=10)
+    axs[1].set_xticklabels(np.arange(1, len(weights) + 1))
 
     return fig
 

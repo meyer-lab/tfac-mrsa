@@ -181,8 +181,8 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     axs[0].set_ylim(0, 1)
     ticks = [label.replace(' ', '\n') for label in accuracies.index]
     axs[0].set_xticks(range(len(accuracies)))
-    axs[0].set_xticklabels(ticks, fontsize=10)
-    axs[0].set_ylabel('Prediction Accuracy', fontsize=10)
+    axs[0].set_xticklabels(ticks)
+    axs[0].set_ylabel('Prediction Accuracy')
     axs[0].text(
         -1.5,
         1,
@@ -202,8 +202,8 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     axs[1].set_xlim(0, 1)
     axs[1].set_ylim(0, 1)
     axs[1].legend(train_probabilities.columns)
-    axs[1].set_xlabel('False Positive Rate', fontsize=10)
-    axs[1].set_ylabel('True Positive Rate', fontsize=10)
+    axs[1].set_xlabel('False Positive Rate')
+    axs[1].set_ylabel('True Positive Rate')
     axs[1].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[1].text(
         -0.15,
@@ -224,8 +224,8 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     axs[2].set_ylim(0, 1)
     ticks = [label.replace(' ', '\n') for label in val_accuracies.index]
     axs[2].set_xticks(range(len(val_accuracies)))
-    axs[2].set_xticklabels(ticks, fontsize=10)
-    axs[2].set_ylabel('Prediction Accuracy', fontsize=10)
+    axs[2].set_xticklabels(ticks)
+    axs[2].set_ylabel('Prediction Accuracy')
     axs[2].text(
         -1.5,
         1,
@@ -245,8 +245,8 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     axs[3].set_xlim(0, 1)
     axs[3].set_ylim(0, 1)
     axs[3].legend(validation_probabilities.columns)
-    axs[3].set_xlabel('False Positive Rate', fontsize=10)
-    axs[3].set_ylabel('True Positive Rate', fontsize=10)
+    axs[3].set_xlabel('False Positive Rate')
+    axs[3].set_ylabel('True Positive Rate')
     axs[3].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[3].text(
         -0.15,
@@ -291,7 +291,6 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         rowColours=['#DAEBFE'] * meta_performance.shape[0]
     )
     table.auto_set_font_size(False)
-    table.set_fontsize(10)
     table.scale(1, 1.5)
     meta_ax.axis('off')
 

@@ -55,7 +55,7 @@ def run_validation(data_types, patient_data):
 
 def plot_results(validation_predictions, weights):
     """
-    Plots validation predictions and model coefficients for each component in 
+    Plots validation predictions and model coefficients for each component in
     CMTF factorization.
 
     Parameters:
@@ -75,7 +75,7 @@ def plot_results(validation_predictions, weights):
     )
 
     # Validation Predictions
-    
+
     validation_predictions = validation_predictions.fillna(-1).astype(int)
     sns.heatmap(
         validation_predictions.T,

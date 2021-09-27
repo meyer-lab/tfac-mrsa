@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict, cross_val_score
 
-from .dataImport import form_tensor
+from .dataImport import form_tensor, import_validation_patient_metadata
 from tensorpac import perform_CMTF
 
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -27,8 +27,11 @@ def predict_validation(data, labels, predict_proba=False, return_coef=False):
         predictions (pandas.Series): predictions for samples with unknown
             outcomes
     """
-    train_labels = labels.loc[labels != 'Unknown']
-    test_labels = labels.loc[labels == 'Unknown']
+    validation_data = import_validation_patient_metadata()
+    validation_samples = set(validation_data.index) & set(labels.index)
+
+    train_labels = labels.drop(validation_samples)
+    test_labels = labels.loc[validation_samples]
 
     if isinstance(data, pd.Series):
         train_data = data.loc[train_labels.index]
@@ -110,24 +113,18 @@ def predict_known(data, labels, method='predict'):
     return predictions
 
 
-def predict_regression(data, labels):
+def predict_regression(data, labels, return_coef=False):
     """
     Predicts value for all samples in data via cross-validation.
 
     Parameters:
         data (pandas.DataFrame): data to classify
         labels (pandas.Series): labels for samples in data
+        return_coef (bool, default: False): return model coefficients
 
     Returns:
         predictions (pandas.Series): predictions for samples
     """
-    labels = labels.loc[labels != 'Unknown']
-
-    if isinstance(data, pd.Series):
-        data = data.loc[labels.index]
-    else:
-        data = data.loc[labels.index, :]
-
     model = LinearRegression()
     skf = StratifiedKFold(
         n_splits=5,
@@ -154,10 +151,14 @@ def predict_regression(data, labels):
         index=labels.index
     )
 
-    return predictions
+    if return_coef:
+        model.fit(data, labels)
+        return predictions, model.coef_
+    else:
+        return predictions
 
 
-def run_model(data, labels):
+def run_model(data, labels, return_coef=False):
     """
     Runs provided LogisticRegressionCV model with the provided data
     and labels.
@@ -165,6 +166,7 @@ def run_model(data, labels):
     Parameters:
         data (pandas.DataFrame): DataFrame of CMTF components
         labels (pandas.Series): Labels for provided data
+        return_coef (bool, default: False): return model coefficients
 
     Returns:
         score (float): Accuracy for best-performing model (considers
@@ -203,6 +205,10 @@ def run_model(data, labels):
     )
     model.fit(data, labels)
 
+    coef = None
+    if return_coef:
+        coef = model.coef_[0]
+
     scores = np.mean(list(model.scores_.values())[0], axis=0)
 
     model = LogisticRegression(
@@ -214,7 +220,10 @@ def run_model(data, labels):
         max_iter=100000,
     )
 
-    return np.max(scores), model
+    if return_coef:
+        return np.max(scores), model, coef
+    else:
+        return np.max(scores), model
 
 
 def evaluate_scaling():

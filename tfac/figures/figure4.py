@@ -194,12 +194,12 @@ def plot_results(weights):
     ax7.yaxis.set_tick_params(rotation=90)
     ax11.set_ylabel("")
     # Titles/labeling
-    ax12.set_title("Subjects", fontsize=15)
-    ax16.set_title("Cytokines", fontsize=15)
-    ax18.set_title("Source", fontsize=15)
+    ax12.set_title("Subjects")
+    ax16.set_title("Cytokines")
+    ax18.set_title("Source")
 
     for ii, ax in enumerate([ax1, ax12, ax16, ax18]):
-        ax.text(-0.2, 1.1, ascii_uppercase[ii], transform=ax.transAxes, fontsize=25, fontweight="bold", va="top")
+        ax.text(-0.2, 1.1, ascii_uppercase[ii], transform=ax.transAxes, fontsize=14, fontweight="bold", va="top")
 
     for offset, target in enumerate(TARGETS):
         ax1.errorbar(
@@ -222,13 +222,12 @@ def plot_results(weights):
         linestyle='--'
     )
 
-    ax1.set_xlabel('Model Coefficient', fontsize=10)
-    ax1.set_xlim(-2.5, 2.5)
+    ax1.set_xlabel('Model Coefficient')
+    ax1.set_xlim(-3, 3)
     ax1.set_ylim(-1, 76)
     ax1.set_yticks(np.arange(1.5, 80, 9))
     ax1.set_yticklabels(
-        [f'Cmp. {i}' for i in range(1, 10)],
-        fontsize=10
+        [f'Cmp. {i}' for i in range(1, 10)]
     )
 
     plt.subplots_adjust(left=0.05, right=0.975)
@@ -237,9 +236,7 @@ def plot_results(weights):
 
 
 def makeFigure():
-    # weights = bootstrap_weights()
-    # weights.to_csv('weights_scaled.csv')
-    weights = pd.read_csv('weights_scaled.csv', index_col=[0, 1])
+    weights = bootstrap_weights()
     fig = plot_results(weights)
 
     return fig

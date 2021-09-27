@@ -75,8 +75,8 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
     # R2X v. Components
 
     axs[0].plot(r2x_v_components.index, r2x_v_components)
-    axs[0].set_ylabel('R2X', fontsize=10)
-    axs[0].set_xlabel('Number of Components', fontsize=10)
+    axs[0].set_ylabel('R2X')
+    axs[0].set_xlabel('Number of Components')
     axs[0].set_ylim(0, 1)
     axs[0].set_xticks(r2x_v_components.index)
     axs[0].text(
@@ -91,8 +91,8 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
 
     r2x_v_scaling.plot(ax=axs[1])
     axs[1].set_xscale("log")
-    axs[1].set_ylabel('R2X', fontsize=10)
-    axs[1].set_xlabel('Variance Scaling (Cytokine/RNA)', fontsize=10)
+    axs[1].set_ylabel('R2X')
+    axs[1].set_xlabel('Variance Scaling (Cytokine/RNA)')
     axs[1].set_ylim(0, 1)
     axs[1].tick_params(axis='x', pad=-3)
     axs[1].text(
@@ -106,8 +106,8 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
     # Accuracy v. Components
 
     axs[2].plot(acc_v_components.index, acc_v_components)
-    axs[2].set_ylabel('Prediction Accuracy', fontsize=10)
-    axs[2].set_xlabel('Number of Components', fontsize=10)
+    axs[2].set_ylabel('Prediction Accuracy')
+    axs[2].set_xlabel('Number of Components')
     axs[2].set_xticks(acc_v_components.index)
     axs[2].set_ylim([0.5, 0.75])
     axs[2].text(
@@ -121,8 +121,8 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
     # Accuracy v. Scaling
 
     axs[3].semilogx(acc_v_scaling.index, acc_v_scaling, base=2)
-    axs[3].set_ylabel('Prediction Accuracy', fontsize=10)
-    axs[3].set_xlabel('Variance Scaling (Cytokine/RNA)', fontsize=10)
+    axs[3].set_ylabel('Prediction Accuracy')
+    axs[3].set_xlabel('Variance Scaling (Cytokine/RNA)')
     axs[3].set_ylim([0.5, 0.75])
     axs[3].set_xticks(np.logspace(-7, 7, base=2, num=8))
     axs[3].tick_params(axis='x', pad=-3)

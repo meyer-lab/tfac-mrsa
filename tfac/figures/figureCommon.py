@@ -31,9 +31,17 @@ matplotlib.rcParams["ytick.major.pad"] = 1.0
 matplotlib.rcParams["ytick.minor.pad"] = 0.9
 
 
-def getSetup(figsize, gridd, multz=None, empts=None):
+def getSetup(figsize, gridd, multz=None, empts=None, style="whitegrid"):
     """ Establish figure set-up with subplots. """
-    sns.set(style="whitegrid", font_scale=0.7, color_codes=True, palette="colorblind", rc={"grid.linestyle": "dotted", "axes.linewidth": 0.6})
+    sns.set(
+        style=style,
+        font_scale=0.7,
+        color_codes=True,
+        palette="colorblind",
+        rc={
+            "grid.linestyle": "dotted",
+            "axes.linewidth": 0.6}
+    )
 
     # create empty list if empts isn't specified
     if empts is None:
@@ -44,20 +52,27 @@ def getSetup(figsize, gridd, multz=None, empts=None):
 
     # Setup plotting space and grid
     f = plt.figure(figsize=figsize, constrained_layout=True)
-    gs1 = gridspec.GridSpec(*gridd, figure=f)
+    gs1 = gridspec.GridSpec(**gridd, figure=f)
 
     # Get list of axis objects
     x = 0
     ax = list()
-    while x < gridd[0] * gridd[1]:
+    while x < gridd['nrows'] * gridd['ncols']:
         if x not in empts and x not in multz.keys():  # If this is just a normal subplot
-            ax.append(f.add_subplot(gs1[x]))
+            ax.append(
+                f.add_subplot(
+                    gs1[x],
+                    frame_on=False,
+                    xticks=[],
+                    yticks=[]
+                )
+            )
         elif x in multz.keys():  # If this is a subplot that spans grid elements
             ax.append(f.add_subplot(gs1[x: x + multz[x] + 1]))
             x += multz[x]
         x += 1
 
-    return (ax, f)
+    return ax, f
 
 
 def subplotLabel(axs):

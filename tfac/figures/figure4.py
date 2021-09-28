@@ -4,14 +4,14 @@ Creates Figure 4 -- Model Interpretation
 from os.path import abspath, dirname
 from string import ascii_uppercase
 
-from matplotlib import gridspec, pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
 
-from .figureCommon import OPTIMAL_SCALING
+from .figureCommon import getSetup, OPTIMAL_SCALING
 from ..dataImport import form_tensor, import_cytokines
 from ..predict import run_model, predict_regression
 from tensorpac import perform_CMTF
@@ -64,70 +64,66 @@ def bootstrap_weights():
     return weights
 
 
-
-
 def tfac_setup():
     """Import and organize R2X and heatmaps"""
     # R2X
-    tensor, matrix, patInfo = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
     plasma, _ = import_cytokines()
     cytokines = plasma.index
 
-    patInfo.loc[:, 'sorted'] = range(patInfo.shape[0])
-    patInfo = patInfo.sort_values(['cohort', 'type', 'status'])
-    sortIDX = patInfo.loc[:, 'sorted']
-    patInfo = patInfo.drop('sorted', axis=1)
-    patInfo = patInfo.T
+    pat_info.loc[:, 'sorted'] = range(pat_info.shape[0])
+    pat_info = pat_info.sort_values(['cohort', 'type', 'status'])
+    sort_idx = pat_info.loc[:, 'sorted']
+    pat_info = pat_info.drop('sorted', axis=1)
+    pat_info = pat_info.T
 
-    components = 9
-    AllR2X = []
-    # Run factorization at each component number up to chosen limit
-    for component in range(1, components + 1):
-        print(f"Starting decomposition with {component} components.")
-        AllR2X.append(perform_CMTF(tensor, matrix, r=component).R2X)
-
-    R2X = pd.DataFrame({"Number of Components": np.arange(1, components + 1), "R2X": AllR2X})
-
-    # Heatmaps
     factors = perform_CMTF(tensor, matrix)
+    col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
+    subs = pd.DataFrame(
+        factors.factors[0][sort_idx, :], 
+        columns=col_names, 
+        index=[str(x) for x in pat_info.columns]
+    )
+    cytos = pd.DataFrame(
+        factors.factors[1], 
+        columns=col_names, 
+        index=cytokines
+    )
+    sour = pd.DataFrame(
+        factors.factors[2], 
+        columns=col_names, 
+        index=["Serum", "Plasma"]
+    )
 
-    colnames = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
-    subs = pd.DataFrame(factors.factors[0][sortIDX, :], columns=colnames, index=[str(x) for x in patInfo.columns])
-    cytos = pd.DataFrame(factors.factors[1], columns=colnames, index=cytokines)
-    sour = pd.DataFrame(factors.factors[2], columns=colnames, index=["Serum", "Plasma"])
-
-    return R2X, subs, cytos, sour, patInfo
+    return subs, cytos, sour, pat_info
 
 
-def plot_results(weights):
+def plot_results(weights, subs, cytos, sour, pat_info):
     """ Get a list of the axis objects and create a figure. """
-    # Get list of axis objects
-    R2X, subs, cytos, sour, patInfo = tfac_setup()
+    fig_size = (20, 7)
+    layout = {
+        'ncols': 18,
+        'nrows': 1,
+        'width_ratios': [35, 6, 1, 4, 1, 4, 1, 1.5, 1.5, 1.5, 1.5, 25, 1, 2, 16, 25, 8, 25],
+        'wspace': 0
+    }
+    axs, fig = getSetup(
+        fig_size,
+        layout,
+        style=None
+    )
+    axs[0].set_frame_on(True)
 
-    fig = plt.figure(figsize=(20, 7))
-    # Width corresponds to plots as such: [R2X, spacer, typecbar, spacer, cohortcbar, spacer, outcomecbar, spacer, type, cohort, outcome, subs, spacer, cbar, spacer, cyto, spacer, source]
-    gs = gridspec.GridSpec(1, 18, width_ratios=[35, 9, 1, 6, 1, 6, 1, 1.5, 1.5, 1.5, 1.5, 25, 1, 2, 12, 25, 8, 25],
-                           wspace=0)
-    # Create axes that will have plots
-    ax1 = plt.subplot(gs[0])
-    ax3 = plt.subplot(gs[2])
-    ax5 = plt.subplot(gs[4])
-    ax7 = plt.subplot(gs[6])
-    ax9 = plt.subplot(gs[8])
-    ax10 = plt.subplot(gs[9])
-    ax11 = plt.subplot(gs[10])
-    ax12 = plt.subplot(gs[11])
-    ax14 = plt.subplot(gs[13])
-    ax16 = plt.subplot(gs[15])
-    ax18 = plt.subplot(gs[17])
     # Determine scale
     vmin = min(subs.values.min(), cytos.values.min(), sour.values.min())
     vmax = max(subs.values.max(), cytos.values.max(), sour.values.max())
+    
     # Plot main graphs
-    sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=ax14, vmin=vmin, vmax=vmax, ax=ax12)
-    sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax16)
-    sns.heatmap(sour, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=ax18)
-    ax18.set_yticklabels(["Serum", "Plasma"], rotation=0)
+    sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=axs[13], vmin=vmin, vmax=vmax, ax=axs[11])
+    sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[15])
+    sns.heatmap(sour, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[17])
+    axs[17].set_yticklabels(["Serum", "Plasma"], rotation=0)
+    
     # Set up subject colorbars
     outcome_colors = ["gray", "lightgreen", "brown"]
     cohort_colors = ["deeppink", "orchid", "pink"]
@@ -135,8 +131,9 @@ def plot_results(weights):
     outcome_cmap = sns.color_palette(outcome_colors)
     cohort_cmap = sns.color_palette(cohort_colors)
     type_cmap = sns.color_palette(type_colors)
+    
     # Data types bar
-    types = pd.DataFrame(patInfo.loc["type"]).set_index("type")
+    types = pd.DataFrame(pat_info.loc["type"]).set_index("type")
     types["Type"] = 0
     types[types.index == "0Serum"] = 6
     types[types.index == "1Plasma"] = 5
@@ -147,64 +144,72 @@ def plot_results(weights):
     types[types.index == "0Serum1Plasma2RNAseq"] = 0
 
     sns.heatmap(
-        types, ax=ax9, cbar_ax=ax3, yticklabels=False, xticklabels=True, cmap=type_cmap
+        types, ax=axs[8], cbar_ax=axs[2], yticklabels=False, xticklabels=True, cmap=type_cmap
     )
-    ax9.set_xticklabels(types.columns, rotation=90)
-    colorbar = ax9.collections[0].colorbar
+    axs[8].set_xticklabels(types.columns, rotation=90)
+    colorbar = axs[8].collections[0].colorbar
     colorbar.set_ticks(np.linspace(.4, 5.6, 7))
-    ax3.yaxis.set_ticklabels(
+    axs[2].yaxis.set_ticklabels(
         ["All types", "Plasma\nRNAseq", "Serum\nRNAseq", "Serum\nPlasma", "RNAseq", "Plasma", "Serum"],
         va="center"
     )
-    ax3.yaxis.set_ticks_position('left')
-    ax3.yaxis.set_tick_params(rotation=90)
-    ax9.set_ylabel("")
+    axs[2].yaxis.set_ticks_position('left')
+    axs[2].yaxis.set_tick_params(rotation=90)
+    axs[8].set_ylabel("")
 
     # Cohort bar
-    cohort = pd.DataFrame(patInfo.loc["cohort"]).set_index("cohort")
+    cohort = pd.DataFrame(pat_info.loc["cohort"]).set_index("cohort")
     cohort["Cohort"] = 0
     cohort[cohort.index == 1] = 2
     cohort[cohort.index == 2] = 1
     cohort[cohort.index == 3] = 0
 
     sns.heatmap(
-        cohort, ax=ax10, cbar_ax=ax5, yticklabels=False, xticklabels=True, cmap=cohort_cmap
+        cohort, ax=axs[9], cbar_ax=axs[4], yticklabels=False, xticklabels=True, cmap=cohort_cmap
     )
-    ax10.set_xticklabels(cohort.columns, rotation=90)
-    colorbar = ax10.collections[0].colorbar
+    axs[9].set_xticklabels(cohort.columns, rotation=90)
+    colorbar = axs[9].collections[0].colorbar
     colorbar.set_ticks([.33, 1, 1.66])
-    ax5.yaxis.set_ticklabels(["Cohort 3", "Cohort 2", "Cohort 1"], va="center")
-    ax5.yaxis.set_ticks_position('left')
-    ax5.yaxis.set_tick_params(rotation=90)
-    ax10.set_ylabel("")
+    axs[4].yaxis.set_ticklabels(["Cohort 3", "Cohort 2", "Cohort 1"], va="center")
+    axs[4].yaxis.set_ticks_position('left')
+    axs[4].yaxis.set_tick_params(rotation=90)
+    axs[9].set_ylabel("")
 
     # Outcome bar
-    outs = pd.DataFrame(patInfo.loc["status"]).set_index("status")
+    outs = pd.DataFrame(pat_info.loc["status"]).set_index("status")
     outs["Outcome"] = 0
     outs[outs.index == "0"] = 1
     outs[outs.index == "1"] = 2
     outs[outs.index == "Unknown"] = 0
 
     sns.heatmap(
-        outs, ax=ax11, cbar_ax=ax7, yticklabels=False, xticklabels=True, cmap=outcome_cmap
+        outs, ax=axs[10], cbar_ax=axs[6], yticklabels=False, xticklabels=True, cmap=outcome_cmap
     )
-    ax11.set_xticklabels(outs.columns, rotation=90)
-    colorbar = ax11.collections[0].colorbar
+    axs[10].set_xticklabels(outs.columns, rotation=90)
+    colorbar = axs[10].collections[0].colorbar
     colorbar.set_ticks([.33, 1, 1.66])
-    ax7.yaxis.set_ticklabels(["Unknown", "Resolver", "Persister"], va='center')
-    ax7.yaxis.set_ticks_position('left')
-    ax7.yaxis.set_tick_params(rotation=90)
-    ax11.set_ylabel("")
+    axs[6].yaxis.set_ticklabels(["Unknown", "Resolver", "Persister"], va='center')
+    axs[6].yaxis.set_ticks_position('left')
+    axs[6].yaxis.set_tick_params(rotation=90)
+    axs[10].set_ylabel("")
     # Titles/labeling
-    ax12.set_title("Subjects")
-    ax16.set_title("Cytokines")
-    ax18.set_title("Source")
+    axs[11].set_title("Subjects")
+    axs[15].set_title("Cytokines")
+    axs[17].set_title("Source")
 
-    for ii, ax in enumerate([ax1, ax12, ax16, ax18]):
-        ax.text(-0.2, 1.1, ascii_uppercase[ii], transform=ax.transAxes, fontsize=14, fontweight="bold", va="top")
+    for ii, ax in enumerate([axs[0], axs[11], axs[15], axs[17]]):
+        ax.text(
+            -0.2,
+            1.05,
+            ascii_uppercase[ii],
+            transform=ax.transAxes,
+            fontsize=14,
+            fontweight="bold",
+            va="top"
+        )
 
     for offset, target in enumerate(TARGETS):
-        ax1.errorbar(
+        axs[0].errorbar(
             weights.loc[(target, 'Mean')],
             range(offset, (len(TARGETS) + 5) * weights.shape[1], len(TARGETS) + 5),
             marker='.',
@@ -213,32 +218,41 @@ def plot_results(weights):
             capsize=2
         )
 
-    ax1.legend(
+    axs[0].legend(
         ['Persistence', 'Sex', 'Race', 'Age']
     )
 
-    ax1.plot(
+    axs[0].plot(
         [0, 0],
         [-100, 100],
         color='k',
         linestyle='--'
     )
 
-    ax1.set_xlabel('Model Coefficient')
-    ax1.set_xlim(-3, 3)
-    ax1.set_ylim(-1, 76)
-    ax1.set_yticks(np.arange(1.5, 80, 9))
-    ax1.set_yticklabels(
+    axs[0].set_xlabel('Model Coefficient')
+    axs[0].set_xlim(-3, 3)
+    axs[0].set_ylim(-1, 76)
+    axs[0].set_yticks(np.arange(1.5, 80, 9))
+    axs[0].set_yticklabels(
         [f'Cmp. {i}' for i in range(1, 10)]
     )
 
-    plt.subplots_adjust(left=0.05, right=0.975)
+    plt.subplots_adjust(left=0.05, right=0.975, top=0.95)
 
     return fig
 
 
 def makeFigure():
-    weights = bootstrap_weights()
-    fig = plot_results(weights)
+    # weights = bootstrap_weights()
+    # R2X, subs, cytos, sour, pat_info = tfac_setup()
+
+    R2X = pd.read_pickle('R2X.pkl')
+    subs = pd.read_pickle('subs.pkl')
+    cytos = pd.read_pickle('cytos.pkl')
+    sour = pd.read_pickle('sour.pkl')
+    pat_info = pd.read_pickle('patInfo.pkl')
+    weights = pd.read_csv('weights_scaled.csv', index_col=[0, 1])
+    
+    fig = plot_results(weights, subs, cytos, sour, pat_info)
 
     return fig

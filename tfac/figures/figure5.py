@@ -161,7 +161,10 @@ def plot_results(cv_results, val_results):
         fig (matplotlib.Figure): figure depicting predictions for all samples
     """
     fig_size = (8, 8)
-    layout = (2, 1)
+    layout = {
+        'ncols': 1,
+        'nrows': 2
+    }
     axs, fig = getSetup(
         fig_size,
         layout

@@ -15,6 +15,7 @@ from tensorpac import perform_CMTF
 OPTIMAL_SCALING = 32.0
 
 
+matplotlib.rcParams["axes.titlesize"] = 14
 matplotlib.rcParams["font.size"] = 10
 matplotlib.rcParams["legend.borderpad"] = 0.35
 matplotlib.rcParams["legend.fontsize"] = 8

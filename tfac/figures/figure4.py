@@ -102,10 +102,23 @@ def tfac_setup():
 def plot_results(weights):
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    R2X, subs, cytos, sour, patInfo = tfac_setup()
+    # R2X, subs, cytos, sour, patInfo = tfac_setup()
+
+    # R2X.to_pickle('R2X.pkl')
+    # subs.to_pickle('subs.pkl')
+    # cytos.to_pickle('cytos.pkl')
+    # sour.to_pickle('sour.pkl')
+    # patInfo.to_pickle('patInfo.pkl')
+    R2X = pd.read_pickle('R2X.pkl')
+    subs = pd.read_pickle('subs.pkl')
+    cytos = pd.read_pickle('cytos.pkl')
+    sour = pd.read_pickle('sour.pkl')
+    patInfo = pd.read_pickle('patInfo.pkl')
+
     fig = plt.figure(figsize=(20, 7))
     # Width corresponds to plots as such: [R2X, spacer, typecbar, spacer, cohortcbar, spacer, outcomecbar, spacer, type, cohort, outcome, subs, spacer, cbar, spacer, cyto, spacer, source]
-    gs = gridspec.GridSpec(1, 18, width_ratios=[30, 10, 1, 6, 1, 6, 1, 1.5, 1.5, 1.5, 1.5, 25, 1, 2, 20, 25, 8, 25], wspace=0)
+    gs = gridspec.GridSpec(1, 18, width_ratios=[35, 9, 1, 6, 1, 6, 1, 1.5, 1.5, 1.5, 1.5, 25, 1, 2, 12, 25, 8, 25],
+                           wspace=0)
     # Create axes that will have plots
     ax1 = plt.subplot(gs[0])
     ax3 = plt.subplot(gs[2])
@@ -236,7 +249,8 @@ def plot_results(weights):
 
 
 def makeFigure():
-    weights = bootstrap_weights()
+    # weights = bootstrap_weights()
+    weights = pd.read_csv('weights_scaled.csv', index_col=[0, 1])
     fig = plot_results(weights)
 
     return fig

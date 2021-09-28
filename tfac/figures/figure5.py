@@ -5,7 +5,7 @@ import seaborn as sns
 
 from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
 from tfac.dataImport import form_tensor, import_cytokines
-from tfac.predict import predict_known, predict_unknown
+from tfac.predict import predict_known, predict_validation
 from tensorpac import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
@@ -113,7 +113,7 @@ def run_unknown(data_types, patient_data):
         data = data_type[1]
         labels = patient_data.loc[data.index, 'status']
 
-        _predictions = predict_unknown(data, labels)
+        _predictions = predict_validation(data, labels)
         predictions.loc[_predictions.index, source] = _predictions
 
     return predictions

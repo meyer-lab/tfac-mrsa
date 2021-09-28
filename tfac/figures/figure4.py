@@ -10,12 +10,12 @@ import seaborn as sns
 
 from .figureCommon import getSetup, get_data_types
 from ..dataImport import import_validation_patient_metadata
-from ..predict import predict_unknown
+from ..predict import predict_validation
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def run_unknown(data_types, patient_data):
+def run_validation(data_types, patient_data):
     """
     Predicts samples with unknown outcomes.
 
@@ -38,13 +38,13 @@ def run_unknown(data_types, patient_data):
         labels = patient_data.loc[data.index, 'status']
 
         if source == 'CMTF':
-            _predictions, coef = predict_unknown(
+            _predictions, coef = predict_validation(
                 data, labels, return_coef=True
             )
             predictions.loc[_predictions.index, source] = _predictions
             weights = coef
         else:
-            _predictions = predict_unknown(data, labels)
+            _predictions = predict_validation(data, labels)
             predictions.loc[_predictions.index, source] = _predictions
 
     validation_meta = import_validation_patient_metadata()
@@ -91,16 +91,14 @@ def plot_results(validation_predictions, weights):
     )
     axs[0].set_xticklabels(
         validation_predictions.index,
-        fontsize=10,
         ha='center',
         rotation=90
     )
     axs[0].set_yticklabels(
         validation_predictions.columns,
-        fontsize=10,
         rotation=0
     )
-    axs[0].set_xlabel('Patient', fontsize=12)
+    axs[0].set_xlabel('Patient')
 
     legend_elements = [Patch(facecolor='dimgrey', edgecolor='dimgrey', label='Data Not Available'),
                        Patch(facecolor='#ffd2d2', edgecolor='#ffd2d2', label='Persistor'),
@@ -114,19 +112,19 @@ def plot_results(validation_predictions, weights):
         weights
     )
 
-    axs[1].set_xlabel('Component', fontsize=12)
-    axs[1].set_ylabel('Model Coefficient', fontsize=12)
+    axs[1].set_xlabel('Component')
+    axs[1].set_ylabel('Model Coefficient')
     axs[1].set_yticks([0, -2, -4])
-    axs[1].set_yticklabels([0, -2, -4], fontsize=10)
+    axs[1].set_yticklabels([0, -2, -4])
     axs[1].set_xticks(np.arange(1, len(weights) + 1))
-    axs[1].set_xticklabels(np.arange(1, len(weights) + 1), fontsize=10)
+    axs[1].set_xticklabels(np.arange(1, len(weights) + 1))
 
     return fig
 
 
 def makeFigure():
     data_types, patient_data = get_data_types()
-    validation_predictions, weights = run_unknown(data_types, patient_data)
+    validation_predictions, weights = run_validation(data_types, patient_data)
     fig = plot_results(validation_predictions, weights)
 
     validation_predictions.to_csv(

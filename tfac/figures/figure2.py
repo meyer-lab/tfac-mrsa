@@ -1,13 +1,17 @@
 """
 Creates Figure 2 -- CMTF Plotting
 """
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from .figureCommon import getSetup, OPTIMAL_SCALING
 from ..dataImport import form_tensor
 from ..predict import evaluate_components, evaluate_scaling
 from tensorpac import perform_CMTF, calcR2X
+
+LABEL_POS = (
+    (0.025, 0.52),
+    (0.94, 0.455)
+)
 
 
 def get_r2x_results():
@@ -71,64 +75,63 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
     # R2X v. Components
 
     axs[0].plot(r2x_v_components.index, r2x_v_components)
-    axs[0].set_ylabel('R2X', fontsize=12)
-    axs[0].set_xlabel('Number of Components', fontsize=12)
+    axs[0].set_ylabel('R2X')
+    axs[0].set_xlabel('Number of Components')
     axs[0].set_ylim(0, 1)
+    axs[0].set_xticks(r2x_v_components.index)
     axs[0].text(
-        0.02,
-        0.95,
+        -1.5,
+        1,
         'A',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
-        transform=plt.gcf().transFigure
     )
 
     # R2X v. Scaling
 
     r2x_v_scaling.plot(ax=axs[1])
     axs[1].set_xscale("log")
-    axs[1].set_ylabel('R2X', fontsize=12)
-    axs[1].set_xlabel('Variance Scaling (Cytokine/RNA)', fontsize=12)
+    axs[1].set_ylabel('R2X')
+    axs[1].set_xlabel('Variance Scaling (Cytokine/RNA)')
     axs[1].set_ylim(0, 1)
+    axs[1].tick_params(axis='x', pad=-3)
     axs[1].text(
-        0.52,
-        0.95,
+        1E-3,
+        1,
         'B',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
-        transform=plt.gcf().transFigure
     )
 
     # Accuracy v. Components
 
     axs[2].plot(acc_v_components.index, acc_v_components)
-    axs[2].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
-    axs[2].set_xlabel('Number of Components', fontsize=12)
+    axs[2].set_ylabel('Prediction Accuracy')
+    axs[2].set_xlabel('Number of Components')
     axs[2].set_xticks(acc_v_components.index)
     axs[2].set_ylim([0.5, 0.75])
     axs[2].text(
-        0.02,
-        0.45,
+        -1.5,
+        0.75,
         'C',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
-        transform=plt.gcf().transFigure
     )
 
     # Accuracy v. Scaling
 
     axs[3].semilogx(acc_v_scaling.index, acc_v_scaling, base=2)
-    axs[3].set_ylabel('Best Accuracy over Repeated\n10-fold Cross Validation', fontsize=12)
-    axs[3].set_xlabel('Variance Scaling (Cytokine/RNA)', fontsize=12)
+    axs[3].set_ylabel('Prediction Accuracy')
+    axs[3].set_xlabel('Variance Scaling (Cytokine/RNA)')
     axs[3].set_ylim([0.5, 0.75])
     axs[3].set_xticks(np.logspace(-7, 7, base=2, num=8))
+    axs[3].tick_params(axis='x', pad=-3)
     axs[3].text(
-        0.52,
-        0.45,
+        1E-3,
+        0.75,
         'D',
-        fontsize=16,
+        fontsize=14,
         fontweight='bold',
-        transform=plt.gcf().transFigure
     )
 
     return fig

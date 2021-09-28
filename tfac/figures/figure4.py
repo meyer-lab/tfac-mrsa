@@ -102,18 +102,7 @@ def tfac_setup():
 def plot_results(weights):
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    # R2X, subs, cytos, sour, patInfo = tfac_setup()
-
-    # R2X.to_pickle('R2X.pkl')
-    # subs.to_pickle('subs.pkl')
-    # cytos.to_pickle('cytos.pkl')
-    # sour.to_pickle('sour.pkl')
-    # patInfo.to_pickle('patInfo.pkl')
-    R2X = pd.read_pickle('R2X.pkl')
-    subs = pd.read_pickle('subs.pkl')
-    cytos = pd.read_pickle('cytos.pkl')
-    sour = pd.read_pickle('sour.pkl')
-    patInfo = pd.read_pickle('patInfo.pkl')
+    R2X, subs, cytos, sour, patInfo = tfac_setup()
 
     fig = plt.figure(figsize=(20, 7))
     # Width corresponds to plots as such: [R2X, spacer, typecbar, spacer, cohortcbar, spacer, outcomecbar, spacer, type, cohort, outcome, subs, spacer, cbar, spacer, cyto, spacer, source]
@@ -249,8 +238,7 @@ def plot_results(weights):
 
 
 def makeFigure():
-    # weights = bootstrap_weights()
-    weights = pd.read_csv('weights_scaled.csv', index_col=[0, 1])
+    weights = bootstrap_weights()
     fig = plot_results(weights)
 
     return fig

@@ -128,7 +128,7 @@ def plot_results(weights, subs, cytos, source, pat_info):
     layout = {
         'ncols': 18,
         'nrows': 1,
-        'width_ratios': [35, 6, 1, 4, 1, 4, 1, 1.5, 1.5, 1.5, 1.5, 25, 1, 2, 16, 25, 8, 25],
+        'width_ratios': [35, 6, 1, 4, 1, 4, 1, 1.5, 1.5, 1.5, 1.5, 25, 1, 1, 16, 25, 8, 25],
         'wspace': 0
     }
     axs, fig = getSetup(

@@ -25,8 +25,10 @@ matplotlib.rcParams["legend.handletextpad"] = 0.5
 matplotlib.rcParams["legend.labelspacing"] = 0.2
 matplotlib.rcParams["legend.markerscale"] = 0.7
 matplotlib.rcParams["svg.fonttype"] = 'none'
+matplotlib.rcParams["xtick.labelsize"] = 10
 matplotlib.rcParams["xtick.major.pad"] = 1.0
 matplotlib.rcParams["xtick.minor.pad"] = 0.9
+matplotlib.rcParams["ytick.labelsize"] = 10
 matplotlib.rcParams["ytick.major.pad"] = 1.0
 matplotlib.rcParams["ytick.minor.pad"] = 0.9
 

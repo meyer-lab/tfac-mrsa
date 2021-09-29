@@ -66,7 +66,6 @@ def bootstrap_weights():
 
 def tfac_setup():
     """Import and organize R2X and heatmaps"""
-    # R2X
     tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
     plasma, _ = import_cytokines()
     cytokines = plasma.index
@@ -243,16 +242,9 @@ def plot_results(weights, subs, cytos, sour, pat_info):
 
 
 def makeFigure():
-    # weights = bootstrap_weights()
-    # R2X, subs, cytos, sour, pat_info = tfac_setup()
+    weights = bootstrap_weights()
+    subs, cytos, sour, pat_info = tfac_setup()
 
-    R2X = pd.read_pickle('R2X.pkl')
-    subs = pd.read_pickle('subs.pkl')
-    cytos = pd.read_pickle('cytos.pkl')
-    sour = pd.read_pickle('sour.pkl')
-    pat_info = pd.read_pickle('patInfo.pkl')
-    weights = pd.read_csv('weights_scaled.csv', index_col=[0, 1])
-    
     fig = plot_results(weights, subs, cytos, sour, pat_info)
 
     return fig

@@ -29,7 +29,8 @@ def bootstrap_weights():
         None
 
     Returns:
-        weights (pandas.Series): bootstrapped coefficient weights
+        weights (pandas.DataFrame): mean and StD of component weights w/r to
+            prediction targets
     """
     tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
     patient_data = patient_data.reset_index(drop=True)
@@ -65,7 +66,20 @@ def bootstrap_weights():
 
 
 def tfac_setup():
-    """Import and organize R2X and heatmaps"""
+    """
+    Import cytokine data and correlate tfac components to cytokines and
+    data sources.
+
+    Parameters:
+        None
+
+    Returns:
+        subs (pandas.DataFrame): patient correlations to tfac components
+        cytos (pandas.DataFrame): cytokine correlations to tfac components
+        source (pandas.DataFrame): cytokine source correlations to tfac
+            components
+        pat_info (pandas.DataFrame): patient meta-data
+    """
     tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
     plasma, _ = import_cytokines()
     cytokines = plasma.index
@@ -88,17 +102,28 @@ def tfac_setup():
         columns=col_names, 
         index=cytokines
     )
-    sour = pd.DataFrame(
+    source = pd.DataFrame(
         factors.factors[2], 
         columns=col_names, 
         index=["Serum", "Plasma"]
     )
 
-    return subs, cytos, sour, pat_info
+    return subs, cytos, source, pat_info
 
 
-def plot_results(weights, subs, cytos, sour, pat_info):
-    """ Get a list of the axis objects and create a figure. """
+def plot_results(weights, subs, cytos, source, pat_info):
+    """
+    Plots component weights and interpretation.
+
+    Parameters:
+        weights (pandas.DataFrame): mean and StD of component weights w/r to
+            prediction targets
+        subs (pandas.DataFrame): patient correlations to tfac components
+        cytos (pandas.DataFrame): cytokine correlations to tfac components
+        source (pandas.DataFrame): cytokine source correlations to tfac
+            components
+        pat_info (pandas.DataFrame): patient meta-data
+    """
     fig_size = (20, 7)
     layout = {
         'ncols': 18,
@@ -114,13 +139,13 @@ def plot_results(weights, subs, cytos, sour, pat_info):
     axs[0].set_frame_on(True)
 
     # Determine scale
-    vmin = min(subs.values.min(), cytos.values.min(), sour.values.min())
-    vmax = max(subs.values.max(), cytos.values.max(), sour.values.max())
+    vmin = min(subs.values.min(), cytos.values.min(), source.values.min())
+    vmax = max(subs.values.max(), cytos.values.max(), source.values.max())
     
     # Plot main graphs
     sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=axs[13], vmin=vmin, vmax=vmax, ax=axs[11])
     sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[15])
-    sns.heatmap(sour, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[17])
+    sns.heatmap(source, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[17])
     axs[17].set_yticklabels(["Serum", "Plasma"], rotation=0)
     
     # Set up subject colorbars
@@ -243,8 +268,8 @@ def plot_results(weights, subs, cytos, sour, pat_info):
 
 def makeFigure():
     weights = bootstrap_weights()
-    subs, cytos, sour, pat_info = tfac_setup()
+    subs, cytos, source, pat_info = tfac_setup()
 
-    fig = plot_results(weights, subs, cytos, sour, pat_info)
+    fig = plot_results(weights, subs, cytos, source, pat_info)
 
     return fig

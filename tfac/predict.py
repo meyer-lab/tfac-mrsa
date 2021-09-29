@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
-from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict, cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
 
 from .dataImport import form_tensor, import_validation_patient_metadata
 from tensorpac import perform_CMTF

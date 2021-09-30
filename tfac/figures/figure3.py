@@ -29,7 +29,7 @@ def run_validation(data_types, patient_data):
     )
     predictions = predictions.loc[patient_data['status'] == 'Unknown']
     probabilities = predictions.copy()
-    
+
     validation_meta = import_validation_patient_metadata()
 
     for data_type in data_types:
@@ -150,7 +150,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
             persistence for training samples
         validation_samples (pandas.DataFrame): predictions for validation
             cohort samples
-        validation_probabilities (pandas.DataFrame): predicted probability 
+        validation_probabilities (pandas.DataFrame): predicted probability
             of persistence for validation samples
         sex_predictions (pandas.DataFrame): sex predictions for samples with
             known outcomes and sex

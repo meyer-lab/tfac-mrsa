@@ -46,7 +46,15 @@ def fig_S1_setup():
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     # Get list of axis objects
-    ax, f = getSetup((8, 8), (3, 1))
+    fig_size = (8, 8)
+    layout = {
+        'ncols': 1,
+        'nrows': 3
+    }
+    ax, f = getSetup(
+        fig_size,
+        layout
+    )
     pears, ser, plas = fig_S1_setup()
     a = sns.pointplot(data=pears, x=0, y=1, join=False, ax=ax[0])
     a.set_xticklabels(a.get_xticklabels(), rotation=30, ha="right")

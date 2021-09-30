@@ -57,7 +57,10 @@ def plot_results(weights):
             each CMTF component
     """
     fig_size = (4, 4)
-    layout = (1, 1)
+    layout = {
+        'nrows': 1,
+        'ncols': 1
+    }
     axs, fig = getSetup(
         fig_size,
         layout

@@ -163,7 +163,10 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         fig (matplotlib.Figure): figure depicting predictions for all samples
     """
     fig_size = (8, 8)
-    layout = (3, 2)
+    layout = {
+        'ncols': 2,
+        'nrows': 3
+    }
     axs, fig = getSetup(
         fig_size,
         layout

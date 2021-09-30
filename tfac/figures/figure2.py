@@ -66,7 +66,10 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
         fig (matplotlib.Figure): figure depicting CMTF parameterization plots
     """
     fig_size = (8, 8)
-    layout = (2, 2)
+    layout = {
+        'ncols': 2,
+        'nrows': 2
+    }
     axs, fig = getSetup(
         fig_size,
         layout

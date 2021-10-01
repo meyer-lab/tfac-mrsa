@@ -139,19 +139,16 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
 
     return fig
 
-from tfac.GSEA_preprocessing import translate_geneIDs, translate_gene_sets
 def makeFigure():
-    path = "tfac/data/gsea_libraries/"
-    files = ["Azimuth_Cell_Types_2021_short", "CellMarker_Augmented_2021_blood", "CellMarker_Augmented_2021_peripheral", "HuBMAP_ASCT_plus_B_augmented_w_RNAseq_Coexpression_immune_bloodonly"]
-    for f in files: 
-        translate_gene_sets(pd.read_csv(path + f + ".csv", header=None), path, f)
-    # r2x_v_components, r2x_v_scaling = get_r2x_results()
-    # acc_v_components = evaluate_components(OPTIMAL_SCALING)
-    # acc_v_scaling = evaluate_scaling()
+    r2x_v_components, r2x_v_scaling = get_r2x_results()
+    acc_v_components = evaluate_components(OPTIMAL_SCALING)
+    acc_v_scaling = evaluate_scaling()
 
-    # fig = plot_results(
-    #     r2x_v_components,
-    #     r2x_v_scaling,
-    #     acc_v_components,
-    #     acc_v_scaling
-    # )
+    fig = plot_results(
+        r2x_v_components,
+        r2x_v_scaling,
+        acc_v_components,
+        acc_v_scaling
+    )
+
+    return fig

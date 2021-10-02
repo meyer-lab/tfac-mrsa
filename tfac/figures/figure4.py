@@ -93,18 +93,18 @@ def tfac_setup():
     factors = perform_CMTF(tensor, matrix)
     col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
     subs = pd.DataFrame(
-        factors.factors[0][sort_idx, :], 
-        columns=col_names, 
+        factors.factors[0][sort_idx, :],
+        columns=col_names,
         index=[str(x) for x in pat_info.columns]
     )
     cytos = pd.DataFrame(
-        factors.factors[1], 
-        columns=col_names, 
+        factors.factors[1],
+        columns=col_names,
         index=cytokines
     )
     source = pd.DataFrame(
-        factors.factors[2], 
-        columns=col_names, 
+        factors.factors[2],
+        columns=col_names,
         index=["Serum", "Plasma"]
     )
 
@@ -141,13 +141,13 @@ def plot_results(weights, subs, cytos, source, pat_info):
     # Determine scale
     vmin = min(subs.values.min(), cytos.values.min(), source.values.min())
     vmax = max(subs.values.max(), cytos.values.max(), source.values.max())
-    
+
     # Plot main graphs
     sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=axs[13], vmin=vmin, vmax=vmax, ax=axs[11])
     sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[15])
     sns.heatmap(source, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[17])
     axs[17].set_yticklabels(["Serum", "Plasma"], rotation=0)
-    
+
     # Set up subject colorbars
     outcome_colors = ["gray", "lightgreen", "brown"]
     cohort_colors = ["deeppink", "orchid", "pink"]
@@ -155,7 +155,7 @@ def plot_results(weights, subs, cytos, source, pat_info):
     outcome_cmap = sns.color_palette(outcome_colors)
     cohort_cmap = sns.color_palette(cohort_colors)
     type_cmap = sns.color_palette(type_colors)
-    
+
     # Data types bar
     types = pd.DataFrame(pat_info.loc["type"]).set_index("type")
     types["Type"] = 0

@@ -64,9 +64,6 @@ def getSetup(figsize, gridd, multz=None, empts=None, style="whitegrid"):
             ax.append(
                 f.add_subplot(
                     gs1[x],
-                    frame_on=False,
-                    xticks=[],
-                    yticks=[]
                 )
             )
         elif x in multz.keys():  # If this is a subplot that spans grid elements

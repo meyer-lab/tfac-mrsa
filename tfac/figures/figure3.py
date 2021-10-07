@@ -86,7 +86,11 @@ def run_cv(data_types, patient_data):
 
             _predictions = predict_known(data, labels)
             if column == 'status':
-                _probabilities = predict_known(data, labels, method='predict_proba')
+                _probabilities = predict_known(
+                    data,
+                    labels,
+                    method='predict_proba'
+                )
                 probabilities.loc[_probabilities.index, source] = _probabilities
 
             df.loc[_predictions.index, source] = _predictions
@@ -162,12 +166,13 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     Returns:
         fig (matplotlib.Figure): figure depicting predictions for all samples
     """
-    fig_size = (8, 8)
+    fig_size = (5, 5)
     layout = {
         'ncols': 2,
-        'nrows': 3
+        'nrows': 3,
+        'height_ratios': [1, 1, 0.1]
     }
-    axs, fig = getSetup(
+    axs, fig, _ = getSetup(
         fig_size,
         layout
     )
@@ -184,14 +189,21 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     axs[0].set_ylim(0, 1)
     ticks = [label.replace(' ', '\n') for label in accuracies.index]
     axs[0].set_xticks(range(len(accuracies)))
-    axs[0].set_xticklabels(ticks)
+    axs[0].set_xticklabels(
+        ticks,
+        fontsize=9,
+        ma='right',
+        rotation=90,
+        va='top'
+    )
     axs[0].set_ylabel('Prediction Accuracy')
     axs[0].text(
-        -1.5,
-        1,
+        -0.35,
+        0.9,
         'A',
         fontsize=14,
         fontweight='bold',
+        transform=axs[0].transAxes
     )
 
     # AUC-ROC Curves
@@ -209,11 +221,12 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     axs[1].set_ylabel('True Positive Rate')
     axs[1].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[1].text(
-        -0.15,
-        1,
+        -0.35,
+        0.9,
         'B',
         fontsize=14,
         fontweight='bold',
+        transform=axs[1].transAxes
     )
 
     # Validation Accuracies
@@ -227,14 +240,21 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     axs[2].set_ylim(0, 1)
     ticks = [label.replace(' ', '\n') for label in val_accuracies.index]
     axs[2].set_xticks(range(len(val_accuracies)))
-    axs[2].set_xticklabels(ticks)
+    axs[2].set_xticklabels(
+        ticks,
+        fontsize=9,
+        ma='right',
+        rotation=90,
+        va='top'
+    )
     axs[2].set_ylabel('Prediction Accuracy')
     axs[2].text(
-        -1.5,
-        1,
+        -0.35,
+        0.9,
         'C',
         fontsize=14,
         fontweight='bold',
+        transform=axs[2].transAxes
     )
 
     # Validation AUC-ROC Curves
@@ -252,11 +272,12 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     axs[3].set_ylabel('True Positive Rate')
     axs[3].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[3].text(
-        -0.15,
-        1,
+        -0.35,
+        0.9,
         'D',
         fontsize=14,
         fontweight='bold',
+        transform=axs[3].transAxes
     )
 
     # Metadata predictions
@@ -277,8 +298,11 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         index=['Sex', 'Race', 'Age'],
         columns=['Accuracy', 'Metric']
     )
-    meta_performance.loc[:, 'Accuracy'] = \
-        [sex_accuracy.loc['CMTF'], race_accuracy.loc['CMTF'], age_accuracy]
+    meta_performance.loc[:, 'Accuracy'] = [
+        sex_accuracy.loc['CMTF'],
+        race_accuracy.loc['CMTF'],
+        round(age_accuracy, 4)
+    ]
     meta_performance.loc[:, 'Metric'] = \
         ['Balanced Accuracy', 'Balanced Accuracy', 'R-Squared']
 
@@ -291,18 +315,20 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         rowLoc='center',
         colWidths=[0.25, 0.25],
         colColours=['#DAEBFE'] * meta_performance.shape[1],
-        rowColours=['#DAEBFE'] * meta_performance.shape[0]
+        rowColours=['#DAEBFE'] * meta_performance.shape[0],
+        fontsize=10
     )
     table.auto_set_font_size(False)
     table.scale(1, 1.5)
     meta_ax.axis('off')
 
     meta_ax.text(
-        0.175,
-        0.8,
+        0.15,
+        2.5,
         'E',
         fontsize=14,
         fontweight='bold',
+        transform=meta_ax.transAxes
     )
 
     return fig
@@ -318,9 +344,10 @@ def export_results(train_samples, train_probabilities, validation_samples,
         train_samples (pandas.DataFrame): predictions for training samples
         train_probabilities (pandas.DataFrame): probabilities of persistence for
             training samples
-        validation_samples (pandas.DataFrame): predictions for validation samples
-        validation_probabilities (pandas.DataFrame): probabilities of persistence
-            for validation samples
+        validation_samples (pandas.DataFrame): predictions for validation
+            samples
+        validation_probabilities (pandas.DataFrame): probabilities of
+            persistence for validation samples
         sex_predictions (pandas.DataFrame): sex predictions for samples with
             known outcomes and sex
         race_predictions (pandas.DataFrame): race predictions for samples
@@ -397,7 +424,8 @@ def export_results(train_samples, train_probabilities, validation_samples,
 
 def makeFigure():
     data_types, patient_data = get_data_types()
-    validation_samples, validation_probabilities = run_validation(data_types, patient_data)
+    validation_samples, validation_probabilities = \
+        run_validation(data_types, patient_data)
     train_samples, train_probabilities, sex_predictions, race_predictions = \
         run_cv(data_types, patient_data)
     age_predictions = run_age_regression(data_types[-1][-1], patient_data)

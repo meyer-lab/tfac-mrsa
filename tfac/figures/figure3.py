@@ -315,15 +315,14 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         rowLoc='center',
         colWidths=[0.25, 0.25],
         colColours=['#DAEBFE'] * meta_performance.shape[1],
-        rowColours=['#DAEBFE'] * meta_performance.shape[0],
-        fontsize=10
+        rowColours=['#DAEBFE'] * meta_performance.shape[0]
     )
     table.auto_set_font_size(False)
-    table.scale(1, 1.5)
+    table.scale(1.25, 1.5)
     meta_ax.axis('off')
 
     meta_ax.text(
-        0.15,
+        0.1,
         2.5,
         'E',
         fontsize=14,
@@ -423,16 +422,25 @@ def export_results(train_samples, train_probabilities, validation_samples,
 
 
 def makeFigure():
-    data_types, patient_data = get_data_types()
-    validation_samples, validation_probabilities = \
-        run_validation(data_types, patient_data)
-    train_samples, train_probabilities, sex_predictions, race_predictions = \
-        run_cv(data_types, patient_data)
-    age_predictions = run_age_regression(data_types[-1][-1], patient_data)
+    # data_types, patient_data = get_data_types()
+    # validation_samples, validation_probabilities = \
+    #     run_validation(data_types, patient_data)
+    # train_samples, train_probabilities, sex_predictions, race_predictions = \
+    #     run_cv(data_types, patient_data)
+    # age_predictions = run_age_regression(data_types[-1][-1], patient_data)
+    #
+    # export_results(train_samples, train_probabilities, validation_samples,
+    #                validation_probabilities, sex_predictions, race_predictions,
+    #                age_predictions)
 
-    export_results(train_samples, train_probabilities, validation_samples,
-                   validation_probabilities, sex_predictions, race_predictions,
-                   age_predictions)
+    train_samples = pd.read_csv('train_samples.csv', index_col=0)
+    train_probabilities = pd.read_csv('train_probabilities.csv', index_col=0)
+    validation_samples = pd.read_csv('validation_samples.csv', index_col=0)
+    validation_probabilities = pd.read_csv('validation_probabilities.csv',
+                                           index_col=0)
+    sex_predictions = pd.read_csv('sex_predictions.csv', index_col=0)
+    race_predictions = pd.read_csv('race_predictions.csv', index_col=0)
+    age_predictions = pd.read_csv('age_predictions.csv', index_col=0)
 
     fig = plot_results(train_samples, train_probabilities, validation_samples,
                        validation_probabilities, sex_predictions,

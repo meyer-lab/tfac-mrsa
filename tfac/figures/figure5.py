@@ -165,7 +165,7 @@ def plot_results(cv_results, val_results):
         'ncols': 1,
         'nrows': 2
     }
-    axs, fig = getSetup(
+    axs, fig, _ = getSetup(
         fig_size,
         layout
     )

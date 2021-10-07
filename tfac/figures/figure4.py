@@ -74,7 +74,7 @@ def tfac_setup():
         None
 
     Returns:
-        subs (pandas.DataFrame): patient correlations to tfac components
+        subjects (pandas.DataFrame): patient correlations to tfac components
         cytos (pandas.DataFrame): cytokine correlations to tfac components
         source (pandas.DataFrame): cytokine source correlations to tfac
             components
@@ -92,7 +92,7 @@ def tfac_setup():
 
     factors = perform_CMTF(tensor, matrix)
     col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
-    subs = pd.DataFrame(
+    subjects = pd.DataFrame(
         factors.factors[0][sort_idx, :],
         columns=col_names,
         index=[str(x) for x in pat_info.columns]
@@ -108,50 +108,109 @@ def tfac_setup():
         index=["Serum", "Plasma"]
     )
 
-    return subs, cytos, source, pat_info
+    return subjects, cytos, source, pat_info
 
 
-def plot_results(weights, subs, cytos, source, pat_info):
+def plot_results(weights, subjects, cytos, source, pat_info):
     """
     Plots component weights and interpretation.
 
     Parameters:
         weights (pandas.DataFrame): mean and StD of component weights w/r to
             prediction targets
-        subs (pandas.DataFrame): patient correlations to tfac components
+        subjects (pandas.DataFrame): patient correlations to tfac components
         cytos (pandas.DataFrame): cytokine correlations to tfac components
         source (pandas.DataFrame): cytokine source correlations to tfac
             components
         pat_info (pandas.DataFrame): patient meta-data
     """
-    fig_size = (20, 7)
+    fig_size = (5, 5)
     layout = {
-        'ncols': 18,
-        'nrows': 1,
-        'width_ratios': [35, 6, 1, 4, 1, 4, 1, 1.5, 1.5, 1.5, 1.5, 25, 1, 1, 16, 25, 8, 25],
+        # 'height_ratios': [1, 0.5],
+        'hspace': 0.3,
+        'ncols': 1,
+        'nrows': 2,
         'wspace': 0
     }
-    axs, fig = getSetup(
+    _, fig, gs = getSetup(
         fig_size,
         layout,
         style=None
     )
+    top_gs = gs[0].subgridspec(
+        ncols=3,
+        nrows=1,
+        width_ratios=[35, 4, 25]
+    )
+    bottom_gs = gs[1].subgridspec(
+        ncols=14,
+        nrows=1,
+        width_ratios=[25, 12, 1, 5, 1, 5, 1, 1, 1, 1, 1, 25, 1, 1],
+        wspace=0
+    )
+
+    for gs in [top_gs, bottom_gs]:
+        for col in range(gs.ncols):
+            fig.add_subplot(gs[col])
+
+    fig.delaxes(fig.axes[0])
+    fig.delaxes(fig.axes[0])
+    axs = fig.axes
+    for ax in axs:
+        ax.set_frame_on(False)
     axs[0].set_frame_on(True)
 
+    spacers = [1, 4, 5, 6, 8, 10, 16]
+    for spacer in spacers:
+        axs[spacer].set_xticks([])
+        axs[spacer].set_yticks([])
+
     # Determine scale
-    vmin = min(subs.values.min(), cytos.values.min(), source.values.min())
-    vmax = max(subs.values.max(), cytos.values.max(), source.values.max())
+    vmin = min(subjects.values.min(), cytos.values.min(), source.values.min())
+    vmax = max(subjects.values.max(), cytos.values.max(), source.values.max())
 
     # Plot main graphs
-    sns.heatmap(subs, cmap="PRGn", center=0, xticklabels=True, yticklabels=False, cbar_ax=axs[13], vmin=vmin, vmax=vmax, ax=axs[11])
-    sns.heatmap(cytos, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[15])
-    sns.heatmap(source, cmap="PRGn", center=0, yticklabels=True, cbar=False, vmin=vmin, vmax=vmax, ax=axs[17])
-    axs[17].set_yticklabels(["Serum", "Plasma"], rotation=0)
+    sns.heatmap(
+        subjects,
+        cmap="PRGn",
+        center=0,
+        xticklabels=True,
+        yticklabels=False,
+        cbar_ax=axs[15],
+        vmin=vmin,
+        vmax=vmax,
+        ax=axs[14]
+    )
+    sns.heatmap(
+        cytos,
+        cmap="PRGn",
+        center=0,
+        yticklabels=True,
+        cbar=False,
+        vmin=vmin,
+        vmax=vmax,
+        ax=axs[2]
+    )
+    sns.heatmap(
+        source,
+        cmap="PRGn",
+        center=0,
+        yticklabels=True,
+        cbar=False,
+        vmin=vmin,
+        vmax=vmax,
+        ax=axs[3]
+    )
+    axs[2].set_yticklabels(cytos.index, fontsize=7)
+    axs[3].set_yticklabels(["Serum", "Plasma"], rotation=0)
+    axs[3].set_xticks(np.arange(0.5, source.shape[1]))
+    axs[3].set_xticklabels([f'Cmp. {i}' for i in range(1, source.shape[1] + 1)])
 
     # Set up subject colorbars
     outcome_colors = ["gray", "lightgreen", "brown"]
     cohort_colors = ["deeppink", "orchid", "pink"]
-    type_colors = ["black", "orange", "purple", "green", "red", "yellow", "blue"]
+    type_colors = \
+        ["black", "orange", "purple", "green", "red", "yellow", "blue"]
     outcome_cmap = sns.color_palette(outcome_colors)
     cohort_cmap = sns.color_palette(cohort_colors)
     type_cmap = sns.color_palette(type_colors)
@@ -168,18 +227,24 @@ def plot_results(weights, subs, cytos, source, pat_info):
     types[types.index == "0Serum1Plasma2RNAseq"] = 0
 
     sns.heatmap(
-        types, ax=axs[8], cbar_ax=axs[2], yticklabels=False, xticklabels=True, cmap=type_cmap
+        types,
+        ax=axs[11],
+        cbar_ax=axs[5],
+        yticklabels=False,
+        xticklabels=False,
+        cmap=type_cmap
     )
-    axs[8].set_xticklabels(types.columns, rotation=90)
-    colorbar = axs[8].collections[0].colorbar
+    colorbar = axs[11].collections[0].colorbar
     colorbar.set_ticks(np.linspace(.4, 5.6, 7))
-    axs[2].yaxis.set_ticklabels(
-        ["All types", "Plasma\nRNAseq", "Serum\nRNAseq", "Serum\nPlasma", "RNAseq", "Plasma", "Serum"],
-        va="center"
+    axs[5].set_yticklabels(
+        [
+            "All types", "Plasma\nRNAseq", "Serum\nRNAseq", "Serum\nPlasma",
+            "RNAseq", "Plasma", "Serum"],
+        va="center",
+        rotation=0
     )
-    axs[2].yaxis.set_ticks_position('left')
-    axs[2].yaxis.set_tick_params(rotation=90)
-    axs[8].set_ylabel("")
+    axs[5].yaxis.set_ticks_position('left')
+    axs[11].set_ylabel("")
 
     # Cohort bar
     cohort = pd.DataFrame(pat_info.loc["cohort"]).set_index("cohort")
@@ -189,15 +254,21 @@ def plot_results(weights, subs, cytos, source, pat_info):
     cohort[cohort.index == 3] = 0
 
     sns.heatmap(
-        cohort, ax=axs[9], cbar_ax=axs[4], yticklabels=False, xticklabels=True, cmap=cohort_cmap
+        cohort,
+        ax=axs[12],
+        cbar_ax=axs[7],
+        yticklabels=False,
+        xticklabels=False,
+        cmap=cohort_cmap
     )
-    axs[9].set_xticklabels(cohort.columns, rotation=90)
-    colorbar = axs[9].collections[0].colorbar
+    colorbar = axs[12].collections[0].colorbar
     colorbar.set_ticks([.33, 1, 1.66])
-    axs[4].yaxis.set_ticklabels(["Cohort 3", "Cohort 2", "Cohort 1"], va="center")
-    axs[4].yaxis.set_ticks_position('left')
-    axs[4].yaxis.set_tick_params(rotation=90)
-    axs[9].set_ylabel("")
+    axs[7].yaxis.set_ticklabels(
+        ["Cohort 3", "Cohort 2", "Cohort 1"],
+        va="center")
+    axs[7].yaxis.set_ticks_position('left')
+    axs[7].yaxis.set_tick_params(rotation=90)
+    axs[12].set_ylabel("")
 
     # Outcome bar
     outs = pd.DataFrame(pat_info.loc["status"]).set_index("status")
@@ -207,24 +278,27 @@ def plot_results(weights, subs, cytos, source, pat_info):
     outs[outs.index == "Unknown"] = 0
 
     sns.heatmap(
-        outs, ax=axs[10], cbar_ax=axs[6], yticklabels=False, xticklabels=True, cmap=outcome_cmap
+        outs,
+        ax=axs[13],
+        cbar_ax=axs[9],
+        yticklabels=False,
+        xticklabels=False,
+        cmap=outcome_cmap
     )
-    axs[10].set_xticklabels(outs.columns, rotation=90)
-    colorbar = axs[10].collections[0].colorbar
+    colorbar = axs[13].collections[0].colorbar
     colorbar.set_ticks([.33, 1, 1.66])
-    axs[6].yaxis.set_ticklabels(["Unknown", "Resolver", "Persister"], va='center')
-    axs[6].yaxis.set_ticks_position('left')
-    axs[6].yaxis.set_tick_params(rotation=90)
-    axs[10].set_ylabel("")
-    # Titles/labeling
-    axs[11].set_title("Subjects")
-    axs[15].set_title("Cytokines")
-    axs[17].set_title("Source")
+    axs[9].yaxis.set_ticklabels(
+        ["Unknown", "Resolver", "Persister"],
+        va='center'
+    )
+    axs[9].yaxis.set_ticks_position('left')
+    axs[9].yaxis.set_tick_params(rotation=90)
+    axs[13].set_ylabel("")
 
-    for ii, ax in enumerate([axs[0], axs[11], axs[15], axs[17]]):
+    for ii, ax in enumerate([axs[0], axs[2], axs[3], axs[14]]):
         ax.text(
             -0.2,
-            1.05,
+            1.1,
             ascii_uppercase[ii],
             transform=ax.transAxes,
             fontsize=14,
@@ -235,7 +309,10 @@ def plot_results(weights, subs, cytos, source, pat_info):
     for offset, target in enumerate(TARGETS):
         axs[0].errorbar(
             weights.loc[(target, 'Mean')],
-            range(offset, (len(TARGETS) + 5) * weights.shape[1], len(TARGETS) + 5),
+            range(
+                offset,
+                (len(TARGETS) + 5) * weights.shape[1], len(TARGETS) + 5
+            ),
             marker='.',
             xerr=weights.loc[(target, 'StD')],
             linestyle='',
@@ -261,15 +338,16 @@ def plot_results(weights, subs, cytos, source, pat_info):
         [f'Cmp. {i}' for i in range(1, 10)]
     )
 
-    plt.subplots_adjust(left=0.05, right=0.975, top=0.95)
+    plt.subplots_adjust(left=0.1, right=0.925, top=0.95)
 
     return fig
 
 
 def makeFigure():
     weights = bootstrap_weights()
-    subs, cytos, source, pat_info = tfac_setup()
+    subjects, cytos, source, pat_info = tfac_setup()
 
-    fig = plot_results(weights, subs, cytos, source, pat_info)
+    cytos = cytos.loc[abs(cytos).max(axis=1) > 0.5]
+    fig = plot_results(weights, subjects, cytos, source, pat_info)
 
     return fig

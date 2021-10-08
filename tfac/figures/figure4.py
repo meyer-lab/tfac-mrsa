@@ -126,7 +126,6 @@ def plot_results(weights, subjects, cytos, source, pat_info):
     """
     fig_size = (5, 5)
     layout = {
-        # 'height_ratios': [1, 0.5],
         'hspace': 0.3,
         'ncols': 1,
         'nrows': 2,

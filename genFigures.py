@@ -4,7 +4,7 @@ import sys
 import logging
 import time
 import matplotlib
-matplotlib.use('AGG')
+# matplotlib.use('AGG')
 
 fdir = './output/'
 

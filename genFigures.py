@@ -16,6 +16,12 @@ if __name__ == '__main__':
 
     exec('from tfac.figures import ' + nameOut)
     ff = eval(nameOut + '.makeFigure()')
-    ff.savefig(fdir + nameOut + '.svg', dpi=300, bbox_inches='tight', pad_inches=0)
+    ff.savefig(
+        fdir + nameOut + '.svg',
+        dpi=300,
+        bbox_inches='tight',
+        pad_inches=0,
+        format='svg'
+    )
 
     logging.info(f'Figure {sys.argv[1]} is done after {time.time() - start} seconds.')

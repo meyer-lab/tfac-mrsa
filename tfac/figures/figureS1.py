@@ -51,7 +51,7 @@ def makeFigure():
         'ncols': 1,
         'nrows': 3
     }
-    ax, f = getSetup(
+    ax, f, _ = getSetup(
         fig_size,
         layout
     )

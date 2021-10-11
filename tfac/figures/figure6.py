@@ -58,7 +58,7 @@ def plot_results(accuracies):
         'ncols': 1,
         'nrows': 1
     }
-    axs, fig = getSetup(
+    axs, fig, _ = getSetup(
         fig_size,
         layout
     )

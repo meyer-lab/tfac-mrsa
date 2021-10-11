@@ -61,7 +61,7 @@ def plot_results(weights):
         'nrows': 1,
         'ncols': 1
     }
-    axs, fig = getSetup(
+    axs, fig, _ = getSetup(
         fig_size,
         layout
     )

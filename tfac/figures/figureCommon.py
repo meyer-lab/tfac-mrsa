@@ -15,35 +15,34 @@ from tensorpac import perform_CMTF
 OPTIMAL_SCALING = 32.0
 
 
-matplotlib.rcParams["axes.titlesize"] = 14
-matplotlib.rcParams['font.family'] = ['sans-serif']
-matplotlib.rcParams['font.sans-serif'] = ['Arial']
-matplotlib.rcParams["font.size"] = 10
+matplotlib.rcParams["axes.labelsize"] = 10
+matplotlib.rcParams["axes.titlesize"] = 12
+matplotlib.rcParams["font.family"] = ["sans-serif"]
+matplotlib.rcParams["font.sans-serif"] = ["Arial"]
+matplotlib.rcParams["font.size"] = 8
 matplotlib.rcParams["legend.borderpad"] = 0.35
-matplotlib.rcParams["legend.fontsize"] = 8
+matplotlib.rcParams["legend.fontsize"] = 7
 matplotlib.rcParams["legend.framealpha"] = 0.5
 matplotlib.rcParams["legend.handlelength"] = 0.5
 matplotlib.rcParams["legend.handletextpad"] = 0.5
 matplotlib.rcParams["legend.labelspacing"] = 0.2
 matplotlib.rcParams["legend.markerscale"] = 0.7
-matplotlib.rcParams["svg.fonttype"] = 'none'
+matplotlib.rcParams["svg.fonttype"] = "none"
+matplotlib.rcParams["xtick.labelsize"] = 8
 matplotlib.rcParams["xtick.major.pad"] = 1.0
 matplotlib.rcParams["xtick.minor.pad"] = 0.9
+matplotlib.rcParams["ytick.labelsize"] = 8
 matplotlib.rcParams["ytick.major.pad"] = 1.0
 matplotlib.rcParams["ytick.minor.pad"] = 0.9
 
 
 def getSetup(figsize, gridd, multz=None, empts=None, style="whitegrid"):
     """ Establish figure set-up with subplots. """
-    sns.set(
-        style=style,
-        font_scale=0.7,
-        color_codes=True,
-        palette="colorblind",
-        rc={
-            "grid.linestyle": "dotted",
-            "axes.linewidth": 0.6}
+    sns.set_style(
+        style,
+        rc=matplotlib.rcParams
     )
+    sns.set_palette('colorblind')
 
     # create empty list if empts isn't specified
     if empts is None:
@@ -54,7 +53,7 @@ def getSetup(figsize, gridd, multz=None, empts=None, style="whitegrid"):
 
     # Setup plotting space and grid
     f = plt.figure(figsize=figsize, constrained_layout=True)
-    gs1 = gridspec.GridSpec(**gridd, figure=f)
+    gs = gridspec.GridSpec(**gridd, figure=f)
 
     # Get list of axis objects
     x = 0
@@ -63,15 +62,15 @@ def getSetup(figsize, gridd, multz=None, empts=None, style="whitegrid"):
         if x not in empts and x not in multz.keys():  # If this is just a normal subplot
             ax.append(
                 f.add_subplot(
-                    gs1[x],
+                    gs[x],
                 )
             )
         elif x in multz.keys():  # If this is a subplot that spans grid elements
-            ax.append(f.add_subplot(gs1[x: x + multz[x] + 1]))
+            ax.append(f.add_subplot(gs[x: x + multz[x] + 1]))
             x += multz[x]
         x += 1
 
-    return ax, f
+    return ax, f, gs
 
 
 def subplotLabel(axs):

@@ -1,6 +1,7 @@
 """
 Creates Figure 3 -- Model Performance
 """
+import matplotlib
 import numpy as np
 from os.path import abspath, dirname, join
 import pandas as pd
@@ -10,6 +11,7 @@ from tfac.dataImport import import_validation_patient_metadata
 from tfac.figures.figureCommon import getSetup, get_data_types
 from tfac.predict import predict_known, predict_validation, predict_regression
 
+COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
@@ -118,28 +120,58 @@ def run_age_regression(data, patient_data):
     return age_predictions
 
 
-def get_accuracies(train_samples):
+def get_accuracy(predicted, actual):
     """
-    Calculates prediction accuracy for training samples with known outcomes.
+    Returns the accuracy for the provided predictions.
 
     Parameters:
-        train_samples (pandas.DataFrame): predictions for training samples
+        predicted (pandas.Series): predicted values for samples
+        actual (pandas.Series): actual values for samples
+
+    Returns:
+        float: accuracy of predicted values
+    """
+    predicted = predicted.astype(float)
+    actual = actual.astype(float)
+
+    correct = [1 if predicted.loc[i] == actual.loc[i] else 0 for i in
+               predicted.index]
+
+    return np.mean(correct)
+
+
+def get_accuracies(samples):
+    """
+    Calculates prediction accuracy for samples with known outcomes.
+
+    Parameters:
+        samples (pandas.DataFrame): predictions for different models
 
     Returns:
         accuracies (pandas.Series): model accuracy w/r to each model type
     """
-    d_types = train_samples.columns[:-1]
+    cmtf = samples.loc[:, 'CMTF']
+    actual = samples.loc[:, 'Actual']
+    samples = samples.drop(['CMTF', 'Actual'], axis=1)
+
+    d_types = samples.columns
     accuracies = pd.Series(
+        index=d_types
+    )
+    cmtf_accuracies = pd.Series(
         index=d_types
     )
 
     for d_type in d_types:
-        col = train_samples.loc[:, d_type].dropna().astype(int)
-        actual = train_samples.loc[col.index, 'Actual'].astype(int)
-        correct = [1 if col.loc[i] == actual.loc[i] else 0 for i in col.index]
-        accuracies.loc[d_type] = np.mean(correct)
+        col = samples.loc[:, d_type]
+        col = col.dropna()
+        labels = actual.loc[col.index]
+        cmtf_col = cmtf.loc[col.index]
 
-    return accuracies
+        accuracies.loc[d_type] = get_accuracy(col, actual)
+        cmtf_accuracies.loc[d_type] = get_accuracy(cmtf_col, labels)
+
+    return accuracies, cmtf_accuracies
 
 
 def plot_results(train_samples, train_probabilities, validation_samples,
@@ -180,15 +212,25 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     # Cross-validation Accuracies
 
     train_samples = train_samples.loc[train_samples['Actual'] != 'Unknown']
-    accuracies = get_accuracies(train_samples)
+    accuracies, train_cmtf = get_accuracies(train_samples)
     axs[0].bar(
-        range(len(accuracies)),
-        accuracies
+        np.arange(0, 3 * len(accuracies), 3),
+        accuracies,
+        width=1
+    )
+    axs[0].bar(
+        np.arange(1, 3 * len(train_cmtf), 3),
+        train_cmtf,
+        width=1
     )
 
+    axs[0].set_xlim(-1, 3 * len(accuracies) - 1)
     axs[0].set_ylim(0, 1)
+    axs[0].legend(['Cytokine Data', 'CMTF'])
     ticks = [label.replace(' ', '\n') for label in accuracies.index]
-    axs[0].set_xticks(range(len(accuracies)))
+    axs[0].set_xticks(
+        np.arange(0.5, 3 * len(accuracies), 3)
+    )
     axs[0].set_xticklabels(
         ticks,
         fontsize=9,
@@ -208,17 +250,28 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     # AUC-ROC Curves
 
-    for d_type in train_probabilities.columns:
+    cmtf_probabilities = train_probabilities.loc[:, 'CMTF']
+    train_probabilities = train_probabilities.drop(
+        ['CMTF', 'Plasma IL-10', 'Serum IL-10'],
+        axis=1
+    )
+    for d_type, color in zip(train_probabilities.columns,
+                             COLOR_CYCLE[:train_probabilities.shape[1]]):
         col = train_probabilities.loc[:, d_type].dropna()
+        cmtf_col = cmtf_probabilities.loc[col.index]
+
         actual = train_samples.loc[col.index, 'Actual'].astype(int)
         fpr, tpr, _ = roc_curve(actual, col)
-        axs[1].plot(fpr, tpr)
+        cmtf_fpr, cmtf_tpr, _ = roc_curve(actual, cmtf_col)
+
+        axs[1].plot(cmtf_fpr, cmtf_tpr, color=color, label=d_type)
+        axs[1].plot(fpr, tpr, color=color, linestyle='--')
 
     axs[1].set_xlim(0, 1)
     axs[1].set_ylim(0, 1)
-    axs[1].legend(train_probabilities.columns)
     axs[1].set_xlabel('False Positive Rate')
     axs[1].set_ylabel('True Positive Rate')
+    axs[1].legend()
     axs[1].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[1].text(
         -0.35,
@@ -231,15 +284,24 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     # Validation Accuracies
 
-    val_accuracies = get_accuracies(validation_samples)
+    val_accuracies, val_cmtf = get_accuracies(validation_samples)
     axs[2].bar(
-        range(len(val_accuracies)),
-        val_accuracies
+        np.arange(0, 3 * len(val_accuracies), 3),
+        val_accuracies,
+        width=1
+    )
+    axs[2].bar(
+        np.arange(1, 3 * len(val_cmtf), 3),
+        val_cmtf,
+        width=1
     )
 
+    axs[2].set_xlim(-1, 3 * len(accuracies) - 1)
     axs[2].set_ylim(0, 1)
-    ticks = [label.replace(' ', '\n') for label in val_accuracies.index]
-    axs[2].set_xticks(range(len(val_accuracies)))
+    axs[2].legend(['Cytokine Data', 'CMTF'])
+    axs[2].set_xticks(
+        np.arange(0.5, 3 * len(val_accuracies), 3)
+    )
     axs[2].set_xticklabels(
         ticks,
         fontsize=9,
@@ -259,17 +321,29 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     # Validation AUC-ROC Curves
 
-    for d_type in validation_probabilities.columns:
+    cmtf_probabilities = validation_probabilities.loc[:, 'CMTF']
+    validation_probabilities = validation_probabilities.drop(
+        ['CMTF', 'Plasma IL-10', 'Serum IL-10'],
+        axis=1
+    )
+    for d_type, color in zip(validation_probabilities.columns,
+                             COLOR_CYCLE[:validation_probabilities.shape[1]]):
         col = validation_probabilities.loc[:, d_type].dropna()
+        cmtf_col = cmtf_probabilities.loc[col.index]
+
         actual = validation_samples.loc[col.index, 'Actual'].astype(int)
         fpr, tpr, _ = roc_curve(actual, col)
-        axs[3].plot(fpr, tpr)
+        cmtf_fpr, cmtf_tpr, _ = roc_curve(actual, cmtf_col)
+
+        axs[3].plot(fpr, tpr, color=color, label=d_type, linestyle='--')
+        axs[3].plot(cmtf_fpr, cmtf_tpr, color=color)
 
     axs[3].set_xlim(0, 1)
     axs[3].set_ylim(0, 1)
     axs[3].legend(validation_probabilities.columns)
     axs[3].set_xlabel('False Positive Rate')
     axs[3].set_ylabel('True Positive Rate')
+    axs[3].legend()
     axs[3].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[3].text(
         -0.35,
@@ -287,8 +361,14 @@ def plot_results(train_samples, train_probabilities, validation_samples,
     gs = axs[4].get_gridspec()
     meta_ax = fig.add_subplot(gs[4:6])
 
-    sex_accuracy = get_accuracies(sex_predictions.loc[:, ['CMTF', 'Actual']])
-    race_accuracy = get_accuracies(race_predictions.loc[:, ['CMTF', 'Actual']])
+    sex_accuracy = get_accuracy(
+        sex_predictions.loc[:, 'CMTF'],
+        sex_predictions.loc[:, 'Actual']
+    )
+    race_accuracy = get_accuracy(
+        race_predictions.loc[:, 'CMTF'],
+        race_predictions.loc[:, 'Actual']
+    )
     age_accuracy = r2_score(
         age_predictions.loc[:, 'Actual'],
         age_predictions.loc[:, 'CMTF']
@@ -299,8 +379,8 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         columns=['Accuracy', 'Metric']
     )
     meta_performance.loc[:, 'Accuracy'] = [
-        sex_accuracy.loc['CMTF'],
-        race_accuracy.loc['CMTF'],
+        sex_accuracy,
+        race_accuracy,
         round(age_accuracy, 4)
     ]
     meta_performance.loc[:, 'Metric'] = \
@@ -432,6 +512,11 @@ def makeFigure():
     export_results(train_samples, train_probabilities, validation_samples,
                    validation_probabilities, sex_predictions, race_predictions,
                    age_predictions)
+
+    age_predictions = age_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
+    sex_predictions = sex_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
+    race_predictions = \
+        race_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
 
     fig = plot_results(train_samples, train_probabilities, validation_samples,
                        validation_probabilities, sex_predictions,

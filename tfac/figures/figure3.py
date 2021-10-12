@@ -11,7 +11,7 @@ from tfac.dataImport import import_validation_patient_metadata
 from tfac.figures.figureCommon import getSetup, get_data_types
 from tfac.predict import predict_known, predict_validation, predict_regression
 
-COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color']
+COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
 

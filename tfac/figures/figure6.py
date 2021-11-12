@@ -1,110 +1,128 @@
-import re
+"""
+Creates Figure 6 -- Components vs. Cytokines
+"""
+from os.path import abspath, dirname
+from string import ascii_uppercase
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from sklearn.preprocessing import scale
+from sklearn.utils import resample
 
-from tfac.dataImport import form_tensor
-from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
-from tfac.predict import predict_known
+from .figureCommon import getSetup, OPTIMAL_SCALING
+from ..dataImport import form_tensor, import_cytokines
+from ..predict import run_model, predict_regression
 from tensorpack import perform_CMTF
 
-
-def makeFigure():
-    predicted = get_predictions()
-    accuracies = get_accuracy_by_dtype(predicted)
-    fig = plot_results(accuracies)
-
-    return fig
+N_BOOTSTRAP = 30
+PATH_HERE = dirname(dirname(abspath(__file__)))
+TARGETS = ['status', 'gender', 'race', 'age']
 
 
-def get_accuracy_by_dtype(predictions):
+def tfac_setup():
     """
-    Calculates model accuracy w/r to available data types.
-
-    Parameters:
-        predictions (pandas.Series): model predictions for each sample
-
-    Returns:
-        accuracies (pandas.Series): model accuracy w/r to data types
-    """
-    d_types = list(set(predictions['Type']))
-    accuracies = pd.Series(
-        index=d_types,
-        dtype=float
-    )
-
-    for d_type in d_types:
-        predicted = predictions.loc[predictions['Type'] == d_type]
-        accuracies.loc[d_type] = np.mean(predicted['Correct'])
-
-    accuracies = accuracies.dropna()
-    accuracies = accuracies.sort_values(ascending=False)
-    return accuracies
-
-
-def plot_results(accuracies):
-    """
-    Plots model accuracy relative to different data sources.
-
-    Parameters:
-        accuracies (pandas.Series): model accuracy w/r to data types
-
-    Returns:
-        fig (matplotlib.Figure): bar plot depicting model accuracy w/r to data
-            types
-    """
-    fig_size = (4, 4)
-    layout = {
-        'ncols': 1,
-        'nrows': 1
-    }
-    axs, fig, _ = getSetup(
-        fig_size,
-        layout
-    )
-
-    labels = [re.sub(r'\d', '/', d_type[1:]) for d_type in accuracies.index]
-    axs[0].bar(range(len(accuracies)), accuracies)
-    axs[0].set_xticks(range(len(accuracies)))
-    axs[0].set_xticklabels(labels, rotation=45, ha='right', fontsize=10)
-    axs[0].set_ylabel('Mean Accuracy', fontsize=12)
-    axs[0].set_xlabel('Datatypes Available', fontsize=12)
-
-    return fig
-
-
-def get_predictions():
-    """
-    Predicts samples with known outcomes via cross-validation.
+    Import cytokine data and correlate tfac components to cytokines and
+    data sources.
 
     Parameters:
         None
 
     Returns:
-        predictions (pandas.Series): model predictions for each sample
+        subjects (pandas.DataFrame): patient correlations to tfac components
+        cytos (pandas.DataFrame): cytokine correlations to tfac components
+        source (pandas.DataFrame): cytokine source correlations to tfac
+            components
+        pat_info (pandas.DataFrame): patient meta-data
     """
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
-    patient_data = patient_data.loc[:, ['status', 'type']]
+    tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
+    plasma, _ = import_cytokines()
+    cytokines = plasma.index
 
-    components = perform_CMTF(tensor, matrix)
-    components = components[1][0]
+    pat_info.loc[:, 'sorted'] = range(pat_info.shape[0])
+    pat_info = pat_info.sort_values(['cohort', 'type', 'status'])
+    sort_idx = pat_info.loc[:, 'sorted']
+    pat_info = pat_info.drop('sorted', axis=1)
+    pat_info = pat_info.T
 
-    data = pd.DataFrame(
-        components,
-        index=patient_data.index,
-        columns=list(range(1, components.shape[1] + 1))
+    factors = perform_CMTF(tensor, matrix)
+    col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
+    subjects = pd.DataFrame(
+        factors.factors[0][sort_idx, :],
+        columns=col_names,
+        index=[str(x) for x in pat_info.columns]
     )
-    predicted = pd.DataFrame(
-        index=patient_data.index
+    cytos = pd.DataFrame(
+        factors.factors[1],
+        columns=col_names,
+        index=cytokines
     )
-    labels = patient_data.loc[:, 'status']
+    source = pd.DataFrame(
+        factors.factors[2],
+        columns=col_names,
+        index=["Serum", "Plasma"]
+    )
 
-    predictions = predict_known(data, labels)
-    for i in predictions.index:
-        if predictions.loc[i] == labels.loc[i]:
-            predicted.loc[i, 'Correct'] = 1
-        else:
-            predicted.loc[i, 'Correct'] = 0
+    return subjects, cytos, source, pat_info
 
-    predicted.loc[:, 'Type'] = patient_data.loc[:, 'type']
-    return predicted
+
+def plot_results(subjects, cytos, source):
+    """
+    Plots component weights and interpretation.
+
+    Parameters:
+        subjects (pandas.DataFrame): patient correlations to tfac components
+        cytos (pandas.DataFrame): cytokine correlations to tfac components
+        source (pandas.DataFrame): cytokine source correlations to tfac
+            components
+    """
+    fig_size = (5, 5)
+    layout = {
+        'ncols': 2,
+        'nrows': 1,
+        'wspace': 0
+    }
+    axs, fig, _ = getSetup(
+        fig_size,
+        layout,
+        style=None
+    )
+
+    v_min = min(subjects.values.min(), cytos.values.min(), source.values.min())
+    v_max = max(subjects.values.max(), cytos.values.max(), source.values.max())
+
+    sns.heatmap(
+        cytos,
+        cmap="PRGn",
+        center=0,
+        yticklabels=True,
+        cbar=False,
+        vmin=v_min,
+        vmax=v_max,
+        ax=axs[0]
+    )
+    sns.heatmap(
+        source,
+        cmap="PRGn",
+        center=0,
+        yticklabels=True,
+        cbar=False,
+        vmin=v_min,
+        vmax=v_max,
+        ax=axs[1]
+    )
+
+    axs[0].set_yticklabels(cytos.index, fontsize=7)
+    axs[1].set_yticklabels(["Serum", "Plasma"], rotation=0)
+    axs[1].set_xticks(np.arange(0.5, source.shape[1]))
+    axs[1].set_xticklabels([f'Cmp. {i}' for i in range(1, source.shape[1] + 1)])
+
+    return fig
+
+
+def makeFigure():
+    subjects, cytos, source, _ = tfac_setup()
+    fig = plot_results(subjects, cytos, source)
+
+    return fig

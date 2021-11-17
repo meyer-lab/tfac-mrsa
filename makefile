@@ -5,7 +5,7 @@ SHELL := /bin/bash
 flist = 2 3 4 5 6 7 S1
 flistFull = $(patsubst %, output/figure%.svg, $(flist))
 
-all: pylint.log output/manuscript.md $(flistFull)
+all: pylint.log $(flistFull)
 
 venv: venv/bin/activate
 
@@ -17,21 +17,6 @@ venv/bin/activate: requirements.txt
 output/figure%.svg: genFigures.py tfac/figures/figure%.py venv
 	@ mkdir -p ./output
 	. venv/bin/activate && ./genFigures.py $*
-
-output/manuscript.md: venv manuscript/*.md venv/bin/activate
-	. venv/bin/activate && manubot process --content-directory=manuscript --output-directory=output --cache-directory=cache --skip-citations --log-level=INFO
-	git remote rm rootstock
-
-output/manuscript.html: venv output/manuscript.md $(flistFull)
-	. venv/bin/activate && pandoc --verbose \
-		--defaults=./common/templates/manubot/pandoc/common.yaml \
-		--defaults=./common/templates/manubot/pandoc/html.yaml output/manuscript.md
-
-output/manuscript.docx: venv output/manuscript.md $(flistFull)
-	. venv/bin/activate && pandoc --verbose -t docx $(pandocCommon) \
-		--reference-doc=common/templates/manubot/default.docx \
-		--resource-path=.:content \
-		-o $@ output/manuscript.md
 
 test: venv
 	. venv/bin/activate && pytest -s -x -v

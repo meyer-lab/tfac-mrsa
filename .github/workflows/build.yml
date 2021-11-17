@@ -18,8 +18,6 @@ jobs:
         make venv
     - name: Build figures
       run: make all -j 3
-    - name: Build manuscript
-      run: make output/manuscript.html
     - name: Upload files
       uses: actions/upload-artifact@v2
       with:

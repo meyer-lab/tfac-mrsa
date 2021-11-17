@@ -1,33 +1,55 @@
+"""
+Creates Figure 7 -- Accuracy vs. Datatypes
+"""
+import re
+
 import numpy as np
 import pandas as pd
 
 from tfac.dataImport import form_tensor
 from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
-from tfac.predict import run_model
+from tfac.predict import predict_known
 from tensorpack import perform_CMTF
 
 
-def makeFigure():
-    weights = get_model_coefficients()
-    fig = plot_results(weights)
-
-    return fig
-
-
-def get_model_coefficients():
+def get_accuracy_by_dtype(predictions):
     """
-    Fits Logistic Regression model to CMTF components, then returns the
-    coefficient associated with each component.
+    Calculates model accuracy w/r to available data types.
+
+    Parameters:
+        predictions (pandas.Series): model predictions for each sample
+
+    Returns:
+        accuracies (pandas.Series): model accuracy w/r to data types
+    """
+    d_types = list(set(predictions['Type']))
+    accuracies = pd.Series(
+        index=d_types,
+        dtype=float
+    )
+
+    for d_type in d_types:
+        predicted = predictions.loc[predictions['Type'] == d_type]
+        accuracies.loc[d_type] = np.mean(predicted['Correct'])
+
+    accuracies = accuracies.dropna()
+    accuracies = accuracies.sort_values(ascending=False)
+    return accuracies
+
+
+def get_predictions():
+    """
+    Predicts samples with known outcomes via cross-validation.
 
     Parameters:
         None
 
     Returns:
-        weights (numpy.array): Logistic Regression coefficients associated
-            with CMTF components
+        predictions (pandas.Series): model predictions for each sample
     """
     tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
-    labels = patient_data.loc[:, 'status']
+    patient_data = patient_data.loc[:, ['status', 'type']]
+
     components = perform_CMTF(tensor, matrix)
     components = components[1][0]
 
@@ -36,44 +58,56 @@ def get_model_coefficients():
         index=patient_data.index,
         columns=list(range(1, components.shape[1] + 1))
     )
-    labels = labels.loc[labels != 'Unknown']
-    data = data.loc[labels.index, :]
+    predicted = pd.DataFrame(
+        index=patient_data.index
+    )
+    labels = patient_data.loc[:, 'status']
 
-    _, model = run_model(data, labels)
-    model.fit(data, labels)
+    predictions = predict_known(data, labels)
+    for i in predictions.index:
+        if predictions.loc[i] == labels.loc[i]:
+            predicted.loc[i, 'Correct'] = 1
+        else:
+            predicted.loc[i, 'Correct'] = 0
 
-    return model.coef_[0]
+    predicted.loc[:, 'Type'] = patient_data.loc[:, 'type']
+    return predicted
 
 
-def plot_results(weights):
+def plot_results(accuracies):
     """
-    Plots model coefficients for each component in CMTF factorization.
+    Plots model accuracy relative to different data sources.
 
     Parameters:
-        weights (numpy.array): model weights associated with each component
+        accuracies (pandas.Series): model accuracy w/r to data types
 
     Returns:
-        fig (matplotlib.Figure): bar plot depicting model coefficients for
-            each CMTF component
+        fig (plt.Figure): bar plot depicting model accuracy w/r to data
+            types
     """
     fig_size = (4, 4)
     layout = {
-        'nrows': 1,
-        'ncols': 1
+        'ncols': 1,
+        'nrows': 1
     }
     axs, fig, _ = getSetup(
         fig_size,
         layout
     )
 
-    axs[0].bar(
-        range(1, len(weights) + 1),
-        weights
-    )
+    labels = [re.sub(r'\d', '/', d_type[1:]) for d_type in accuracies.index]
+    axs[0].bar(range(len(accuracies)), accuracies)
+    axs[0].set_xticks(range(len(accuracies)))
+    axs[0].set_xticklabels(labels, rotation=45, ha='right', fontsize=10)
+    axs[0].set_ylabel('Mean Accuracy', fontsize=12)
+    axs[0].set_xlabel('Datatypes Available', fontsize=12)
 
-    axs[0].set_xlabel('Component', fontsize=12)
-    axs[0].set_ylabel('Model Coefficient', fontsize=12)
-    axs[0].set_xticks(np.arange(1, len(weights) + 1))
-    axs[0].set_xticklabels(np.arange(1, len(weights) + 1))
+    return fig
+
+
+def makeFigure():
+    predicted = get_predictions()
+    accuracies = get_accuracy_by_dtype(predicted)
+    fig = plot_results(accuracies)
 
     return fig

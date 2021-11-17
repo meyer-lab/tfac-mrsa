@@ -64,14 +64,15 @@ def tfac_setup():
 
 def plot_results(subjects, pat_info):
     """
-    Plots component weights and interpretation.
+    Plots component associations to subjects and metadata characteristics.
 
     Parameters:
         subjects (pandas.DataFrame): patient correlations to tfac components
-        cytos (pandas.DataFrame): cytokine correlations to tfac components
-        source (pandas.DataFrame): cytokine source correlations to tfac
-            components
         pat_info (pandas.DataFrame): patient meta-data
+
+    Returns:
+        fig (plt.figure): figure containing heatmaps of CMTF components vs.
+            patients
     """
     fig_size = (5, 5)
     layout = {
@@ -211,9 +212,7 @@ def plot_results(subjects, pat_info):
 
 
 def makeFigure():
-    # subjects, _, _, pat_info = tfac_setup()
-    subjects = pd.read_pickle('subs.pkl')
-    pat_info = pd.read_pickle('patInfo.pkl')
+    subjects, _, _, pat_info = tfac_setup()
     fig = plot_results(subjects, pat_info)
 
     return fig

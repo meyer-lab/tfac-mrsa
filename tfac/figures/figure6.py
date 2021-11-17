@@ -69,13 +69,17 @@ def tfac_setup():
 
 def plot_results(subjects, cytos, source):
     """
-    Plots component weights and interpretation.
+    Plots component associations to cytokines and cytokine sources.
 
     Parameters:
         subjects (pandas.DataFrame): patient correlations to tfac components
         cytos (pandas.DataFrame): cytokine correlations to tfac components
         source (pandas.DataFrame): cytokine source correlations to tfac
             components
+
+    Returns:
+        fig (plt.figure): figure containing heatmaps of CMTF components vs.
+            cytokines and cytokine sources
     """
     fig_size = (5, 5)
     layout = {

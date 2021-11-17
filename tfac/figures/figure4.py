@@ -1,5 +1,5 @@
 """
-Creates Figure 4 -- Model Interpretation
+Creates Figure 4 -- Bootstrapped Model Weights
 """
 from os.path import abspath, dirname
 
@@ -107,13 +107,16 @@ def tfac_setup():
 
 def plot_results(weights):
     """
-    Plots component weights and interpretation.
+    Plots range of weights for each CMTF component.
 
     Parameters:
         weights (pandas.DataFrame): mean and StD of component weights w/r to
             prediction targets
+
+    Returns:
+        fig (plt.figure): figure containing component weight range plot
     """
-    fig_size = (5, 5)
+    fig_size = (3, 3)
     layout = {
         'ncols': 1,
         'nrows': 1,
@@ -157,15 +160,13 @@ def plot_results(weights):
     ax.set_ylim(-2, 100)
 
     ax.set_xlabel('Model Coefficient')
-    plt.subplots_adjust(left=0.1, right=0.925, top=0.95)
+    plt.subplots_adjust(left=0.2, right=0.925, top=0.95)
 
     return fig
 
 
 def makeFigure():
-    # weights = bootstrap_weights()
-    # weights.to_csv('weights.csv')
-    weights = pd.read_csv('weights.csv', index_col=[0, 1])
+    weights = bootstrap_weights()
     fig = plot_results(weights)
 
     return fig

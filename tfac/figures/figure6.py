@@ -21,42 +21,27 @@ PATH_HERE = dirname(dirname(abspath(__file__)))
 TARGETS = ['status', 'gender', 'race', 'age']
 
 
-def tfac_setup():
+def cytokine_setup():
     """
-    Import cytokine data and correlate tfac components to cytokines and
-    data sources.
+    Import cytokine data and CMTF component correlations to cytokine data.
 
     Parameters:
         None
 
     Returns:
-        subjects (pandas.DataFrame): patient correlations to tfac components
-        cytos (pandas.DataFrame): cytokine correlations to tfac components
+        cytokines (pandas.DataFrame): cytokine correlations to tfac components
         source (pandas.DataFrame): cytokine source correlations to tfac
             components
-        pat_info (pandas.DataFrame): patient meta-data
     """
-    tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, _ = form_tensor(OPTIMAL_SCALING)
     plasma, _ = import_cytokines()
-    cytokines = plasma.index
-
-    pat_info.loc[:, 'sorted'] = range(pat_info.shape[0])
-    pat_info = pat_info.sort_values(['cohort', 'type', 'status'])
-    sort_idx = pat_info.loc[:, 'sorted']
-    pat_info = pat_info.drop('sorted', axis=1)
-    pat_info = pat_info.T
 
     factors = perform_CMTF(tensor, matrix)
     col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
-    subjects = pd.DataFrame(
-        factors.factors[0][sort_idx, :],
-        columns=col_names,
-        index=[str(x) for x in pat_info.columns]
-    )
-    cytos = pd.DataFrame(
+    cytokines = pd.DataFrame(
         factors.factors[1],
         columns=col_names,
-        index=cytokines
+        index=plasma.index
     )
     source = pd.DataFrame(
         factors.factors[2],
@@ -64,16 +49,15 @@ def tfac_setup():
         index=["Serum", "Plasma"]
     )
 
-    return subjects, cytos, source, pat_info
+    return cytokines, source
 
 
-def plot_results(subjects, cytos, source):
+def plot_results(cytokines, source):
     """
     Plots component associations to cytokines and cytokine sources.
 
     Parameters:
-        subjects (pandas.DataFrame): patient correlations to tfac components
-        cytos (pandas.DataFrame): cytokine correlations to tfac components
+        cytokines (pandas.DataFrame): cytokine correlations to tfac components
         source (pandas.DataFrame): cytokine source correlations to tfac
             components
 
@@ -93,11 +77,11 @@ def plot_results(subjects, cytos, source):
         style=None
     )
 
-    v_min = min(subjects.values.min(), cytos.values.min(), source.values.min())
-    v_max = max(subjects.values.max(), cytos.values.max(), source.values.max())
+    v_min = min(cytokines.values.min(), source.values.min())
+    v_max = max(cytokines.values.max(), source.values.max())
 
     sns.heatmap(
-        cytos,
+        cytokines,
         cmap="PRGn",
         center=0,
         yticklabels=True,
@@ -117,7 +101,7 @@ def plot_results(subjects, cytos, source):
         ax=axs[1]
     )
 
-    axs[0].set_yticklabels(cytos.index, fontsize=7)
+    axs[0].set_yticklabels(cytokines.index, fontsize=7)
     axs[1].set_yticklabels(["Serum", "Plasma"], rotation=0)
     axs[1].set_xticks(np.arange(0.5, source.shape[1]))
     axs[1].set_xticklabels([f'Cmp. {i}' for i in range(1, source.shape[1] + 1)])
@@ -126,7 +110,7 @@ def plot_results(subjects, cytos, source):
 
 
 def makeFigure():
-    subjects, cytos, source, _ = tfac_setup()
-    fig = plot_results(subjects, cytos, source)
+    cytokines, source = cytokine_setup()
+    fig = plot_results(cytokines, source)
 
     return fig

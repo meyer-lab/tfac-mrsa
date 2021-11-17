@@ -59,52 +59,6 @@ def bootstrap_weights():
     return weights
 
 
-def tfac_setup():
-    """
-    Import cytokine data and correlate tfac components to cytokines and
-    data sources.
-
-    Parameters:
-        None
-
-    Returns:
-        subjects (pandas.DataFrame): patient correlations to tfac components
-        cytos (pandas.DataFrame): cytokine correlations to tfac components
-        source (pandas.DataFrame): cytokine source correlations to tfac
-            components
-        pat_info (pandas.DataFrame): patient meta-data
-    """
-    tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
-    plasma, _ = import_cytokines()
-    cytokines = plasma.index
-
-    pat_info.loc[:, 'sorted'] = range(pat_info.shape[0])
-    pat_info = pat_info.sort_values(['cohort', 'type', 'status'])
-    sort_idx = pat_info.loc[:, 'sorted']
-    pat_info = pat_info.drop('sorted', axis=1)
-    pat_info = pat_info.T
-
-    factors = perform_CMTF(tensor, matrix)
-    col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
-    subjects = pd.DataFrame(
-        factors.factors[0][sort_idx, :],
-        columns=col_names,
-        index=[str(x) for x in pat_info.columns]
-    )
-    cytos = pd.DataFrame(
-        factors.factors[1],
-        columns=col_names,
-        index=cytokines
-    )
-    source = pd.DataFrame(
-        factors.factors[2],
-        columns=col_names,
-        index=["Serum", "Plasma"]
-    )
-
-    return subjects, cytos, source, pat_info
-
-
 def plot_results(weights):
     """
     Plots range of weights for each CMTF component.

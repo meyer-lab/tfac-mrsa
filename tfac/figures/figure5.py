@@ -18,22 +18,17 @@ TARGETS = ['status', 'gender', 'race', 'age']
 
 def tfac_setup():
     """
-    Import cytokine data and correlate tfac components to cytokines and
-    data sources.
+    Imports patient metadata and subject-component correlations.
 
     Parameters:
         None
 
     Returns:
         subjects (pandas.DataFrame): patient correlations to tfac components
-        cytos (pandas.DataFrame): cytokine correlations to tfac components
-        source (pandas.DataFrame): cytokine source correlations to tfac
-            components
         pat_info (pandas.DataFrame): patient meta-data
     """
     tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
     plasma, _ = import_cytokines()
-    cytokines = plasma.index
 
     pat_info.loc[:, 'sorted'] = range(pat_info.shape[0])
     pat_info = pat_info.sort_values(['cohort', 'type', 'status'])
@@ -48,18 +43,8 @@ def tfac_setup():
         columns=col_names,
         index=[str(x) for x in pat_info.columns]
     )
-    cytos = pd.DataFrame(
-        factors.factors[1],
-        columns=col_names,
-        index=cytokines
-    )
-    source = pd.DataFrame(
-        factors.factors[2],
-        columns=col_names,
-        index=["Serum", "Plasma"]
-    )
 
-    return subjects, cytos, source, pat_info
+    return subjects, pat_info
 
 
 def plot_results(subjects, pat_info):
@@ -212,7 +197,7 @@ def plot_results(subjects, pat_info):
 
 
 def makeFigure():
-    subjects, _, _, pat_info = tfac_setup()
+    subjects, pat_info = tfac_setup()
     fig = plot_results(subjects, pat_info)
 
     return fig

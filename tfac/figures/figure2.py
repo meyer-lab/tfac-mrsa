@@ -8,11 +8,6 @@ from ..dataImport import form_tensor
 from ..predict import evaluate_components, evaluate_scaling
 from tensorpack import perform_CMTF, calcR2X
 
-LABEL_POS = (
-    (0.025, 0.52),
-    (0.94, 0.455)
-)
-
 
 def get_r2x_results():
     """

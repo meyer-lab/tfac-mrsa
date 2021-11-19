@@ -12,7 +12,7 @@ from matplotlib import gridspec, pyplot as plt
 from tfac.dataImport import import_cytokines, form_tensor
 from tensorpack import perform_CMTF
 
-OPTIMAL_SCALING = 32.0
+OPTIMAL_SCALING = 2 ** 0.5
 
 
 matplotlib.rcParams["axes.labelsize"] = 10

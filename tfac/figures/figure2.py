@@ -8,11 +8,6 @@ from ..dataImport import form_tensor
 from ..predict import evaluate_components, evaluate_scaling
 from tensorpack import perform_CMTF, calcR2X
 
-LABEL_POS = (
-    (0.025, 0.52),
-    (0.94, 0.455)
-)
-
 
 def get_r2x_results():
     """
@@ -85,7 +80,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[0].set_ylim(0, 1)
     axs[0].set_xticks(r2x_v_components.index)
     axs[0].text(
-        -0.35,
+        -0.25,
         0.9,
         'A',
         fontsize=14,
@@ -105,7 +100,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[1].set_ylim(0, 1)
     axs[1].tick_params(axis='x', pad=-3)
     axs[1].text(
-        -0.35,
+        -0.25,
         0.9,
         'B',
         fontsize=14,
@@ -121,7 +116,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[2].set_xticks(acc_v_components.index)
     axs[2].set_ylim([0.5, 0.75])
     axs[2].text(
-        -0.35,
+        -0.25,
         0.9,
         'C',
         fontsize=14,
@@ -138,7 +133,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[3].set_xticks(np.logspace(-7, 7, base=2, num=8))
     axs[3].tick_params(axis='x', pad=-3)
     axs[3].text(
-        -0.35,
+        -0.25,
         0.9,
         'D',
         fontsize=14,

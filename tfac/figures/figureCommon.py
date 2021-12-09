@@ -16,10 +16,12 @@ OPTIMAL_SCALING = 32.0
 
 
 matplotlib.rcParams["axes.labelsize"] = 10
+matplotlib.rcParams["axes.linewidth"] = 0.6
 matplotlib.rcParams["axes.titlesize"] = 12
 matplotlib.rcParams["font.family"] = ["sans-serif"]
 matplotlib.rcParams["font.sans-serif"] = ["Arial"]
 matplotlib.rcParams["font.size"] = 8
+matplotlib.rcParams["grid.linestyle"] = "dotted"
 matplotlib.rcParams["legend.borderpad"] = 0.35
 matplotlib.rcParams["legend.fontsize"] = 7
 matplotlib.rcParams["legend.framealpha"] = 0.5
@@ -38,11 +40,13 @@ matplotlib.rcParams["ytick.minor.pad"] = 0.9
 
 def getSetup(figsize, gridd, multz=None, empts=None, style="whitegrid"):
     """ Establish figure set-up with subplots. """
-    sns.set_style(
-        style,
-        rc=matplotlib.rcParams
+    sns.set(
+        style=style,
+        font_scale=0.7,
+        color_codes=True,
+        palette="colorblind",
+        rc=plt.rcParams
     )
-    sns.set_palette('colorblind')
 
     # create empty list if empts isn't specified
     if empts is None:

@@ -5,7 +5,7 @@ SHELL := /bin/bash
 flist = 2 3 4 5 6 7 S1
 flistFull = $(patsubst %, output/figure%.svg, $(flist))
 
-all: pylint.log $(flistFull)
+all: $(flistFull)
 
 venv: venv/bin/activate
 

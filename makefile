@@ -5,7 +5,7 @@ SHELL := /bin/bash
 flist = 2 3 4 5 6 7 S1
 flistFull = $(patsubst %, output/figure%.svg, $(flist))
 
-all: pylint.log $(flistFull)
+all: $(flistFull)
 
 venv: venv/bin/activate
 
@@ -23,9 +23,6 @@ test: venv
 
 coverage.xml: venv
 	. venv/bin/activate && pytest --junitxml=junit.xml --cov=tfac --cov-report xml:coverage.xml
-
-pylint.log: venv
-	. venv/bin/activate && (pylint --rcfile=./common/pylintrc tfac > pylint.log || echo "pylint exited with $?")
 
 clean:
 	rm -rf coverage.xml junit.xml venv

@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.metrics import r2_score, roc_curve
 
 from tfac.dataImport import import_validation_patient_metadata
-from tfac.figures.figureCommon import getSetup, get_data_types
+from tfac.figures.common import getSetup, get_data_types
 from tfac.predict import predict_known, predict_validation, predict_regression
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]

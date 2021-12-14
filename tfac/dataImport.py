@@ -93,7 +93,7 @@ def scale_cytokines(cyto):
 
 
 @lru_cache
-def import_rna(trim_low=True, scale_rna=True):
+def import_rna(scale_rna=True):
     """
     Return RNA expression data.
 
@@ -112,9 +112,6 @@ def import_rna(trim_low=True, scale_rna=True):
         dtype="float64"
     )
     rna.index = rna.index.astype("int32")
-
-    if trim_low:
-        rna = rna.loc[:, rna.mean(axis=0) > 1.0]
 
     if scale_rna:
         columns = rna.columns

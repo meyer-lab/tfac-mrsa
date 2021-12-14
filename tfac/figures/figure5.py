@@ -3,7 +3,7 @@ from os.path import abspath, dirname, join
 import pandas as pd
 import seaborn as sns
 
-from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
+from tfac.figures.common import getSetup, OPTIMAL_SCALING
 from tfac.dataImport import form_tensor, import_cytokines
 from tfac.predict import predict_known, predict_validation
 from tensorpack import perform_CMTF

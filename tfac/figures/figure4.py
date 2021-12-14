@@ -11,7 +11,7 @@ import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
 
-from .figureCommon import getSetup, OPTIMAL_SCALING
+from .common import getSetup, OPTIMAL_SCALING
 from ..dataImport import form_tensor, import_cytokines
 from ..predict import run_model, predict_regression
 from tensorpack import perform_CMTF

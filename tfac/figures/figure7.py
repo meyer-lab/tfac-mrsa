@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from tfac.dataImport import form_tensor
-from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
+from tfac.figures.common import getSetup, OPTIMAL_SCALING
 from tfac.predict import run_model
 from tensorpack import perform_CMTF
 

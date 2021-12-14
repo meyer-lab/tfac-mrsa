@@ -3,7 +3,7 @@ Creates Figure 2 -- CMTF Plotting
 """
 import numpy as np
 import pandas as pd
-from .figureCommon import getSetup, OPTIMAL_SCALING
+from .common import getSetup, OPTIMAL_SCALING
 from ..dataImport import form_tensor
 from ..predict import evaluate_components, evaluate_scaling
 from tensorpack import perform_CMTF, calcR2X

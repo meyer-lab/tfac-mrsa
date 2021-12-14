@@ -93,7 +93,7 @@ def scale_cytokines(cyto):
 
 
 @lru_cache
-def import_rna(scale_rna=True):
+def import_rna(scale_rna=False):
     """
     Return RNA expression data.
 

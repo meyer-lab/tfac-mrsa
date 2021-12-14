@@ -8,7 +8,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
-      run: make clean && make venv
+      run: poetry install --no-root
     - name: Build figures
       run: make all -j 3
     - name: Upload files

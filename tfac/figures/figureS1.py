@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import pearsonr
 from tfac.dataImport import form_tensor, import_cytokines
-from .figureCommon import getSetup
+from .common import getSetup
 
 
 def fig_S1_setup():

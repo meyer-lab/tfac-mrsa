@@ -105,7 +105,7 @@ def import_rna(scale_rna=False):
         rna (pandas.DataFrame): RNA expression counts
     """
     rna = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.txt.zip'),
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_modules.txt.zip'),
         delimiter=',',
         index_col=0,
         engine="c",

@@ -93,7 +93,7 @@ def scale_cytokines(cyto):
 
 
 @lru_cache
-def import_rna(trim_low=True, scale_rna=True):
+def import_rna(scale_rna=False):
     """
     Return RNA expression data.
 
@@ -105,16 +105,13 @@ def import_rna(trim_low=True, scale_rna=True):
         rna (pandas.DataFrame): RNA expression counts
     """
     rna = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.txt.zip'),
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_modules.txt.zip'),
         delimiter=',',
         index_col=0,
         engine="c",
         dtype="float64"
     )
     rna.index = rna.index.astype("int32")
-
-    if trim_low:
-        rna = rna.loc[:, rna.mean(axis=0) > 1.0]
 
     if scale_rna:
         columns = rna.columns

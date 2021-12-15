@@ -3,7 +3,7 @@ from os.path import abspath, dirname, join
 import pandas as pd
 import seaborn as sns
 
-from tfac.figures.common import getSetup, OPTIMAL_SCALING
+from tfac.figures.common import getSetup
 from tfac.dataImport import form_tensor, import_cytokines
 from tfac.predict import predict_known, predict_validation
 from tensorpack import perform_CMTF
@@ -70,7 +70,7 @@ def get_data_types():
         patient_data (pandas.DataFrame): patient metadata
     """
     plasma_cyto, serum_cyto = import_cytokines()
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, patient_data = form_tensor()
     patient_data = patient_data.loc[:, ['status', 'type']]
 
     components = perform_CMTF(tensor, matrix)

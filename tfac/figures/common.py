@@ -17,8 +17,6 @@ from tensorpack import perform_CMTF
 
 matplotlib.use('AGG')
 
-OPTIMAL_SCALING = 32.0
-
 
 matplotlib.rcParams["axes.labelsize"] = 10
 matplotlib.rcParams["axes.linewidth"] = 0.6
@@ -127,7 +125,7 @@ def get_data_types():
         patient_data (pandas.DataFrame): patient metadata
     """
     plasma_cyto, serum_cyto = import_cytokines()
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, patient_data = form_tensor()
 
     components = perform_CMTF(tensor, matrix)
     components = components[1][0]

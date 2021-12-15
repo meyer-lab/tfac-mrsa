@@ -8,6 +8,8 @@ from sklearn.preprocessing import scale
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
+OPTIMAL_SCALING = 32.0
+
 
 @lru_cache
 def import_patient_metadata():
@@ -92,7 +94,6 @@ def scale_cytokines(cyto):
     return cyto
 
 
-@lru_cache
 def import_rna(scale_rna=False):
     """
     Return RNA expression data.
@@ -158,7 +159,8 @@ def add_missing_columns(data, patients):
     return data
 
 
-def form_tensor(variance_scaling: float = 1.0):
+@lru_cache
+def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
     """
     Forms a tensor of cytokine data and a matrix of RNA expression data for
     CMTF decomposition.
@@ -188,4 +190,4 @@ def form_tensor(variance_scaling: float = 1.0):
     tensor /= np.sum(np.square(np.nan_to_num(tensor)))
     rna /= np.sum(np.square(np.nan_to_num(rna)))
 
-    return tensor * variance_scaling, rna.T, patient_data
+    return np.copy(tensor * variance_scaling), np.copy(rna.T), patient_data

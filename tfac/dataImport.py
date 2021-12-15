@@ -8,6 +8,8 @@ from sklearn.preprocessing import scale
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
+OPTIMAL_SCALING = 2 ** 0.5
+
 
 @lru_cache
 def import_patient_metadata():
@@ -92,8 +94,7 @@ def scale_cytokines(cyto):
     return cyto
 
 
-@lru_cache
-def import_rna(trim_low=True, scale_rna=True):
+def import_rna(scale_rna=False):
     """
     Return RNA expression data.
 
@@ -105,16 +106,13 @@ def import_rna(trim_low=True, scale_rna=True):
         rna (pandas.DataFrame): RNA expression counts
     """
     rna = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_expression.txt.zip'),
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_modules.txt.zip'),
         delimiter=',',
         index_col=0,
         engine="c",
         dtype="float64"
     )
     rna.index = rna.index.astype("int32")
-
-    if trim_low:
-        rna = rna.loc[:, rna.mean(axis=0) > 1.0]
 
     if scale_rna:
         columns = rna.columns
@@ -161,7 +159,8 @@ def add_missing_columns(data, patients):
     return data
 
 
-def form_tensor(variance_scaling: float = 1.0):
+@lru_cache
+def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
     """
     Forms a tensor of cytokine data and a matrix of RNA expression data for
     CMTF decomposition.
@@ -191,4 +190,4 @@ def form_tensor(variance_scaling: float = 1.0):
     tensor /= np.sum(np.square(np.nan_to_num(tensor)))
     rna /= np.sum(np.square(np.nan_to_num(rna)))
 
-    return tensor * variance_scaling, rna.T, patient_data
+    return np.copy(tensor * variance_scaling), np.copy(rna.T), patient_data

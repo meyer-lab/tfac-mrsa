@@ -3,20 +3,16 @@ Creates Figure 2 -- CMTF Plotting
 """
 import numpy as np
 import pandas as pd
-from .figureCommon import getSetup, OPTIMAL_SCALING
+from .common import getSetup
 from ..dataImport import form_tensor
-from ..predict import evaluate_components, evaluate_scaling
-from tensorpac import perform_CMTF, calcR2X
-
-LABEL_POS = (
-    (0.025, 0.52),
-    (0.94, 0.455)
-)
+from ..predict import evaluate_accuracy
+from tensorpack import perform_CMTF, calcR2X
 
 
 def get_r2x_results():
     """
-    Calculates CMTF R2X with regards to the number of CMTF components and RNA/cytokine scaling.
+    Calculates CMTF R2X with regards to the number of CMTF components and
+    RNA/cytokine scaling.
 
     Parameters:
         None
@@ -26,21 +22,31 @@ def get_r2x_results():
         r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
     """
     # R2X v. Components
-    tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, _ = form_tensor()
     components = 12
 
     r2x_v_components = pd.Series(
         index=np.arange(1, components + 1)
     )
+    acc_v_components = pd.Series(
+        index=np.arange(1, components + 1).tolist(),
+        dtype=float
+    )
     for n_components in r2x_v_components.index:
         print(f"Starting decomposition with {n_components} components.")
-        r2x_v_components.loc[n_components] = \
-            perform_CMTF(tensor, matrix, r=n_components).R2X
+        t_fac = perform_CMTF(tensor, matrix, r=n_components)
+        r2x_v_components.loc[n_components] = t_fac.R2X
+        acc_v_components[n_components] = evaluate_accuracy(t_fac.factors[0])
 
     # R2X v. Scaling
+    scalingV = np.logspace(-7, 7, base=2, num=29)
     r2x_v_scaling = pd.DataFrame(
-        index=np.logspace(-7, 7, base=2, num=29),
+        index=scalingV,
         columns=["Total", "Tensor", "Matrix"]
+    )
+    acc_v_scaling = pd.Series(
+        index=scalingV.tolist(),
+        dtype=float
     )
     for scaling in r2x_v_scaling.index:
         tensor, matrix, _ = form_tensor(scaling)
@@ -48,11 +54,13 @@ def get_r2x_results():
         r2x_v_scaling.loc[scaling, "Total"] = calcR2X(t_fac, tensor, matrix)
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
         r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)
+        acc_v_scaling.loc[scaling] = evaluate_accuracy(t_fac.factors[0])
 
-    return r2x_v_components, r2x_v_scaling
+    return r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling
 
 
-def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scaling):
+def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
+                 acc_v_scaling):
     """
     Plots prediction model performance.
 
@@ -65,12 +73,12 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
     Returns:
         fig (matplotlib.Figure): figure depicting CMTF parameterization plots
     """
-    fig_size = (8, 8)
+    fig_size = (5, 5)
     layout = {
         'ncols': 2,
         'nrows': 2
     }
-    axs, fig = getSetup(
+    axs, fig, _ = getSetup(
         fig_size,
         layout
     )
@@ -83,27 +91,32 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
     axs[0].set_ylim(0, 1)
     axs[0].set_xticks(r2x_v_components.index)
     axs[0].text(
-        -1.5,
-        1,
+        -0.25,
+        0.9,
         'A',
         fontsize=14,
         fontweight='bold',
+        transform=axs[0].transAxes
     )
 
     # R2X v. Scaling
 
     r2x_v_scaling.plot(ax=axs[1])
+    axs[1].legend(
+        ['Total', 'Cytokine', 'RNA']
+    )
     axs[1].set_xscale("log")
     axs[1].set_ylabel('R2X')
-    axs[1].set_xlabel('Variance Scaling (Cytokine/RNA)')
+    axs[1].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
     axs[1].set_ylim(0, 1)
     axs[1].tick_params(axis='x', pad=-3)
     axs[1].text(
-        1E-3,
-        1,
+        -0.25,
+        0.9,
         'B',
         fontsize=14,
         fontweight='bold',
+        transform=axs[1].transAxes
     )
 
     # Accuracy v. Components
@@ -114,35 +127,35 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components, acc_v_scalin
     axs[2].set_xticks(acc_v_components.index)
     axs[2].set_ylim([0.5, 0.75])
     axs[2].text(
-        -1.5,
-        0.75,
+        -0.25,
+        0.9,
         'C',
         fontsize=14,
         fontweight='bold',
+        transform=axs[2].transAxes
     )
 
     # Accuracy v. Scaling
 
     axs[3].semilogx(acc_v_scaling.index, acc_v_scaling, base=2)
     axs[3].set_ylabel('Prediction Accuracy')
-    axs[3].set_xlabel('Variance Scaling (Cytokine/RNA)')
+    axs[3].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
     axs[3].set_ylim([0.5, 0.75])
     axs[3].set_xticks(np.logspace(-7, 7, base=2, num=8))
     axs[3].tick_params(axis='x', pad=-3)
     axs[3].text(
-        1E-3,
-        0.75,
+        -0.25,
+        0.9,
         'D',
         fontsize=14,
         fontweight='bold',
+        transform=axs[3].transAxes
     )
 
     return fig
 
 def makeFigure():
-    r2x_v_components, r2x_v_scaling = get_r2x_results()
-    acc_v_components = evaluate_components(OPTIMAL_SCALING)
-    acc_v_scaling = evaluate_scaling()
+    r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling = get_r2x_results()
 
     fig = plot_results(
         r2x_v_components,

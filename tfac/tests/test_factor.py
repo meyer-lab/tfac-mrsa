@@ -2,7 +2,7 @@
 Test that we can factor the data.
 """
 from ..dataImport import form_tensor
-from tensorpac import perform_CMTF
+from tensorpack import perform_CMTF
 
 
 def test_CMTF():

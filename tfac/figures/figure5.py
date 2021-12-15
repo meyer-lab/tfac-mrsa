@@ -3,10 +3,10 @@ from os.path import abspath, dirname, join
 import pandas as pd
 import seaborn as sns
 
-from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
+from tfac.figures.common import getSetup
 from tfac.dataImport import form_tensor, import_cytokines
 from tfac.predict import predict_known, predict_validation
-from tensorpac import perform_CMTF
+from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
@@ -70,7 +70,7 @@ def get_data_types():
         patient_data (pandas.DataFrame): patient metadata
     """
     plasma_cyto, serum_cyto = import_cytokines()
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, patient_data = form_tensor()
     patient_data = patient_data.loc[:, ['status', 'type']]
 
     components = perform_CMTF(tensor, matrix)
@@ -165,7 +165,7 @@ def plot_results(cv_results, val_results):
         'ncols': 1,
         'nrows': 2
     }
-    axs, fig = getSetup(
+    axs, fig, _ = getSetup(
         fig_size,
         layout
     )

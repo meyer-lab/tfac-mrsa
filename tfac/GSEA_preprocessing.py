@@ -47,3 +47,25 @@ def translate_geneIDs(toID="entrezgene", export=False):
         out.to_csv(path + "MRSA_gsea_input_ENTREZ.csv")
 
     return out[[toID, "Components"]]
+
+
+def translate_gene_sets(gs, path, f):
+    mg = mygene.MyGeneInfo()
+    for r in range(gs.shape[0]):
+        xx = gs.iloc[r, :].dropna()[2:]
+        genes = list(gs.iloc[r, :].dropna()[2:])
+        gIDX = list(xx.index)
+        gg = mg.querymany(genes, scopes="symbol", fields="entrezgene", species="human", returnall=False, as_dataframe=True)
+        aa = dict(zip(list(gg.index), list(gg["entrezgene"])))
+        gs.iloc[r, gIDX] = [aa[g] for g in genes]
+        gs.to_csv(path + f + ".csv")
+
+
+def export_gmt_files(files):
+    """To convert the output .csv files to gmt:
+        1. Manually remove the index column and column labels.
+        2. Save file as .txt
+        3. Then change the suffix as .gmt """
+    path = "tfac/data/gsea_libraries/"
+    for f in files: 
+        translate_gene_sets(pd.read_csv(path + f + ".csv", header=None), path, f)

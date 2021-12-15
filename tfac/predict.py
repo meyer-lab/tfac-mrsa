@@ -226,57 +226,18 @@ def run_model(data, labels, return_coef=False):
         return np.max(scores), model
 
 
-def evaluate_scaling():
+def evaluate_accuracy(data):
     """
-    Evaluates the model's accuracy over a range of variance scaling
-    values.
+    Evaluates the model's accuracy for a given subject factors matrix.
 
     Parameters:
-        None
+        Subject factors matrix.
 
     Returns:
-        by_scaling (pandas.Series): Model accuracy over a range of
-            variance scaling values
+        Model accuracy
     """
-    by_scaling = pd.Series(
-        index=np.logspace(-7, 7, base=2, num=29).tolist(),
-        dtype=float
-    )
-
-    for scaling, _ in by_scaling.items():
-        tensor, matrix, patient_data = form_tensor(scaling)
-        labels = patient_data.loc[:, 'status']
-
-        data = perform_CMTF(tensor, matrix)
-        data = data[1][0]
-
-        score, _ = run_model(data, labels)
-        by_scaling.loc[scaling] = score
-
-    return by_scaling
-
-
-def evaluate_components():
-    """
-    Evaluates the model's accuracy over a range of CMTF component
-    counts.
-
-    Returns:
-        by_scaling (pandas.Series): Model accuracy over a range of
-            CMTF component counts
-    """
-    by_components = pd.Series(
-        index=np.arange(1, 13).tolist(),
-        dtype=float
-    )
-
-    tensor, matrix, patient_data = form_tensor()
+    _, _, patient_data = form_tensor()
     labels = patient_data.loc[:, 'status']
-    for n_components, _ in by_components.items():
-        data = perform_CMTF(tensor, matrix, n_components)
-        data = data[1][0]
 
-        score, _ = run_model(data, labels)
-        by_components.loc[n_components] = score
-
-    return by_components
+    score, _ = run_model(data, labels)
+    return score

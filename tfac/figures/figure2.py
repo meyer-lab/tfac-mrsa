@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from .common import getSetup
 from ..dataImport import form_tensor
-from ..predict import evaluate_components, evaluate_scaling
+from ..predict import evaluate_accuracy
 from tensorpack import perform_CMTF, calcR2X
 
 
@@ -28,15 +28,25 @@ def get_r2x_results():
     r2x_v_components = pd.Series(
         index=np.arange(1, components + 1)
     )
+    acc_v_components = pd.Series(
+        index=np.arange(1, components + 1).tolist(),
+        dtype=float
+    )
     for n_components in r2x_v_components.index:
         print(f"Starting decomposition with {n_components} components.")
-        r2x_v_components.loc[n_components] = \
-            perform_CMTF(tensor, matrix, r=n_components).R2X
+        t_fac = perform_CMTF(tensor, matrix, r=n_components)
+        r2x_v_components.loc[n_components] = t_fac.R2X
+        acc_v_components[n_components] = evaluate_accuracy(t_fac.factors[0])
 
     # R2X v. Scaling
+    scalingV = np.logspace(-7, 7, base=2, num=29)
     r2x_v_scaling = pd.DataFrame(
-        index=np.logspace(-7, 7, base=2, num=29),
+        index=scalingV,
         columns=["Total", "Tensor", "Matrix"]
+    )
+    acc_v_scaling = pd.Series(
+        index=scalingV.tolist(),
+        dtype=float
     )
     for scaling in r2x_v_scaling.index:
         tensor, matrix, _ = form_tensor(scaling)
@@ -44,8 +54,9 @@ def get_r2x_results():
         r2x_v_scaling.loc[scaling, "Total"] = calcR2X(t_fac, tensor, matrix)
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
         r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)
+        acc_v_scaling.loc[scaling] = evaluate_accuracy(t_fac.factors[0])
 
-    return r2x_v_components, r2x_v_scaling
+    return r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling
 
 
 def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
@@ -145,9 +156,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
 
 
 def makeFigure():
-    r2x_v_components, r2x_v_scaling = get_r2x_results()
-    acc_v_components = evaluate_components()
-    acc_v_scaling = evaluate_scaling()
+    r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling = get_r2x_results()
 
     fig = plot_results(
         r2x_v_components,

@@ -15,4 +15,4 @@ test:
 
 clean:
 	rm -rf coverage.xml junit.xml
-	git clean -f output
+	git clean -ffdx output

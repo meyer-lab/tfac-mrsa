@@ -2,6 +2,9 @@
 This file contains functions that are used in multiple figures.
 """
 from string import ascii_lowercase
+import sys
+import logging
+import time
 
 import pandas as pd
 import seaborn as sns
@@ -12,7 +15,7 @@ from matplotlib import gridspec, pyplot as plt
 from tfac.dataImport import import_cytokines, form_tensor
 from tensorpack import perform_CMTF
 
-OPTIMAL_SCALING = 2 ** 0.5
+matplotlib.use('AGG')
 
 
 matplotlib.rcParams["axes.labelsize"] = 10
@@ -83,6 +86,20 @@ def subplotLabel(axs):
         ax.text(-0.2, 1.2, ascii_lowercase[ii], transform=ax.transAxes, fontsize=16, fontweight="bold", va="top")
 
 
+def genFigure():
+    """ Main figure generation function. """
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+    fdir = './output/'
+    start = time.time()
+    nameOut = 'figure' + sys.argv[1]
+
+    exec('from tfac.figures.' + nameOut + ' import makeFigure', globals())
+    ff = makeFigure()
+    ff.savefig(fdir + nameOut + '.svg', dpi=300, bbox_inches='tight', pad_inches=0)
+
+    logging.info(f'Figure {sys.argv[1]} is done after {time.time() - start} seconds.')
+
+
 def overlayCartoon(figFile, cartoonFile, x, y, scalee=1):
     """ Add cartoon to a figure file. """
 
@@ -108,7 +125,7 @@ def get_data_types():
         patient_data (pandas.DataFrame): patient metadata
     """
     plasma_cyto, serum_cyto = import_cytokines()
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, patient_data = form_tensor()
 
     components = perform_CMTF(tensor, matrix)
     components = components[1][0]

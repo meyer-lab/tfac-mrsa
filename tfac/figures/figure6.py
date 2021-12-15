@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from tfac.dataImport import form_tensor
-from tfac.figures.figureCommon import getSetup, OPTIMAL_SCALING
+from tfac.figures.common import getSetup
 from tfac.predict import predict_known
 from tensorpack import perform_CMTF
 
@@ -83,7 +83,7 @@ def get_predictions():
     Returns:
         predictions (pandas.Series): model predictions for each sample
     """
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, patient_data = form_tensor()
     patient_data = patient_data.loc[:, ['status', 'type']]
 
     components = perform_CMTF(tensor, matrix)

@@ -8,7 +8,7 @@ from sklearn.preprocessing import scale
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
-OPTIMAL_SCALING = 32.0
+OPTIMAL_SCALING = 2 ** 0.5
 
 
 @lru_cache

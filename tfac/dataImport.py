@@ -68,27 +68,14 @@ def import_cytokines(scale_cyto=True):
         index_col=0
     )
 
-    for cols in plasma_cyto.columns:
-        plasma_cyto[cols] = count_vector(plasma_cyto[cols])
-
-    for cols in serum_cyto.columns:
-        serum_cyto[cols] = count_vector(serum_cyto[cols])
+    plasma_cyto['IL-12(p70)'] = np.clip(plasma_cyto['IL-12(p70)'], 1.0, np.inf)
+    serum_cyto['IL-12(p70)'] = np.clip(serum_cyto['IL-12(p70)'], 1.0, np.inf)
 
     if scale_cyto:
         plasma_cyto = scale_cytokines(plasma_cyto)
         serum_cyto = scale_cytokines(serum_cyto)
 
     return plasma_cyto.T, serum_cyto.T
-
-
-def count_vector(vIn):
-    """ Count the number of times each value appears. """
-    vMatch = np.sum(vIn == vIn.min())
-
-    if np.sum(vMatch) > 1:
-        vIn[vMatch] = np.nan
-
-    return vIn
 
 
 def scale_cytokines(cyto):

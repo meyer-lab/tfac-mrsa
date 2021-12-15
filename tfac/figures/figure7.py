@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from tfac.dataImport import form_tensor
-from tfac.figures.common import getSetup, OPTIMAL_SCALING
+from tfac.figures.common import getSetup
 from tfac.predict import run_model
 from tensorpack import perform_CMTF
 
@@ -26,7 +26,7 @@ def get_model_coefficients():
         weights (numpy.array): Logistic Regression coefficients associated
             with CMTF components
     """
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, patient_data = form_tensor()
     labels = patient_data.loc[:, 'status']
     components = perform_CMTF(tensor, matrix)
     components = components[1][0]

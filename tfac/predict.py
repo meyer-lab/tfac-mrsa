@@ -256,13 +256,10 @@ def evaluate_scaling():
     return by_scaling
 
 
-def evaluate_components(var_scaling):
+def evaluate_components():
     """
     Evaluates the model's accuracy over a range of CMTF component
     counts.
-
-    Parameters:
-        var_scaling (float): Variance scaling (RNA/cytokine)
 
     Returns:
         by_scaling (pandas.Series): Model accuracy over a range of
@@ -273,7 +270,7 @@ def evaluate_components(var_scaling):
         dtype=float
     )
 
-    tensor, matrix, patient_data = form_tensor(var_scaling)
+    tensor, matrix, patient_data = form_tensor()
     labels = patient_data.loc[:, 'status']
     for n_components, _ in by_components.items():
         data = perform_CMTF(tensor, matrix, n_components)

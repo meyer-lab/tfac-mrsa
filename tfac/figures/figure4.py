@@ -11,7 +11,7 @@ import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
 
-from .common import getSetup, OPTIMAL_SCALING
+from .common import getSetup
 from ..dataImport import form_tensor, import_cytokines
 from ..predict import run_model, predict_regression
 from tensorpack import perform_CMTF
@@ -32,7 +32,7 @@ def bootstrap_weights():
         weights (pandas.DataFrame): mean and StD of component weights w/r to
             prediction targets
     """
-    tensor, matrix, patient_data = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, patient_data = form_tensor()
     patient_data = patient_data.reset_index(drop=True)
     patient_data = patient_data.loc[patient_data['status'] != 'Unknown']
 
@@ -80,7 +80,7 @@ def tfac_setup():
             components
         pat_info (pandas.DataFrame): patient meta-data
     """
-    tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, pat_info = form_tensor()
     plasma, _ = import_cytokines()
     cytokines = plasma.index
 

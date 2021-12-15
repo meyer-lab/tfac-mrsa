@@ -3,7 +3,7 @@ Creates Figure 2 -- CMTF Plotting
 """
 import numpy as np
 import pandas as pd
-from .common import getSetup, OPTIMAL_SCALING
+from .common import getSetup
 from ..dataImport import form_tensor
 from ..predict import evaluate_components, evaluate_scaling
 from tensorpack import perform_CMTF, calcR2X
@@ -22,7 +22,7 @@ def get_r2x_results():
         r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
     """
     # R2X v. Components
-    tensor, matrix, pat_info = form_tensor(OPTIMAL_SCALING)
+    tensor, matrix, _ = form_tensor()
     components = 12
 
     r2x_v_components = pd.Series(
@@ -146,7 +146,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
 
 def makeFigure():
     r2x_v_components, r2x_v_scaling = get_r2x_results()
-    acc_v_components = evaluate_components(OPTIMAL_SCALING)
+    acc_v_components = evaluate_components()
     acc_v_scaling = evaluate_scaling()
 
     fig = plot_results(

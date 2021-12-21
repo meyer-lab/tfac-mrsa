@@ -154,7 +154,6 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
 
     return fig
 
-
 def makeFigure():
     r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling = get_r2x_results()
 

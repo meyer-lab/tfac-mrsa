@@ -187,7 +187,7 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
         (serum_cyto, plasma_cyto)
     ).T
 
-    tensor /= np.sum(np.square(np.nan_to_num(tensor)))
-    rna /= np.sum(np.square(np.nan_to_num(rna)))
+    tensor /= np.nanvar(tensor)
+    rna /= np.nanvar(rna)
 
     return np.copy(tensor * variance_scaling), np.copy(rna.T), patient_data

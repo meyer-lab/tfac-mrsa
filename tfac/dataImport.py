@@ -110,7 +110,7 @@ def import_rna(scale_rna=False):
         rna (pandas.DataFrame): RNA expression counts
     """
     rna = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_modules.txt.zip'),
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_modules_combat.txt'),
         delimiter=',',
         index_col=0,
         engine="c",
@@ -191,7 +191,7 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
         (serum_cyto, plasma_cyto)
     ).T
 
-    tensor /= np.sum(np.square(np.nan_to_num(tensor)))
-    rna /= np.sum(np.square(np.nan_to_num(rna)))
+    tensor /= np.nanvar(tensor)
+    rna /= np.nanvar(rna)
 
     return np.copy(tensor * variance_scaling), np.copy(rna.T), patient_data

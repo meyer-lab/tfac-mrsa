@@ -39,7 +39,7 @@ def get_r2x_results():
         acc_v_components[n_components] = evaluate_accuracy(t_fac.factors[0])
 
     # R2X v. Scaling
-    scalingV = np.logspace(-10, 10, base=2, num=29)
+    scalingV = np.logspace(-12, 8, base=2, num=29)
     r2x_v_scaling = pd.DataFrame(
         index=scalingV,
         columns=["Total", "Tensor", "Matrix"]

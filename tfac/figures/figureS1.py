@@ -22,8 +22,8 @@ def fig_S1_setup():
     test = pd.concat([pd.DataFrame(serum_slice), pd.DataFrame(plasma_slice)])
     test = test.dropna(axis=1)
     pears = []
-    for i in range(37):
-        pears.append([cytokines[i], pearsonr(test.iloc[i, :].to_numpy(dtype=float), test.iloc[i + 37, :].to_numpy(dtype=float))[0]])
+    for i in range(38):
+        pears.append([cytokines[i], pearsonr(test.iloc[i, :].to_numpy(dtype=float), test.iloc[i + 38, :].to_numpy(dtype=float))[0]])
     pears = pd.DataFrame(pears).sort_values(1)
 
     ser = pd.DataFrame(serum_slice, index=cytokines, columns=patInfo.columns).iloc[:, :148].dropna(axis=1).T

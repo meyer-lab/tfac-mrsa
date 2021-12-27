@@ -68,10 +68,6 @@ def import_cytokines(scale_cyto=True):
         index_col=0
     )
 
-    # IFN-g is often at limit of detection and shows poor correlation across sample types
-    plasma_cyto.drop("IFN-g", inplace=True, axis=1)
-    serum_cyto.drop("IFN-g", inplace=True, axis=1)
-
     plasma_cyto['IL-12(p70)'] = np.clip(plasma_cyto['IL-12(p70)'], 1.0, np.inf)
     serum_cyto['IL-12(p70)'] = np.clip(serum_cyto['IL-12(p70)'], 1.0, np.inf)
 

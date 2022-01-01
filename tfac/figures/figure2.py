@@ -34,7 +34,7 @@ def get_r2x_results():
     )
     for n_components in r2x_v_components.index:
         print(f"Starting decomposition with {n_components} components.")
-        t_fac = perform_CMTF(tensor, matrix, r=n_components)
+        t_fac = perform_CMTF(tensor, matrix, r=n_components, tol=1e-9, maxiter=100)
         r2x_v_components.loc[n_components] = t_fac.R2X
         acc_v_components[n_components] = evaluate_accuracy(t_fac.factors[0])
 
@@ -50,7 +50,7 @@ def get_r2x_results():
     )
     for scaling in r2x_v_scaling.index:
         tensor, matrix, _ = form_tensor(scaling)
-        t_fac = perform_CMTF(tOrig=tensor, mOrig=matrix)
+        t_fac = perform_CMTF(tOrig=tensor, mOrig=matrix, tol=1e-9, maxiter=100)
         r2x_v_scaling.loc[scaling, "Total"] = calcR2X(t_fac, tensor, matrix)
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
         r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)

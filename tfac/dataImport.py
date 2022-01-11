@@ -1,10 +1,12 @@
 """Data import and processing for the MRSA data"""
-from os.path import join, dirname, abspath
+from os.path import join, dirname, abspath, exists
 from functools import lru_cache
+import pickle
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import scale
+from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
@@ -113,14 +115,10 @@ def import_rna(scale_rna=False):
         dtype="float64"
     )
     rna.index = rna.index.astype("int32")
+    rna = rna.T.sort_index()
 
     if scale_rna:
-        columns = rna.columns
-        rna = rna.apply(scale, axis=1, result_type='expand')
-        rna.columns = columns
-        rna = rna.apply(scale, axis=0)
-
-    rna = rna.T.sort_index()
+        rna[:] = scale(rna)
 
     return rna
 
@@ -191,3 +189,37 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
     rna /= np.nanvar(rna)
 
     return np.copy(tensor * variance_scaling), np.copy(rna.T), patient_data
+
+
+def run_CMTF(variance_scaling=OPTIMAL_SCALING, r=9, tol=1e-6):
+    """
+    Builds MRSA tensor and matrix, then performs CMTF and caches result.
+
+    Parameters:
+        variance_scaling (float, default:1.0): RNA/cytokine variance scaling
+        r (int): number of components to use in CMTF
+        tol (float): tolerance for convergence in CMTF
+
+    Returns:
+        tensor (numpy.array): tensor of cytokine data
+        matrix (numpy.array): matrix of RNA expression data
+        components (tensorly.CPTensor): CMTF result
+    """
+    if exists(join(PATH_HERE, 'output', 'cached_cmtf.pkl')):
+        with open(join(PATH_HERE, 'output', 'cached_cmtf.pkl'), 'rb') as reader:
+            cached = pickle.load(reader)
+    else:
+        cached = {}
+
+    if (variance_scaling, r, tol) in cached.keys():
+        return cached[(variance_scaling, r, tol)]
+
+    tensor, matrix, patient_data = form_tensor(variance_scaling)
+    t_fac = perform_CMTF(tensor, matrix, r=r, tol=tol)
+    cached[(variance_scaling, r, tol)] = \
+        (tensor, matrix, patient_data, t_fac)
+
+    with open(join(PATH_HERE, 'output', 'cached_cmtf.pkl'), 'wb') as writer:
+        pickle.dump(cached, writer)
+
+    return tensor, matrix, patient_data, t_fac

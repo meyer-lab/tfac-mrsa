@@ -12,13 +12,13 @@ from sklearn.preprocessing import scale
 from sklearn.utils import resample
 
 from .common import getSetup
-from ..dataImport import form_tensor, import_cytokines
+from ..dataImport import form_tensor, import_cytokines, run_CMTF
 from ..predict import run_model, predict_regression
-from tensorpack import perform_CMTF
+# from tensorpack import perform_CMTF
 
 N_BOOTSTRAP = 30
 PATH_HERE = dirname(dirname(abspath(__file__)))
-TARGETS = ['status', 'gender', 'race', 'age']
+TARGETS = ['status', 'gender']
 
 
 def bootstrap_weights():
@@ -32,12 +32,11 @@ def bootstrap_weights():
         weights (pandas.DataFrame): mean and StD of component weights w/r to
             prediction targets
     """
-    tensor, matrix, patient_data = form_tensor()
+    tensor, matrix, patient_data, t_fac = run_CMTF()
     patient_data = patient_data.reset_index(drop=True)
     patient_data = patient_data.loc[patient_data['status'] != 'Unknown']
 
-    components = perform_CMTF(tensor, matrix)
-    components = components[1][0]
+    components = t_fac[1][0]
     components = components[patient_data.index, :]
 
     stats = ['Mean', 'StD']
@@ -90,7 +89,7 @@ def tfac_setup():
     pat_info = pat_info.drop('sorted', axis=1)
     pat_info = pat_info.T
 
-    factors = perform_CMTF(tensor, matrix)
+    factors = run_CMTF(tensor, matrix)
     col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
     subjects = pd.DataFrame(
         factors.factors[0][sort_idx, :],
@@ -311,7 +310,8 @@ def plot_results(weights, subjects, cytos, source, pat_info):
             weights.loc[(target, 'Mean')],
             range(
                 offset,
-                (len(TARGETS) + 5) * weights.shape[1], len(TARGETS) + 5
+                (len(TARGETS) + 5) * weights.shape[1],
+                len(TARGETS) + 5
             ),
             marker='.',
             xerr=weights.loc[(target, 'StD')],
@@ -320,7 +320,7 @@ def plot_results(weights, subjects, cytos, source, pat_info):
         )
 
     axs[0].legend(
-        ['Persistence', 'Sex', 'Race', 'Age']
+        ['Persistence', 'Sex']
     )
 
     axs[0].plot(
@@ -332,8 +332,8 @@ def plot_results(weights, subjects, cytos, source, pat_info):
 
     axs[0].set_xlabel('Model Coefficient')
     axs[0].set_xlim(-3, 3)
-    axs[0].set_ylim(-1, 76)
-    axs[0].set_yticks(np.arange(1.5, 80, 9))
+    axs[0].set_ylim(-3, 60)
+    axs[0].set_yticks(np.arange(0.5, 60, 7))
     axs[0].set_yticklabels(
         [f'Cmp. {i}' for i in range(1, 10)]
     )

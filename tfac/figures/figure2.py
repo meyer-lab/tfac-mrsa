@@ -6,7 +6,9 @@ import pandas as pd
 from .common import getSetup
 from ..dataImport import form_tensor
 from ..predict import evaluate_accuracy
-from tensorpack import perform_CMTF, calcR2X
+from tensorpack import calcR2X
+
+from tfac.dataImport import run_CMTF
 
 
 def get_r2x_results():
@@ -22,9 +24,7 @@ def get_r2x_results():
         r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
     """
     # R2X v. Components
-    tensor, matrix, _ = form_tensor()
     components = 12
-
     r2x_v_components = pd.Series(
         index=np.arange(1, components + 1)
     )
@@ -34,7 +34,7 @@ def get_r2x_results():
     )
     for n_components in r2x_v_components.index:
         print(f"Starting decomposition with {n_components} components.")
-        t_fac = perform_CMTF(tensor, matrix, r=n_components, tol=1e-9, maxiter=100)
+        tensor, matrix, _, t_fac = run_CMTF(r=n_components, tol=1e-9)
         r2x_v_components.loc[n_components] = t_fac.R2X
         acc_v_components[n_components] = evaluate_accuracy(t_fac.factors[0])
 
@@ -49,8 +49,7 @@ def get_r2x_results():
         dtype=float
     )
     for scaling in r2x_v_scaling.index:
-        tensor, matrix, _ = form_tensor(scaling)
-        t_fac = perform_CMTF(tOrig=tensor, mOrig=matrix, tol=1e-9, maxiter=100)
+        tensor, matrix, _, t_fac = run_CMTF(tol=1e-9)
         r2x_v_scaling.loc[scaling, "Total"] = calcR2X(t_fac, tensor, matrix)
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
         r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)
@@ -154,8 +153,10 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
 
     return fig
 
+
 def makeFigure():
-    r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling = get_r2x_results()
+    r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling = \
+        get_r2x_results()
 
     fig = plot_results(
         r2x_v_components,

@@ -2,6 +2,7 @@
 Creates Figure 3 -- Model Performance
 """
 import matplotlib
+from matplotlib.lines import Line2D
 import numpy as np
 from os.path import abspath, dirname, join
 import pandas as pd
@@ -255,6 +256,8 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         ['CMTF', 'Plasma IL-10', 'Serum IL-10'],
         axis=1
     )
+    legend_lines = []
+    legend_names = []
     for d_type, color in zip(train_probabilities.columns,
                              COLOR_CYCLE[:train_probabilities.shape[1]]):
         col = train_probabilities.loc[:, d_type].dropna()
@@ -264,14 +267,21 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         fpr, tpr, _ = roc_curve(actual, col)
         cmtf_fpr, cmtf_tpr, _ = roc_curve(actual, cmtf_col)
 
-        axs[1].plot(cmtf_fpr, cmtf_tpr, color=color, label=d_type)
+        axs[1].plot(cmtf_fpr, cmtf_tpr, color=color)
         axs[1].plot(fpr, tpr, color=color, linestyle='--')
+
+        legend_lines.append(Line2D([0], [0], color=color, linewidth=0.5))
+        legend_names.append(d_type)
+
+    legend_lines.append(Line2D([0], [0], color='k', linestyle='-', linewidth=0.5))
+    legend_lines.append(Line2D([0], [0], color='k', linestyle='--', linewidth=0.5))
+    legend_names.extend(['CMTF', 'Cytokine Only'])
 
     axs[1].set_xlim(0, 1)
     axs[1].set_ylim(0, 1)
     axs[1].set_xlabel('False Positive Rate')
     axs[1].set_ylabel('True Positive Rate')
-    axs[1].legend()
+    axs[1].legend(legend_lines, legend_names)
     axs[1].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[1].text(
         -0.35,
@@ -335,15 +345,14 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         fpr, tpr, _ = roc_curve(actual, col)
         cmtf_fpr, cmtf_tpr, _ = roc_curve(actual, cmtf_col)
 
-        axs[3].plot(fpr, tpr, color=color, label=d_type, linestyle='--')
+        axs[3].plot(fpr, tpr, color=color, linestyle='--')
         axs[3].plot(cmtf_fpr, cmtf_tpr, color=color)
 
     axs[3].set_xlim(0, 1)
     axs[3].set_ylim(0, 1)
-    axs[3].legend(validation_probabilities.columns)
+    axs[3].legend(legend_lines, legend_names)
     axs[3].set_xlabel('False Positive Rate')
     axs[3].set_ylabel('True Positive Rate')
-    axs[3].legend()
     axs[3].plot([0, 1], [0, 1], color='k', linestyle='--')
     axs[3].text(
         -0.35,

@@ -12,10 +12,10 @@ import matplotlib
 import svgutils.transform as st
 from matplotlib import gridspec, pyplot as plt
 
-from tfac.dataImport import import_cytokines, form_tensor
-from tensorpack import perform_CMTF
+from tfac.dataImport import import_cytokines, form_tensor, run_CMTF
+# from tensorpack import perform_CMTF
 
-matplotlib.use('AGG')
+matplotlib.use('TkAgg')
 
 
 matplotlib.rcParams["axes.labelsize"] = 10
@@ -127,7 +127,7 @@ def get_data_types():
     plasma_cyto, serum_cyto = import_cytokines()
     tensor, matrix, patient_data = form_tensor()
 
-    components = perform_CMTF(tensor, matrix)
+    components = run_CMTF()
     components = components[1][0]
 
     data_types = [

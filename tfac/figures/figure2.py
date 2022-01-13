@@ -48,7 +48,7 @@ def get_r2x_results():
         dtype=float
     )
     for scaling in r2x_v_scaling.index:
-        tensor, matrix, _, t_fac = run_CMTF(tol=1e-9)
+        tensor, matrix, _, t_fac = run_CMTF(variance_scaling=scaling, tol=1e-9)
         r2x_v_scaling.loc[scaling, "Total"] = calcR2X(t_fac, tensor, matrix)
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
         r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)

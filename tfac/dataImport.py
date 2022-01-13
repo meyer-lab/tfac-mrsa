@@ -216,6 +216,8 @@ def run_CMTF(variance_scaling=OPTIMAL_SCALING, r=9, tol=1e-6):
 
     tensor, matrix, patient_data = form_tensor(variance_scaling)
     t_fac = perform_CMTF(tensor, matrix, r=r, tol=tol)
+    t_fac.mFactor /= t_fac.mFactor.var(axis=0)
+
     cached[(variance_scaling, r, tol)] = \
         (tensor, matrix, patient_data, t_fac)
 

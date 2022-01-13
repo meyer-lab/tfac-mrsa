@@ -1,10 +1,15 @@
 """
 This creates Figure 3.
 """
-import pandas as pd
+from os.path import abspath, dirname, join
+
 import numpy as np
-from .common import subplotLabel, getSetup
-from ..impute import evaluate_missing
+import pandas as pd
+
+from tfac.figures.common import subplotLabel, getSetup
+from tfac.impute import evaluate_missing
+
+PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
 def makeFigure():
@@ -24,23 +29,33 @@ def makeFigure():
     comps = np.arange(1, 11)
 
     try:
-        chords_df = pd.read_csv('tfac/data/fig3_chords_df.csv')
+        chords_df = pd.read_csv(
+            join(PATH_HERE, 'data', 'fig3_chords_df.csv')
+        )
     except FileNotFoundError:
         print("Building chords...")
         # Imputing chords dataframe
         chords_df = pd.concat([pd.DataFrame({'Components': comps, 'R2X': evaluate_missing(comps, 15, chords=True)[0]})
                                for _ in range(rep)], axis=0)
-        chords_df.to_csv('tfac/data/fig3_chords_df.csv', index=False)
+        chords_df.to_csv(
+            join(PATH_HERE, 'data', 'fig3_chords_df.csv'),
+            index=False
+        )
     chords_df = chords_df.groupby('Components').agg({'R2X': ['mean', 'sem']})
 
     try:
-        single_df = pd.read_csv('tfac/data/fig3_single_df.csv')
+        single_df = pd.read_csv(
+            join(PATH_HERE, 'data', 'single_df.csv')
+        )
     except FileNotFoundError:
         print("Building singles...")
         # Single imputations dataframe
         single_df = pd.concat([pd.DataFrame(np.vstack((evaluate_missing(comps, 15, chords=False)[0:2], comps)).T,
                                             columns=['CMTF', 'PCA', 'Components']) for _ in range(rep)], axis=0)
-        single_df.to_csv('tfac/data/fig3_single_df.csv', index=False)
+        single_df.to_csv(
+            join(PATH_HERE, 'data', 'single_df.csv'),
+            index=False
+        )
     single_df = single_df.groupby(['Components']).agg(['mean', 'sem'])
 
     Q2Xchord = chords_df['R2X']['mean']

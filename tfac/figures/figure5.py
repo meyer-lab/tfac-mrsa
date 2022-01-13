@@ -3,10 +3,9 @@ from os.path import abspath, dirname, join
 import pandas as pd
 import seaborn as sns
 
+from tfac.dataImport import import_cytokines, run_CMTF
 from tfac.figures.common import getSetup
-from tfac.dataImport import form_tensor, import_cytokines
 from tfac.predict import predict_known, predict_validation
-from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
@@ -70,11 +69,9 @@ def get_data_types():
         patient_data (pandas.DataFrame): patient metadata
     """
     plasma_cyto, serum_cyto = import_cytokines()
-    tensor, matrix, patient_data = form_tensor()
+    tensor, matrix, patient_data, t_fac = run_CMTF()
     patient_data = patient_data.loc[:, ['status', 'type']]
-
-    components = perform_CMTF(tensor, matrix)
-    components = components[1][0]
+    components = t_fac[1][0]
 
     data_types = [
         ('Plasma Cytokines', plasma_cyto.T),

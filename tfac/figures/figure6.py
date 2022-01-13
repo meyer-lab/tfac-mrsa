@@ -3,10 +3,9 @@ import re
 import numpy as np
 import pandas as pd
 
-from tfac.dataImport import form_tensor
+from tfac.dataImport import run_CMTF
 from tfac.figures.common import getSetup
 from tfac.predict import predict_known
-from tensorpack import perform_CMTF
 
 
 def makeFigure():
@@ -83,11 +82,9 @@ def get_predictions():
     Returns:
         predictions (pandas.Series): model predictions for each sample
     """
-    tensor, matrix, patient_data = form_tensor()
+    tensor, matrix, patient_data, t_fac = run_CMTF()
     patient_data = patient_data.loc[:, ['status', 'type']]
-
-    components = perform_CMTF(tensor, matrix)
-    components = components[1][0]
+    components = t_fac[1][0]
 
     data = pd.DataFrame(
         components,

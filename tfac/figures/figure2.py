@@ -3,12 +3,11 @@ Creates Figure 2 -- CMTF Plotting
 """
 import numpy as np
 import pandas as pd
-from .common import getSetup
-from ..dataImport import form_tensor
-from ..predict import evaluate_accuracy
-from tensorpack import calcR2X
 
 from tfac.dataImport import run_CMTF
+from tfac.figures.common import getSetup
+from tfac.predict import evaluate_accuracy
+from tensorpack import calcR2X
 
 
 def get_r2x_results():

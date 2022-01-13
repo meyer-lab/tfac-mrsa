@@ -11,10 +11,9 @@ import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
 
-from .common import getSetup
-from ..dataImport import form_tensor, import_cytokines, run_CMTF
-from ..predict import run_model, predict_regression
-# from tensorpack import perform_CMTF
+from tfac.dataImport import import_cytokines, run_CMTF
+from tfac.figures.common import getSetup
+from tfac.predict import run_model, predict_regression
 
 N_BOOTSTRAP = 30
 PATH_HERE = dirname(dirname(abspath(__file__)))
@@ -77,40 +76,39 @@ def tfac_setup():
         cytos (pandas.DataFrame): cytokine correlations to tfac components
         source (pandas.DataFrame): cytokine source correlations to tfac
             components
-        pat_info (pandas.DataFrame): patient meta-data
+        patient_data (pandas.DataFrame): patient meta-data
     """
-    tensor, matrix, pat_info = form_tensor()
     plasma, _ = import_cytokines()
     cytokines = plasma.index
+    tensor, matrix, patient_data, t_fac = run_CMTF()
 
-    pat_info.loc[:, 'sorted'] = range(pat_info.shape[0])
-    pat_info = pat_info.sort_values(['cohort', 'type', 'status'])
-    sort_idx = pat_info.loc[:, 'sorted']
-    pat_info = pat_info.drop('sorted', axis=1)
-    pat_info = pat_info.T
+    patient_data.loc[:, 'sorted'] = range(patient_data.shape[0])
+    patient_data = patient_data.sort_values(['cohort', 'type', 'status'])
+    sort_idx = patient_data.loc[:, 'sorted']
+    patient_data = patient_data.drop('sorted', axis=1)
+    patient_data = patient_data.T
 
-    factors = run_CMTF(tensor, matrix)
-    col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
+    col_names = [f"Cmp. {i}" for i in np.arange(1, t_fac.rank + 1)]
     subjects = pd.DataFrame(
-        factors.factors[0][sort_idx, :],
+        t_fac.factors[0][sort_idx, :],
         columns=col_names,
-        index=[str(x) for x in pat_info.columns]
+        index=[str(x) for x in patient_data.columns]
     )
     cytos = pd.DataFrame(
-        factors.factors[1],
+        t_fac.factors[1],
         columns=col_names,
         index=cytokines
     )
     source = pd.DataFrame(
-        factors.factors[2],
+        t_fac.factors[2],
         columns=col_names,
         index=["Serum", "Plasma"]
     )
 
-    return subjects, cytos, source, pat_info
+    return subjects, cytos, source, patient_data
 
 
-def plot_results(weights, subjects, cytos, source, pat_info):
+def plot_results(weights, subjects, cytos, source, patient_data):
     """
     Plots component weights and interpretation.
 
@@ -121,7 +119,7 @@ def plot_results(weights, subjects, cytos, source, pat_info):
         cytos (pandas.DataFrame): cytokine correlations to tfac components
         source (pandas.DataFrame): cytokine source correlations to tfac
             components
-        pat_info (pandas.DataFrame): patient meta-data
+        patient_data (pandas.DataFrame): patient meta-data
     """
     fig_size = (5, 5)
     layout = {
@@ -215,7 +213,7 @@ def plot_results(weights, subjects, cytos, source, pat_info):
     type_cmap = sns.color_palette(type_colors)
 
     # Data types bar
-    types = pd.DataFrame(pat_info.loc["type"]).set_index("type")
+    types = pd.DataFrame(patient_data.loc["type"]).set_index("type")
     types["Type"] = 0
     types[types.index == "0Serum"] = 6
     types[types.index == "1Plasma"] = 5
@@ -246,7 +244,7 @@ def plot_results(weights, subjects, cytos, source, pat_info):
     axs[11].set_ylabel("")
 
     # Cohort bar
-    cohort = pd.DataFrame(pat_info.loc["cohort"]).set_index("cohort")
+    cohort = pd.DataFrame(patient_data.loc["cohort"]).set_index("cohort")
     cohort["Cohort"] = 0
     cohort[cohort.index == 1] = 2
     cohort[cohort.index == 2] = 1
@@ -270,7 +268,7 @@ def plot_results(weights, subjects, cytos, source, pat_info):
     axs[12].set_ylabel("")
 
     # Outcome bar
-    outs = pd.DataFrame(pat_info.loc["status"]).set_index("status")
+    outs = pd.DataFrame(patient_data.loc["status"]).set_index("status")
     outs["Outcome"] = 0
     outs[outs.index == "0"] = 1
     outs[outs.index == "1"] = 2
@@ -345,9 +343,9 @@ def plot_results(weights, subjects, cytos, source, pat_info):
 
 def makeFigure():
     weights = bootstrap_weights()
-    subjects, cytos, source, pat_info = tfac_setup()
+    subjects, cytos, source, patient_data = tfac_setup()
 
     cytos = cytos.loc[abs(cytos).max(axis=1) > 0.5]
-    fig = plot_results(weights, subjects, cytos, source, pat_info)
+    fig = plot_results(weights, subjects, cytos, source, patient_data)
 
     return fig

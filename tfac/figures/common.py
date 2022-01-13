@@ -13,7 +13,6 @@ import svgutils.transform as st
 from matplotlib import gridspec, pyplot as plt
 
 from tfac.dataImport import import_cytokines, form_tensor, run_CMTF
-# from tensorpack import perform_CMTF
 
 matplotlib.use('TkAgg')
 
@@ -125,10 +124,8 @@ def get_data_types():
         patient_data (pandas.DataFrame): patient metadata
     """
     plasma_cyto, serum_cyto = import_cytokines()
-    tensor, matrix, patient_data = form_tensor()
-
-    components = run_CMTF()
-    components = components[1][0]
+    tensor, matrix, patient_data, t_fac = run_CMTF()
+    components = t_fac[1][0]
 
     data_types = [
         ('Plasma Cytokines', plasma_cyto.T),

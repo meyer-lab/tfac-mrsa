@@ -3,10 +3,11 @@ This creates Figure S1 - Full Cytokine plots
 """
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from scipy.stats import pearsonr
+import seaborn as sns
+
 from tfac.dataImport import form_tensor, import_cytokines
-from .common import getSetup
+from tfac.figures.common import getSetup
 
 
 def fig_S1_setup():

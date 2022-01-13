@@ -1,13 +1,14 @@
 """
 Figure A2: R2X of CMTF vs PCA.
 """
-import numpy as np
 from matplotlib.ticker import ScalarFormatter
+import numpy as np
 from statsmodels.multivariate.pca import PCA
-from tensorpack import perform_CMTF, calcR2X, tensor_degFreedom
-from ..dataImport import form_tensor
-from .common import subplotLabel, getSetup
-from ..impute import flatten_to_mat
+
+from tfac.dataImport import form_tensor, run_CMTF
+from tfac.figures.common import subplotLabel, getSetup
+from tfac.impute import flatten_to_mat
+from tensorpack import calcR2X, tensor_degFreedom
 
 
 def makeFigure():
@@ -37,7 +38,7 @@ def makeFigure():
         outt = PCA(tMat, ncomp=cc, missing="fill-em", standardize=False, demean=False, normalize=False)
         recon = outt.scores @ outt.loadings.T
         PCAR2X[i] = calcR2X(recon, mIn=tMat)
-        tFac = perform_CMTF(tOrig, mOrig, r=cc)
+        _, _, _, tFac = run_CMTF(r=cc)
         CMTFR2X[i] = tFac.R2X
         sizeTfac[i] = tensor_degFreedom(tFac)
 

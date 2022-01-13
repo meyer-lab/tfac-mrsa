@@ -12,9 +12,9 @@ import matplotlib
 import svgutils.transform as st
 from matplotlib import gridspec, pyplot as plt
 
-from tfac.dataImport import import_cytokines, form_tensor, run_CMTF
+from tfac.dataImport import import_cytokines, run_CMTF
 
-matplotlib.use('TkAgg')
+matplotlib.use('AGG')
 
 
 matplotlib.rcParams["axes.labelsize"] = 10

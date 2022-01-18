@@ -36,7 +36,7 @@ def bootstrap_weights():
     patient_data = patient_data.reset_index(drop=True)
     patient_data = patient_data.loc[patient_data['status'] != 'Unknown']
 
-    components = perform_CMTF(tensor, matrix)
+    components = perform_CMTF(tensor, matrix, maxiter=200, qr=True)
     components = components[1][0]
     components = components[patient_data.index, :]
 

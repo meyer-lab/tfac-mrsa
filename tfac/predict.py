@@ -202,9 +202,9 @@ def run_model(data, labels, return_coef=False):
     score = cross_val_score(model, data, labels, cv=skf, scoring="balanced_accuracy", n_jobs=-1)
 
     if return_coef:
-        return score, model, np.squeeze(model.coef_[0, :])
+        return np.mean(score), model, np.squeeze(model.coef_[0, :])
     else:
-        return score, model
+        return np.mean(score), model
 
 
 def evaluate_accuracy(data):

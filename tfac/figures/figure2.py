@@ -142,7 +142,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[3].set_ylabel('Prediction Accuracy')
     axs[3].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
     axs[3].set_ylim([0.5, 0.75])
-    axs[3].set_xticks(np.logspace(-7, 7, base=2, num=8))
+    axs[3].set_xticks(np.logspace(-12, 8, base=2, num=11))
     axs[3].tick_params(axis='x', pad=-3)
     axs[3].text(
         -0.25,

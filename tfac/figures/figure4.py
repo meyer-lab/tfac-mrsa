@@ -311,7 +311,8 @@ def plot_results(weights, subjects, cytos, source, pat_info):
             weights.loc[(target, 'Mean')],
             range(
                 offset,
-                (len(TARGETS) + 5) * weights.shape[1], len(TARGETS) + 5
+                (len(TARGETS) + 5) * weights.shape[1],
+                len(TARGETS) + 5
             ),
             marker='.',
             xerr=weights.loc[(target, 'StD')],
@@ -320,7 +321,7 @@ def plot_results(weights, subjects, cytos, source, pat_info):
         )
 
     axs[0].legend(
-        ['Persistence', 'Sex', 'Race', 'Age']
+        ['Persistence', 'Sex']
     )
 
     axs[0].plot(
@@ -332,8 +333,8 @@ def plot_results(weights, subjects, cytos, source, pat_info):
 
     axs[0].set_xlabel('Model Coefficient')
     axs[0].set_xlim(-3, 3)
-    axs[0].set_ylim(-1, 76)
-    axs[0].set_yticks(np.arange(1.5, 80, 9))
+    axs[0].set_ylim(-3, 60)
+    axs[0].set_yticks(np.arange(0.5, 60, 7))
     axs[0].set_yticklabels(
         [f'Cmp. {i}' for i in range(1, 10)]
     )

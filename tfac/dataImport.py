@@ -159,6 +159,42 @@ def add_missing_columns(data, patients):
     return data
 
 
+def form_limit_tensor():
+    """
+    Forms a tensor of the limits of detection for each cytokine across cytokine
+    sources and cohorts.
+
+    Returns:
+        limit_tensor (numpy.ndarray): tensor of detection limits for each
+        cytokine and patient; same shape as the tensor produced via form_tensor
+    """
+    plasma_limit, serum_limit = import_cytokines(scale_cyto=False)
+    patient_data = import_patient_metadata()
+    cohorts = set(patient_data.loc[:, 'cohort'])
+
+    patients = set(patient_data.index)
+    serum_limit = add_missing_columns(serum_limit, patients)
+    plasma_limit = add_missing_columns(plasma_limit, patients)
+
+    for cyto in [serum_limit, plasma_limit]:
+        for cohort in cohorts:
+            cohort_patients = patient_data.loc[
+                patient_data.loc[:, 'cohort'] == cohort,
+                :
+            ].index
+            cyto_cohort = cyto.loc[:, cohort_patients]
+            limit = cyto_cohort.min(axis=1)
+
+            for cohort_patient in cohort_patients:
+                cyto.loc[:, cohort_patient] = limit
+
+    limit_tensor = np.stack(
+        (serum_limit.to_numpy(dtype=float), plasma_limit.to_numpy(dtype=float))
+    ).T
+
+    return np.copy(limit_tensor)
+
+
 @lru_cache
 def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
     """

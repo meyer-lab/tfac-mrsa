@@ -10,15 +10,15 @@ import pandas as pd
 import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
+from tensorpack import perform_CMTF
 
 from .common import getSetup
 from ..dataImport import form_tensor, import_cytokines
 from ..predict import run_model, predict_regression
-from tensorpack import perform_CMTF
 
 N_BOOTSTRAP = 30
 PATH_HERE = dirname(dirname(abspath(__file__)))
-TARGETS = ['status', 'gender', 'race', 'age']
+TARGETS = ['status', 'gender']
 
 
 def bootstrap_weights():

@@ -3,6 +3,7 @@ Creates Figure 2 -- CMTF Plotting
 """
 import numpy as np
 import pandas as pd
+
 from .common import getSetup
 from ..dataImport import form_tensor
 from ..predict import evaluate_accuracy
@@ -153,6 +154,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     )
 
     return fig
+
 
 def makeFigure():
     r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling = get_r2x_results()

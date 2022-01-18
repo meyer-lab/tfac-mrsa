@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-
-from tfac.dataImport import form_tensor
-from tfac.figures.common import getSetup
-from tfac.predict import run_model
 from tensorpack import perform_CMTF
+
+from .common import getSetup
+from ..dataImport import form_tensor
+from ..predict import run_model
 
 
 def makeFigure():

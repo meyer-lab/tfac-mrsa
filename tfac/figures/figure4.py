@@ -21,7 +21,7 @@ PATH_HERE = dirname(dirname(abspath(__file__)))
 TARGETS = ['status', 'gender']
 
 
-def bootstrap_weights():
+def bootstrap_weights(components):
     """
     Predicts samples with unknown outcomes.
 
@@ -36,7 +36,6 @@ def bootstrap_weights():
     patient_data = patient_data.reset_index(drop=True)
     patient_data = patient_data.loc[patient_data['status'] != 'Unknown']
 
-    components = perform_CMTF(tensor, matrix)
     components = components[1][0]
     components = components[patient_data.index, :]
 
@@ -54,7 +53,8 @@ def bootstrap_weights():
             if target == 'age':
                 _, _coef = predict_regression(data, labels, return_coef=True)
             else:
-                _, _, _coef = run_model(data, labels, return_coef=True)
+                _, model = run_model(data, labels)
+                _coef = model.coef_[0, :]
 
             coef.append(_coef)
 
@@ -108,7 +108,7 @@ def tfac_setup():
         index=["Serum", "Plasma"]
     )
 
-    return subjects, cytos, source, pat_info
+    return subjects, cytos, source, pat_info, factors
 
 
 def plot_results(weights, subjects, cytos, source, pat_info):
@@ -345,8 +345,8 @@ def plot_results(weights, subjects, cytos, source, pat_info):
 
 
 def makeFigure():
-    weights = bootstrap_weights()
-    subjects, cytos, source, pat_info = tfac_setup()
+    subjects, cytos, source, pat_info, factors = tfac_setup()
+    weights = bootstrap_weights(factors)
 
     cytos = cytos.loc[abs(cytos).max(axis=1) > 0.5]
     fig = plot_results(weights, subjects, cytos, source, pat_info)

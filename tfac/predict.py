@@ -3,11 +3,15 @@ import warnings
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict, cross_val_score
+from sklearn.model_selection import StratifiedKFold, cross_val_predict, cross_val_score
 
 from .dataImport import form_tensor, import_validation_patient_metadata
 
 warnings.filterwarnings('ignore', category=UserWarning)
+skf = StratifiedKFold(
+    n_splits=10,
+    shuffle=True
+)
 
 
 def predict_validation(data, labels, predict_proba=False, return_coef=False):
@@ -83,11 +87,6 @@ def predict_known(data, labels, method='predict'):
         data = data.loc[labels.index, :]
 
     _, model = run_model(data, labels)
-    skf = StratifiedKFold(
-        n_splits=10,
-        shuffle=True,
-        random_state=42
-    )
 
     if isinstance(data, pd.Series):
         data = data.values.reshape(-1, 1)
@@ -125,11 +124,6 @@ def predict_regression(data, labels, return_coef=False):
         predictions (pandas.Series): predictions for samples
     """
     model = LinearRegression()
-    skf = StratifiedKFold(
-        n_splits=5,
-        shuffle=True,
-        random_state=42
-    )
 
     if isinstance(data, pd.Series):
         data = data.values.reshape(-1, 1)
@@ -157,7 +151,7 @@ def predict_regression(data, labels, return_coef=False):
         return predictions
 
 
-def run_model(data, labels, return_coef=False):
+def run_model(data, labels):
     """
     Runs provided LogisticRegression model with the provided data
     and labels.
@@ -165,18 +159,12 @@ def run_model(data, labels, return_coef=False):
     Parameters:
         data (pandas.DataFrame): DataFrame of CMTF components
         labels (pandas.Series): Labels for provided data
-        return_coef (bool, default: False): return model coefficients
 
     Returns:
         score (float): Accuracy for best-performing model (considers
             l1-ratio and C)
         model (sklearn.LogisticRegression)
     """
-    skf = RepeatedStratifiedKFold(
-        n_splits=10,
-        n_repeats=15
-    )
-
     if isinstance(labels, pd.Series):
         labels = labels.reset_index(drop=True)
     else:
@@ -194,17 +182,13 @@ def run_model(data, labels, return_coef=False):
 
     model = LogisticRegression(
         penalty="none",
-        max_iter=100000,
-        multi_class="ovr"
+        max_iter=100000
     )
     model.fit(data, labels)
 
     score = cross_val_score(model, data, labels, cv=skf, scoring="balanced_accuracy", n_jobs=-1)
 
-    if return_coef:
-        return np.mean(score), model, np.squeeze(model.coef_[0, :])
-    else:
-        return np.mean(score), model
+    return np.mean(score), model
 
 
 def evaluate_accuracy(data):

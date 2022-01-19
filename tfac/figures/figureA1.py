@@ -3,6 +3,7 @@ This creates Figure 3.
 """
 import pandas as pd
 import numpy as np
+
 from .common import subplotLabel, getSetup
 from ..impute import evaluate_missing
 

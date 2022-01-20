@@ -5,8 +5,9 @@ import numpy as np
 from matplotlib.ticker import ScalarFormatter
 from statsmodels.multivariate.pca import PCA
 from tensorpack import perform_CMTF, calcR2X, tensor_degFreedom
-from ..dataImport import form_tensor
+
 from .common import subplotLabel, getSetup
+from ..dataImport import form_tensor
 from ..impute import flatten_to_mat
 
 

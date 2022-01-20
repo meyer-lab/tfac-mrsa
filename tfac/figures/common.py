@@ -9,11 +9,11 @@ import time
 import pandas as pd
 import seaborn as sns
 import matplotlib
-import svgutils.transform as st
 from matplotlib import gridspec, pyplot as plt
-
-from tfac.dataImport import import_cytokines, form_tensor
+import svgutils.transform as st
 from tensorpack import perform_CMTF
+
+from ..dataImport import import_cytokines, form_tensor
 
 matplotlib.use('AGG')
 

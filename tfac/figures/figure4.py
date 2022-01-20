@@ -10,15 +10,15 @@ import pandas as pd
 import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
+from tensorpack import perform_CMTF
 
 from .common import getSetup
 from ..dataImport import form_tensor, import_cytokines
 from ..predict import run_model, predict_regression
-from tensorpack import perform_CMTF
 
 N_BOOTSTRAP = 30
 PATH_HERE = dirname(dirname(abspath(__file__)))
-TARGETS = ['status', 'gender', 'race', 'age']
+TARGETS = ['status', 'gender']
 
 
 def bootstrap_weights():
@@ -311,7 +311,8 @@ def plot_results(weights, subjects, cytos, source, pat_info):
             weights.loc[(target, 'Mean')],
             range(
                 offset,
-                (len(TARGETS) + 5) * weights.shape[1], len(TARGETS) + 5
+                (len(TARGETS) + 5) * weights.shape[1],
+                len(TARGETS) + 5
             ),
             marker='.',
             xerr=weights.loc[(target, 'StD')],
@@ -320,7 +321,7 @@ def plot_results(weights, subjects, cytos, source, pat_info):
         )
 
     axs[0].legend(
-        ['Persistence', 'Sex', 'Race', 'Age']
+        ['Persistence', 'Sex']
     )
 
     axs[0].plot(
@@ -332,8 +333,8 @@ def plot_results(weights, subjects, cytos, source, pat_info):
 
     axs[0].set_xlabel('Model Coefficient')
     axs[0].set_xlim(-3, 3)
-    axs[0].set_ylim(-1, 76)
-    axs[0].set_yticks(np.arange(1.5, 80, 9))
+    axs[0].set_ylim(-3, 60)
+    axs[0].set_yticks(np.arange(0.5, 60, 7))
     axs[0].set_yticklabels(
         [f'Cmp. {i}' for i in range(1, 10)]
     )

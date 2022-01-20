@@ -46,12 +46,14 @@ def import_validation_patient_metadata():
 
 
 @lru_cache
-def import_cytokines(scale_cyto=True):
+def import_cytokines(scale_cyto=True, adjust_limits=True):
     """
     Return plasma and serum cytokine data.
 
     Parameters:
         scale_cyto (bool, default:True): scale cytokine values
+        adjust_limits (bool, default:True): adjust limit of detection
+            differences across cohorts
 
     Returns:
         plasma_cyto (pandas.DataFrame): plasma cytokine data
@@ -68,8 +70,14 @@ def import_cytokines(scale_cyto=True):
         index_col=0
     )
 
-    plasma_cyto['IL-12(p70)'] = np.clip(plasma_cyto['IL-12(p70)'], 1.0, np.inf)
-    serum_cyto['IL-12(p70)'] = np.clip(serum_cyto['IL-12(p70)'], 1.0, np.inf)
+    if adjust_limits:
+        limits = import_lod()
+        limits = limits.fillna(0)
+        plasma_cyto = plasma_cyto.clip(limits.loc['Plasma', :], axis=1)
+        serum_cyto = serum_cyto.clip(limits.loc['Serum', :], axis=1)
+    else:
+        plasma_cyto['IL-12(p70)'] = plasma_cyto['IL-12(p70)'].clip(lower=1)
+        serum_cyto['IL-12(p70)'] = serum_cyto['IL-12(p70)'].clip(lower=1)
 
     if scale_cyto:
         plasma_cyto = scale_cytokines(plasma_cyto)
@@ -159,21 +167,21 @@ def add_missing_columns(data, patients):
     return data
 
 
-def form_limit_tensor():
+def import_lod():
     """
-    Forms a tensor of the limits of detection for each cytokine across cytokine
-    sources and cohorts.
+    Forms a matrix of the limits of detection for each cytokine across cytokine
+    sources.
 
     Returns:
         limit_tensor (numpy.ndarray): tensor of detection limits for each
         cytokine and patient; same shape as the tensor produced via form_tensor
     """
-    limit_tensor = np.load(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'LoD_tensor.pkl'),
-        allow_pickle=True
+    limits = pd.read_csv(
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'limit_of_detection.csv'),
+        index_col=0
     )
 
-    return np.copy(limit_tensor)
+    return limits
 
 
 @lru_cache

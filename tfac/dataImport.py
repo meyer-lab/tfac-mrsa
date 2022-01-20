@@ -173,8 +173,9 @@ def import_lod():
     sources.
 
     Returns:
-        limit_tensor (numpy.ndarray): tensor of detection limits for each
-        cytokine and patient; same shape as the tensor produced via form_tensor
+        limit_tensor (pandas.DataFrame): detection limits for each cytokine
+            across serum/plasma sources; set to be highest detection limit
+            across cohorts
     """
     limits = pd.read_csv(
         join(PATH_HERE, 'tfac', 'data', 'mrsa', 'limit_of_detection.csv'),

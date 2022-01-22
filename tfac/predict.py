@@ -11,7 +11,6 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 skf = RepeatedStratifiedKFold(
     n_splits=10,
-    shuffle=True,
     n_repeats=15
 )
 
@@ -97,7 +96,7 @@ def predict_known(data, labels, method='predict'):
         model,
         data,
         labels,
-        cv=skf,
+        cv=10,
         method=method,
         n_jobs=-1
     )
@@ -113,14 +112,13 @@ def predict_known(data, labels, method='predict'):
     return predictions
 
 
-def predict_regression(data, labels, return_coef=False):
+def predict_regression(data, labels):
     """
     Predicts value for all samples in data via cross-validation.
 
     Parameters:
         data (pandas.DataFrame): data to classify
         labels (pandas.Series): labels for samples in data
-        return_coef (bool, default: False): return model coefficients
 
     Returns:
         predictions (pandas.Series): predictions for samples
@@ -134,7 +132,7 @@ def predict_regression(data, labels, return_coef=False):
         model,
         data,
         labels,
-        cv=skf,
+        cv=10,
         n_jobs=-1
     )
 
@@ -145,12 +143,9 @@ def predict_regression(data, labels, return_coef=False):
         predictions,
         index=labels.index
     )
+    model.fit(data, labels)
 
-    if return_coef:
-        model.fit(data, labels)
-        return predictions, model.coef_
-    else:
-        return predictions
+    return predictions, model.coef_
 
 
 def run_model(data, labels, return_coef=False):

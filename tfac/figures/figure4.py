@@ -51,7 +51,7 @@ def bootstrap_weights(components):
         for sample in range(N_BOOTSTRAP):
             data, labels = resample(components, patient_data.loc[:, target])
             if target == 'age':
-                _, _coef = predict_regression(data, labels, return_coef=True)
+                _, _coef = predict_regression(data, labels)
             else:
                 _, _, _coef = run_model(data, labels, return_coef=True)
 

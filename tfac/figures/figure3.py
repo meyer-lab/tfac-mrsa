@@ -112,7 +112,7 @@ def run_age_regression(data, patient_data):
         patient_data (pandas.DataFrame): patient metadata, including age
     """
     labels = patient_data.loc[:, 'age']
-    age_predictions = predict_regression(data, labels)
+    age_predictions, _ = predict_regression(data, labels)
     age_predictions.name = 'CMTF'
 
     age_predictions = pd.DataFrame(age_predictions)

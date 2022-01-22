@@ -25,6 +25,9 @@ def import_patient_metadata():
         index_col=0
     )
 
+    # Drop patients with only RNAseq
+    patient_data = patient_data.loc[patient_data["type"] != "2RNAseq", :]
+
     return patient_data
 
 
@@ -139,7 +142,7 @@ def add_missing_columns(data, patients):
             added; sorted by patient numbers
     """
     # Remove patients who are missing outcome labels
-    shared = set(data.columns) & set(patients)
+    shared = list(set(data.columns) & set(patients))
     data = data.loc[:, shared]
 
     missing = patients.difference(data.columns)

@@ -8,7 +8,7 @@ from sklearn.preprocessing import scale
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
-OPTIMAL_SCALING = 2 ** 0.5
+OPTIMAL_SCALING = 2 ** -6.0
 
 
 @lru_cache
@@ -24,6 +24,9 @@ def import_patient_metadata():
         delimiter=',',
         index_col=0
     )
+
+    # Drop patients with only RNAseq
+    patient_data = patient_data.loc[patient_data["type"] != "2RNAseq", :]
 
     return patient_data
 
@@ -139,7 +142,7 @@ def add_missing_columns(data, patients):
             added; sorted by patient numbers
     """
     # Remove patients who are missing outcome labels
-    shared = set(data.columns) & set(patients)
+    shared = list(set(data.columns) & set(patients))
     data = data.loc[:, shared]
 
     missing = patients.difference(data.columns)

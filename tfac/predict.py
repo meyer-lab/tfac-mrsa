@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_predict
 
-from .dataImport import form_tensor, import_validation_patient_metadata
+from .dataImport import import_validation_patient_metadata
 
 warnings.filterwarnings('ignore', category=UserWarning)
 
@@ -15,7 +15,7 @@ skf = RepeatedStratifiedKFold(
 )
 
 
-def predict_validation(data, labels, predict_proba=False, return_coef=False):
+def predict_validation(data, labels, predict_proba=False):
     """
     Trains a LogisticRegressionCV model using samples with known outcomes,
     then predicts samples with unknown outcomes.
@@ -61,10 +61,7 @@ def predict_validation(data, labels, predict_proba=False, return_coef=False):
     predictions = pd.Series(predicted)
     predictions.index = test_labels.index
 
-    if return_coef:
-        return predictions, model.coef_[0]
-    else:
-        return predictions
+    return predictions
 
 
 def predict_known(data, labels, method='predict'):
@@ -205,20 +202,3 @@ def run_model(data, labels, return_coef=False):
         return np.max(scores), model, coef
     else:
         return np.max(scores), model
-
-
-def evaluate_accuracy(data):
-    """
-    Evaluates the model's accuracy for a given subject factors matrix.
-
-    Parameters:
-        Subject factors matrix.
-
-    Returns:
-        Model accuracy
-    """
-    _, _, patient_data = form_tensor()
-    labels = patient_data.loc[:, 'status']
-
-    score, _ = run_model(data, labels)
-    return score

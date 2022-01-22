@@ -41,7 +41,7 @@ def get_r2x_results():
         acc_v_components[n_components] = run_model(t_fac.factors[0], labels)[0]
 
     # R2X v. Scaling
-    scalingV = np.logspace(-12, 8, base=2, num=29)
+    scalingV = np.logspace(-16, 4, base=2, num=15)
     r2x_v_scaling = pd.DataFrame(
         index=scalingV,
         columns=["Total", "Tensor", "Matrix"]
@@ -143,7 +143,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[3].set_ylabel('Prediction Accuracy')
     axs[3].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
     axs[3].set_ylim([0.5, 0.75])
-    axs[3].set_xticks(np.logspace(-12, 8, base=2, num=11))
+    axs[3].set_xticks(np.logspace(-16, 4, base=2, num=11))
     axs[3].tick_params(axis='x', pad=-3)
     axs[3].text(
         -0.25,

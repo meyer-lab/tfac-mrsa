@@ -157,10 +157,12 @@ def get_accuracies(samples):
 
     d_types = samples.columns
     accuracies = pd.Series(
-        index=d_types
+        index=d_types,
+        dtype=float
     )
     cmtf_accuracies = pd.Series(
-        index=d_types
+        index=d_types,
+        dtype=float
     )
 
     for d_type in d_types:
@@ -518,9 +520,9 @@ def makeFigure():
         run_cv(data_types, patient_data)
     age_predictions = run_age_regression(data_types[-1][-1], patient_data)
 
-    export_results(train_samples, train_probabilities, validation_samples,
-                   validation_probabilities, sex_predictions, race_predictions,
-                   age_predictions)
+    # export_results(train_samples, train_probabilities, validation_samples,
+    #                validation_probabilities, sex_predictions, race_predictions,
+    #                age_predictions)
 
     age_predictions = age_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
     sex_predictions = sex_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)

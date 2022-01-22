@@ -3,12 +3,17 @@ import warnings
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
-from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, cross_val_predict
+from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_predict
 
 from .dataImport import form_tensor, import_validation_patient_metadata
-from tensorpack import perform_CMTF
 
 warnings.filterwarnings('ignore', category=UserWarning)
+
+skf = RepeatedStratifiedKFold(
+    n_splits=10,
+    shuffle=True,
+    n_repeats=15
+)
 
 
 def predict_validation(data, labels, predict_proba=False, return_coef=False):
@@ -28,7 +33,7 @@ def predict_validation(data, labels, predict_proba=False, return_coef=False):
             outcomes
     """
     validation_data = import_validation_patient_metadata()
-    validation_samples = set(validation_data.index) & set(labels.index)
+    validation_samples = list(set(validation_data.index) & set(labels.index))
 
     train_labels = labels.drop(validation_samples)
     test_labels = labels.loc[validation_samples]
@@ -84,11 +89,6 @@ def predict_known(data, labels, method='predict'):
         data = data.loc[labels.index, :]
 
     _, model = run_model(data, labels)
-    skf = StratifiedKFold(
-        n_splits=10,
-        shuffle=True,
-        random_state=42
-    )
 
     if isinstance(data, pd.Series):
         data = data.values.reshape(-1, 1)
@@ -126,11 +126,6 @@ def predict_regression(data, labels, return_coef=False):
         predictions (pandas.Series): predictions for samples
     """
     model = LinearRegression()
-    skf = StratifiedKFold(
-        n_splits=5,
-        shuffle=True,
-        random_state=42
-    )
 
     if isinstance(data, pd.Series):
         data = data.values.reshape(-1, 1)
@@ -173,11 +168,6 @@ def run_model(data, labels, return_coef=False):
             l1-ratio and C)
         model (sklearn.LogisticRegressionCV)
     """
-    skf = RepeatedStratifiedKFold(
-        n_splits=10,
-        n_repeats=15
-    )
-
     if isinstance(labels, pd.Series):
         labels = labels.reset_index(drop=True)
     else:
@@ -204,11 +194,7 @@ def run_model(data, labels, return_coef=False):
         multi_class='ovr'
     )
     model.fit(data, labels)
-
-    coef = None
-    if return_coef:
-        coef = model.coef_[0]
-
+    coef = model.coef_[0]
     scores = np.mean(list(model.scores_.values())[0], axis=0)
 
     model = LogisticRegression(
@@ -216,9 +202,9 @@ def run_model(data, labels, return_coef=False):
         l1_ratio=model.l1_ratio_[0],
         solver="saga",
         penalty="elasticnet",
-        n_jobs=-1,
         max_iter=100000,
     )
+    model.fit(data, labels)
 
     if return_coef:
         return np.max(scores), model, coef

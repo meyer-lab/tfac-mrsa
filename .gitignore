@@ -110,6 +110,5 @@ venv.bak/
 .pybiomart.sqlite
 output/*
 cache
-!output/figure1.svg
 
 .idea/

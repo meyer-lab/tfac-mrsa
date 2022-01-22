@@ -6,7 +6,7 @@ import pandas as pd
 
 from .common import getSetup
 from ..dataImport import form_tensor
-from ..predict import evaluate_accuracy
+from ..predict import run_model
 from tensorpack import perform_CMTF, calcR2X
 
 
@@ -23,7 +23,8 @@ def get_r2x_results():
         r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
     """
     # R2X v. Components
-    tensor, matrix, _ = form_tensor()
+    tensor, matrix, patient_data = form_tensor()
+    labels = patient_data.loc[:, 'status']
     components = 12
 
     r2x_v_components = pd.Series(
@@ -37,10 +38,10 @@ def get_r2x_results():
         print(f"Starting decomposition with {n_components} components.")
         t_fac = perform_CMTF(tensor, matrix, r=n_components, tol=1e-9, maxiter=100)
         r2x_v_components.loc[n_components] = t_fac.R2X
-        acc_v_components[n_components] = evaluate_accuracy(t_fac.factors[0])
+        acc_v_components[n_components] = run_model(t_fac.factors[0], labels)[0]
 
     # R2X v. Scaling
-    scalingV = np.logspace(-12, 8, base=2, num=29)
+    scalingV = np.logspace(-16, 4, base=2, num=15)
     r2x_v_scaling = pd.DataFrame(
         index=scalingV,
         columns=["Total", "Tensor", "Matrix"]
@@ -55,7 +56,7 @@ def get_r2x_results():
         r2x_v_scaling.loc[scaling, "Total"] = calcR2X(t_fac, tensor, matrix)
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
         r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)
-        acc_v_scaling.loc[scaling] = evaluate_accuracy(t_fac.factors[0])
+        acc_v_scaling.loc[scaling] = run_model(t_fac.factors[0], labels)[0]
 
     return r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling
 
@@ -142,7 +143,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[3].set_ylabel('Prediction Accuracy')
     axs[3].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
     axs[3].set_ylim([0.5, 0.75])
-    axs[3].set_xticks(np.logspace(-12, 8, base=2, num=11))
+    axs[3].set_xticks(np.logspace(-16, 4, base=2, num=11))
     axs[3].tick_params(axis='x', pad=-3)
     axs[3].text(
         -0.25,

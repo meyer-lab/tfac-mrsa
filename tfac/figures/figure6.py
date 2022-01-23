@@ -2,10 +2,9 @@ import re
 
 import numpy as np
 import pandas as pd
-from tensorpack import perform_CMTF
 
 from .common import getSetup
-from ..dataImport import form_tensor
+from ..dataImport import get_factors
 from ..predict import predict_known
 
 
@@ -83,10 +82,8 @@ def get_predictions():
     Returns:
         predictions (pandas.Series): model predictions for each sample
     """
-    tensor, matrix, patient_data = form_tensor()
+    components, patient_data = get_factors()
     patient_data = patient_data.loc[:, ['status', 'type']]
-
-    components = perform_CMTF(tensor, matrix)
     components = components[1][0]
 
     data = pd.DataFrame(

@@ -5,6 +5,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import scale
+from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
@@ -49,7 +50,7 @@ def import_validation_patient_metadata():
 
 
 @lru_cache
-def import_cytokines(scale_cyto=True):
+def import_cytokines(scale_cyto=True, transpose=True):
     """
     Return plasma and serum cytokine data.
 
@@ -79,26 +80,21 @@ def import_cytokines(scale_cyto=True):
     serum_cyto.drop("IL-3", axis=1, inplace=True)
 
     if scale_cyto:
-        plasma_cyto = scale_cytokines(plasma_cyto)
-        serum_cyto = scale_cytokines(serum_cyto)
+        plasma_cyto = plasma_cyto.transform(np.log)
+        plasma_cyto -= plasma_cyto.mean(axis=0)
+        serum_cyto = serum_cyto.transform(np.log)
+        serum_cyto -= serum_cyto.mean(axis=0)
 
-    return plasma_cyto.T, serum_cyto.T
+    # If a sample isn't in the metadata, remove it from the cytokines
+    patients = set(import_patient_metadata().index)
+    plasma_cyto = plasma_cyto.reindex(set(plasma_cyto.index).intersection(patients))
+    serum_cyto = serum_cyto.reindex(set(serum_cyto.index).intersection(patients))
 
+    if transpose:
+        plasma_cyto = plasma_cyto.T
+        serum_cyto = serum_cyto.T
 
-def scale_cytokines(cyto):
-    """
-    Scales provided cytokine data--performs a log-transform, then
-    zero-mean centers.
-
-    Parameters:
-        cyto (pandas.DataFrame): cytokine data
-
-    Returns:
-        cyto (pandas.DataFrame): scaled cytokine data
-    """
-    cyto = cyto.transform(np.log)
-    cyto -= cyto.mean(axis=0)
-    return cyto
+    return plasma_cyto, serum_cyto
 
 
 def import_rna(scale_rna=False):
@@ -127,43 +123,9 @@ def import_rna(scale_rna=False):
         rna.columns = columns
         rna = rna.apply(scale, axis=0)
 
-    rna = rna.T.sort_index()
+    rna.sort_index(axis=1, inplace=True)
 
     return rna
-
-
-def add_missing_columns(data, patients):
-    """
-    Adds patients that do not appear in data as empty columns (all NaNs);
-    removes any patients in data not present in patients.
-
-    Parameters:
-        data (pandas.DataFrame): cytokine/RNA data
-        patients (iterable): patients that must appear in data
-
-    Returns:
-        data (pandas.DataFrame): cytokine/RNA data with missing columns
-            added; sorted by patient numbers
-    """
-    # Remove patients who are missing outcome labels
-    shared = list(set(data.columns) & set(patients))
-    data = data.loc[:, shared]
-
-    missing = patients.difference(data.columns)
-    data = pd.concat(
-        [
-            data,
-            pd.DataFrame(
-                data=np.nan,
-                index=data.index,
-                columns=missing
-            )
-        ],
-        axis=1
-    )
-    data = data.sort_index(axis=1)
-
-    return data
 
 
 def form_limit_tensor():
@@ -175,13 +137,12 @@ def form_limit_tensor():
         limit_tensor (numpy.ndarray): tensor of detection limits for each
         cytokine and patient; same shape as the tensor produced via form_tensor
     """
-    plasma_limit, serum_limit = import_cytokines(scale_cyto=False)
+    plasma_limit, serum_limit = import_cytokines(scale_cyto=False, transpose=False)
     patient_data = import_patient_metadata()
     cohorts = set(patient_data.loc[:, 'cohort'])
 
-    patients = set(patient_data.index)
-    serum_limit = add_missing_columns(serum_limit, patients)
-    plasma_limit = add_missing_columns(plasma_limit, patients)
+    serum_limit = serum_limit.reindex(patient_data.index).T
+    plasma_limit = plasma_limit.reindex(patient_data.index).T
 
     for cyto in [serum_limit, plasma_limit]:
         for cohort in cohorts:
@@ -217,20 +178,41 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
         patient_data (pandas.DataFrame): patient data, including status, data
             types, and cohort
     """
-    plasma_cyto, serum_cyto = import_cytokines()
+    plasma_cyto, serum_cyto = import_cytokines(transpose=False)
     rna = import_rna()
     patient_data = import_patient_metadata()
-    patients = set(patient_data.index)
 
-    serum_cyto = add_missing_columns(serum_cyto, patients).to_numpy(dtype=float)
-    plasma_cyto = add_missing_columns(plasma_cyto, patients).to_numpy(dtype=float)
-    rna = add_missing_columns(rna, patients).to_numpy(dtype=float)
+    serum_cyto = serum_cyto.reindex(patient_data.index).to_numpy(dtype=float).T
+    plasma_cyto = plasma_cyto.reindex(patient_data.index).to_numpy(dtype=float).T
+    rna = rna.reindex(patient_data.index).to_numpy(dtype=float)
 
     tensor = np.stack(
         (serum_cyto, plasma_cyto)
     ).T
 
-    tensor /= np.nanvar(tensor)
+    # Put on similar scale
+    tensor = tensor / np.nanvar(tensor) * variance_scaling
     rna /= np.nanvar(rna)
 
-    return np.copy(tensor * variance_scaling), np.copy(rna.T), patient_data
+    assert tensor.shape[0] == rna.shape[0]
+    assert tensor.shape[2] == 2
+    assert tensor.ndim == 3
+    return np.copy(tensor), np.copy(rna), patient_data
+
+
+@lru_cache
+def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=9):
+    """
+    Return the factorization results.
+
+    Parameters:
+        variance_scaling (float, default:1.0): RNA/cytokine variance scaling
+
+    Returns:
+        tfac (tl.CP): The factorization results
+        patient_data (pandas.DataFrame): patient data, including status, data
+            types, and cohort
+    """
+    tensor, rna, patient_data = form_tensor(variance_scaling)
+    t_fac = perform_CMTF(tensor, rna, r=r, tol=1e-9, maxiter=100)
+    return t_fac, patient_data

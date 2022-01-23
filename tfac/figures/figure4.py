@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
-from tensorpack import perform_CMTF
+from tensorpack import get_factors
 
 from .common import getSetup
 from ..dataImport import form_tensor, import_cytokines
@@ -79,7 +79,7 @@ def tfac_setup():
             components
         pat_info (pandas.DataFrame): patient meta-data
     """
-    tensor, matrix, pat_info = form_tensor()
+    factors, pat_info = get_factors()
     plasma, _ = import_cytokines()
     cytokines = plasma.index
 
@@ -89,7 +89,6 @@ def tfac_setup():
     pat_info = pat_info.drop('sorted', axis=1)
     pat_info = pat_info.T
 
-    factors = perform_CMTF(tensor, matrix)
     col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
     subjects = pd.DataFrame(
         factors.factors[0][sort_idx, :],

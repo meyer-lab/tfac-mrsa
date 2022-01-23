@@ -25,7 +25,6 @@ def predict_validation(data, labels, predict_proba=False):
         labels (pandas.Series): labels for samples in data
         predict_proba (bool, default: False): predict probability of positive
             case
-        return_coef (bool, default:False): return model coefficients
 
     Returns:
         predictions (pandas.Series): predictions for samples with unknown

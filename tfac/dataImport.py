@@ -82,8 +82,10 @@ def import_cytokines(scale_cyto=True, transpose=True):
     if scale_cyto:
         plasma_cyto = plasma_cyto.transform(np.log)
         plasma_cyto -= plasma_cyto.mean(axis=0)
+        plasma_cyto /= plasma_cyto.std(axis=0)
         serum_cyto = serum_cyto.transform(np.log)
         serum_cyto -= serum_cyto.mean(axis=0)
+        serum_cyto /= serum_cyto.std(axis=0)
 
     # If a sample isn't in the metadata, remove it from the cytokines
     patients = set(import_patient_metadata().index)

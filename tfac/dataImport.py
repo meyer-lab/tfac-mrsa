@@ -9,7 +9,7 @@ from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 
-OPTIMAL_SCALING = 2 ** -6.0
+OPTIMAL_SCALING = 2 ** 4.0
 
 
 @lru_cache
@@ -206,5 +206,5 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=9):
             types, and cohort
     """
     tensor, rna, patient_data = form_tensor(variance_scaling)
-    t_fac = perform_CMTF(tensor, rna, r=r, tol=1e-9, maxiter=100)
+    t_fac = perform_CMTF(tensor, rna, r=r)
     return t_fac, patient_data

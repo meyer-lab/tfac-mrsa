@@ -81,11 +81,9 @@ def import_cytokines(scale_cyto=True, transpose=True):
 
     if scale_cyto:
         plasma_cyto = plasma_cyto.transform(np.log)
-        plasma_cyto -= plasma_cyto.mean(axis=0)
-        plasma_cyto /= plasma_cyto.std(axis=0)
+        plasma_cyto.loc[:, :] = scale(plasma_cyto.to_numpy())
         serum_cyto = serum_cyto.transform(np.log)
-        serum_cyto -= serum_cyto.mean(axis=0)
-        serum_cyto /= serum_cyto.std(axis=0)
+        serum_cyto.loc[:, :] = scale(serum_cyto.to_numpy())
 
     # If a sample isn't in the metadata, remove it from the cytokines
     patients = set(import_patient_metadata().index)
@@ -99,16 +97,12 @@ def import_cytokines(scale_cyto=True, transpose=True):
     return plasma_cyto, serum_cyto
 
 
-def import_rna(scale_rna=False):
+def import_rna():
     """
-    Return RNA expression data.
-
-    Parameters:
-        trim_low (bool, default:True): remove genes with low expression counts
-        scale_rna (bool, default:True): zero-mean scale RNA expression
+    Return RNA expression modules.
 
     Returns:
-        rna (pandas.DataFrame): RNA expression counts
+        rna (pandas.DataFrame): RNA expression modules
     """
     rna = pd.read_csv(
         join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_modules_combat.txt'),
@@ -119,14 +113,10 @@ def import_rna(scale_rna=False):
     )
     rna.index = rna.index.astype("int32")
 
-    if scale_rna:
-        columns = rna.columns
-        rna = rna.apply(scale, axis=1, result_type='expand')
-        rna.columns = columns
-        rna = rna.apply(scale, axis=0)
+    # Always scale
+    rna.loc[:, :] = scale(rna.to_numpy())
 
     rna.sort_index(axis=1, inplace=True)
-
     return rna
 
 

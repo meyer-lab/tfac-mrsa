@@ -86,7 +86,7 @@ def get_predictions():
     tensor, matrix, patient_data = form_tensor()
     patient_data = patient_data.loc[:, ['status', 'type']]
 
-    components = perform_CMTF(tensor, matrix)
+    components = perform_CMTF(tensor, matrix, r=11)
     components = components[1][0]
 
     data = pd.DataFrame(

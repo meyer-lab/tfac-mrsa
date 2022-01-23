@@ -127,7 +127,7 @@ def get_data_types():
     plasma_cyto, serum_cyto = import_cytokines()
     tensor, matrix, patient_data = form_tensor()
 
-    components = perform_CMTF(tensor, matrix)
+    components = perform_CMTF(tensor, matrix, r=11)
     components = components[1][0]
 
     data_types = [

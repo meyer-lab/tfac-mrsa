@@ -89,7 +89,7 @@ def tfac_setup():
     pat_info = pat_info.drop('sorted', axis=1)
     pat_info = pat_info.T
 
-    factors = perform_CMTF(tensor, matrix)
+    factors = perform_CMTF(tensor, matrix, r=11)
     col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
     subjects = pd.DataFrame(
         factors.factors[0][sort_idx, :],

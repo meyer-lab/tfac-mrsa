@@ -28,6 +28,12 @@ def import_patient_metadata():
     # Drop patients with only RNAseq
     patient_data = patient_data.loc[patient_data["type"] != "2RNAseq", :]
 
+    # Drop patients with only plasma
+    patient_data = patient_data.loc[patient_data["type"] != "1Plasma", :]
+
+    # Drop patients with only serum
+    patient_data = patient_data.loc[patient_data["type"] != "0Serum", :]
+
     return patient_data
 
 

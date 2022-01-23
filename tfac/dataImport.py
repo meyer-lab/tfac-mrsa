@@ -74,6 +74,10 @@ def import_cytokines(scale_cyto=True):
     plasma_cyto['IL-12(p70)'] = np.clip(plasma_cyto['IL-12(p70)'], 1.0, np.inf)
     serum_cyto['IL-12(p70)'] = np.clip(serum_cyto['IL-12(p70)'], 1.0, np.inf)
 
+    # IL-3 is almost entirely missing
+    plasma_cyto.drop("IL-3", axis=1, inplace=True)
+    serum_cyto.drop("IL-3", axis=1, inplace=True)
+
     if scale_cyto:
         plasma_cyto = scale_cytokines(plasma_cyto)
         serum_cyto = scale_cytokines(serum_cyto)

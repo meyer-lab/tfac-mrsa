@@ -10,10 +10,9 @@ import pandas as pd
 import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
-from tensorpack import get_factors
 
 from .common import getSetup
-from ..dataImport import form_tensor, import_cytokines
+from ..dataImport import form_tensor, import_cytokines, get_factors
 from ..predict import run_model, predict_regression
 
 N_BOOTSTRAP = 30

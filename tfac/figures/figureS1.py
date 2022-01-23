@@ -32,16 +32,10 @@ def fig_S1_setup():
 
 
 def cytokine_boxplot(cyto_slice, cytokines, patInfo, axx):
-    ser = pd.DataFrame(cyto_slice, index=cytokines, columns=patInfo.columns).dropna(axis=1).T
-    ser["Outcome"] = patInfo.loc["status"]
-    out0 = ser[ser["Outcome"] == 0]
-    out1 = ser[ser["Outcome"] == 1]
-    ser = ser.append(pd.DataFrame(np.abs(out0.median() - out1.median()), columns=["diff"]).T).sort_values(by="diff", axis=1).drop("diff")
-    ser = pd.melt(ser, id_vars=["Outcome"])
-
-    b = sns.boxplot(data=ser, x="variable", y="value", hue="Outcome", ax=axx)
-    handles, _ = b.get_legend_handles_labels()
-    b.legend(handles, ["Resolved", "Persisted"])
+    ser = pd.DataFrame(cyto_slice, index=cytokines, columns=patInfo.columns).T
+    patInfo = patInfo.T["status"]
+    ser = ser.join(patInfo).dropna().reset_index().melt(id_vars=["sid", "status"])
+    b = sns.boxplot(data=ser, x="variable", y="value", hue="status", ax=axx)
     b.set_xticklabels(b.get_xticklabels(), rotation=30, ha="right")
     b.set_xlabel("Cytokine")
     b.set_ylabel("Normalized cytokine level")

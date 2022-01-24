@@ -28,7 +28,8 @@ def get_r2x_results():
     components = 12
 
     r2x_v_components = pd.Series(
-        index=np.arange(1, components + 1)
+        index=np.arange(1, components + 1),
+        dtype=float
     )
     acc_v_components = pd.Series(
         index=np.arange(1, components + 1).tolist(),
@@ -41,7 +42,7 @@ def get_r2x_results():
         acc_v_components[n_components] = run_model(t_fac.factors[0], labels)[0]
 
     # R2X v. Scaling
-    scalingV = np.logspace(-16, 4, base=2, num=15)
+    scalingV = np.logspace(-10, 10, base=2, num=15)
     r2x_v_scaling = pd.DataFrame(
         index=scalingV,
         columns=["Total", "Tensor", "Matrix"]
@@ -51,6 +52,7 @@ def get_r2x_results():
         dtype=float
     )
     for scaling in r2x_v_scaling.index:
+        tensor, matrix, _ = form_tensor(scaling)
         t_fac, _ = get_factors(variance_scaling=scaling)
         r2x_v_scaling.loc[scaling, "Total"] = t_fac.R2X
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
@@ -101,7 +103,6 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     )
 
     # R2X v. Scaling
-
     r2x_v_scaling.plot(ax=axs[1])
     axs[1].legend(
         ['Total', 'Cytokine', 'RNA']
@@ -121,7 +122,6 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     )
 
     # Accuracy v. Components
-
     axs[2].plot(acc_v_components.index, acc_v_components)
     axs[2].set_ylabel('Prediction Accuracy')
     axs[2].set_xlabel('Number of Components')
@@ -142,7 +142,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[3].set_ylabel('Prediction Accuracy')
     axs[3].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
     axs[3].set_ylim([0.5, 0.75])
-    axs[3].set_xticks(np.logspace(-16, 4, base=2, num=11))
+    axs[3].set_xticks(np.logspace(-10, 10, base=2, num=11))
     axs[3].tick_params(axis='x', pad=-3)
     axs[3].text(
         -0.25,

@@ -8,8 +8,8 @@ from os.path import abspath, dirname, join
 import pandas as pd
 from sklearn.metrics import r2_score, roc_curve
 
-from .common import getSetup, get_data_types
-from ..dataImport import import_validation_patient_metadata
+from .common import getSetup
+from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines
 from ..predict import predict_known, predict_validation, predict_regression
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]
@@ -513,7 +513,23 @@ def export_results(train_samples, train_probabilities, validation_samples,
 
 
 def makeFigure():
-    data_types, patient_data = get_data_types()
+    plasma_cyto, serum_cyto = import_cytokines()
+    components, patient_data = get_factors()
+    components = components[1][0]
+
+    data_types = [
+        ('Plasma Cytokines', plasma_cyto.T),
+        ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
+        ('Serum Cytokines', serum_cyto.T),
+        ('Serum IL-10', serum_cyto.loc['IL-10', :]),
+        ('CMTF', pd.DataFrame(
+            components,
+            index=patient_data.index,
+            columns=list(range(1, components.shape[1] + 1))
+        )
+        )
+    ]
+
     validation_samples, validation_probabilities = \
         run_validation(data_types, patient_data)
     train_samples, train_probabilities, sex_predictions, race_predictions = \

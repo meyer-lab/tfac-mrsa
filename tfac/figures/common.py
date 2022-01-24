@@ -111,36 +111,3 @@ def overlayCartoon(figFile, cartoonFile, x, y, scalee=1):
 
     template.append(cartoon)
     template.save(figFile)
-
-
-def get_data_types():
-    """
-    Creates data for classification.
-
-    Parameters:
-        None
-
-    Returns:
-        data_types (list[tuple]): data sources and their names
-        patient_data (pandas.DataFrame): patient metadata
-    """
-    plasma_cyto, serum_cyto = import_cytokines()
-    tensor, matrix, patient_data = form_tensor()
-
-    components = perform_CMTF(tensor, matrix)
-    components = components[1][0]
-
-    data_types = [
-        ('Plasma Cytokines', plasma_cyto.T),
-        ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
-        ('Serum Cytokines', serum_cyto.T),
-        ('Serum IL-10', serum_cyto.loc['IL-10', :]),
-        ('CMTF', pd.DataFrame(
-            components,
-            index=patient_data.index,
-            columns=list(range(1, components.shape[1] + 1))
-        )
-        )
-    ]
-
-    return data_types, patient_data

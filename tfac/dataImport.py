@@ -165,9 +165,8 @@ def form_limit_tensor():
     sources and cohorts.
 
     Returns:
-        limit_tensor (pandas.DataFrame): detection limits for each cytokine
-            across serum/plasma sources; set to be highest detection limit
-            across cohorts
+        limit_tensor (numpy.ndarray): tensor of detection limits for each
+        cytokine and patient; same shape as the tensor produced via form_tensor
     """
     limit_tensor = np.load(
         join(PATH_HERE, 'tfac', 'data', 'mrsa', 'LoD_tensor.pkl'),

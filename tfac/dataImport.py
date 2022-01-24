@@ -193,7 +193,7 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
 
 
 @lru_cache
-def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=9):
+def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     """
     Return the factorization results.
 

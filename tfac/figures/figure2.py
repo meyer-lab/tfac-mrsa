@@ -52,6 +52,7 @@ def get_r2x_results():
         dtype=float
     )
     for scaling in r2x_v_scaling.index:
+        tensor, matrix, _ = form_tensor(scaling)
         t_fac, _ = get_factors(variance_scaling=scaling)
         r2x_v_scaling.loc[scaling, "Total"] = t_fac.R2X
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)

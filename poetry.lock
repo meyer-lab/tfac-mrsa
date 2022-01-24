@@ -399,7 +399,7 @@ scipy = "*"
 
 [[package]]
 name = "tensorpack"
-version = "0.0.8"
+version = "0.0.9"
 description = "A collection of tensor methods from the Meyer lab."
 category = "main"
 optional = false
@@ -415,8 +415,8 @@ tqdm = "^4.62.3"
 [package.source]
 type = "git"
 url = "https://github.com/meyer-lab/tensorpack.git"
-reference = "main"
-resolved_reference = "800410e0d2608adbaf7f80484b6478d186421d55"
+reference = "v0.0.9"
+resolved_reference = "da68ed94a1e0ce00b9219b78d4557cd7ea35edfe"
 
 [[package]]
 name = "threadpoolctl"
@@ -461,7 +461,7 @@ telegram = ["requests"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "867ddcb0ef30c48e5d6c5aae25fcbfdb5d07f7d6eecc2b498fe70a53eb80eee6"
+content-hash = "065656317e335168d1f7771e1808263ddff032682b7e362048e7b9df30c82d06"
 
 [metadata.files]
 atomicwrites = [

@@ -10,10 +10,9 @@ import pandas as pd
 import seaborn as sns
 from sklearn.preprocessing import scale
 from sklearn.utils import resample
-from tensorpack import perform_CMTF
 
 from .common import getSetup
-from ..dataImport import form_tensor, import_cytokines
+from ..dataImport import form_tensor, import_cytokines, get_factors
 from ..predict import run_model, predict_regression
 
 N_BOOTSTRAP = 30
@@ -21,7 +20,7 @@ PATH_HERE = dirname(dirname(abspath(__file__)))
 TARGETS = ['status', 'gender']
 
 
-def bootstrap_weights():
+def bootstrap_weights(components):
     """
     Predicts samples with unknown outcomes.
 
@@ -32,11 +31,10 @@ def bootstrap_weights():
         weights (pandas.DataFrame): mean and StD of component weights w/r to
             prediction targets
     """
-    tensor, matrix, patient_data = form_tensor()
+    _, _, patient_data = form_tensor()
     patient_data = patient_data.reset_index(drop=True)
     patient_data = patient_data.loc[patient_data['status'] != 'Unknown']
 
-    components = perform_CMTF(tensor, matrix)
     components = components[1][0]
     components = components[patient_data.index, :]
 
@@ -52,7 +50,7 @@ def bootstrap_weights():
         for sample in range(N_BOOTSTRAP):
             data, labels = resample(components, patient_data.loc[:, target])
             if target == 'age':
-                _, _coef = predict_regression(data, labels, return_coef=True)
+                _, _coef = predict_regression(data, labels)
             else:
                 _, _, _coef = run_model(data, labels, return_coef=True)
 
@@ -80,7 +78,7 @@ def tfac_setup():
             components
         pat_info (pandas.DataFrame): patient meta-data
     """
-    tensor, matrix, pat_info = form_tensor()
+    factors, pat_info = get_factors()
     plasma, _ = import_cytokines()
     cytokines = plasma.index
 
@@ -90,7 +88,6 @@ def tfac_setup():
     pat_info = pat_info.drop('sorted', axis=1)
     pat_info = pat_info.T
 
-    factors = perform_CMTF(tensor, matrix)
     col_names = [f"Cmp. {i}" for i in np.arange(1, factors.rank + 1)]
     subjects = pd.DataFrame(
         factors.factors[0][sort_idx, :],
@@ -108,7 +105,7 @@ def tfac_setup():
         index=["Serum", "Plasma"]
     )
 
-    return subjects, cytos, source, pat_info
+    return subjects, cytos, source, pat_info, factors
 
 
 def plot_results(weights, subjects, cytos, source, pat_info):
@@ -345,8 +342,8 @@ def plot_results(weights, subjects, cytos, source, pat_info):
 
 
 def makeFigure():
-    weights = bootstrap_weights()
-    subjects, cytos, source, pat_info = tfac_setup()
+    subjects, cytos, source, pat_info, factors = tfac_setup()
+    weights = bootstrap_weights(factors)
 
     cytos = cytos.loc[abs(cytos).max(axis=1) > 0.5]
     fig = plot_results(weights, subjects, cytos, source, pat_info)

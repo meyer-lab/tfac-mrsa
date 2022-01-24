@@ -103,7 +103,6 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     )
 
     # R2X v. Scaling
-
     r2x_v_scaling.plot(ax=axs[1])
     axs[1].legend(
         ['Total', 'Cytokine', 'RNA']
@@ -123,7 +122,6 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     )
 
     # Accuracy v. Components
-
     axs[2].plot(acc_v_components.index, acc_v_components)
     axs[2].set_ylabel('Prediction Accuracy')
     axs[2].set_xlabel('Number of Components')

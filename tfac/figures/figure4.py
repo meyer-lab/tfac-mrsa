@@ -344,8 +344,4 @@ def plot_results(weights, subjects, cytos, source, pat_info):
 def makeFigure():
     subjects, cytos, source, pat_info, factors = tfac_setup()
     weights = bootstrap_weights(factors)
-
-    cytos = cytos.loc[abs(cytos).max(axis=1) > 0.5]
-    fig = plot_results(weights, subjects, cytos, source, pat_info)
-
-    return fig
+    return plot_results(weights, subjects, cytos, source, pat_info)

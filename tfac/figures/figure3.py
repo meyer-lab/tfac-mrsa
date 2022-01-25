@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.metrics import r2_score, roc_curve
 
 from .common import getSetup
-from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines
+from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines, import_rna
 from ..predict import predict_known, predict_validation, predict_regression
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]
@@ -38,6 +38,9 @@ def run_validation(data_types, patient_data):
     for data_type in data_types:
         source = data_type[0]
         data = data_type[1]
+
+        data = data.reindex(index=patient_data.index)
+        data = data.dropna(axis=0)
         labels = patient_data.loc[data.index, 'status']
 
         _predictions = predict_validation(data, labels)
@@ -85,6 +88,9 @@ def run_cv(data_types, patient_data):
         for data_type in data_types:
             source = data_type[0]
             data = data_type[1]
+
+            data = data.reindex(index=patient_data.index)
+            data = data.dropna(axis=0)
             labels = patient_data.loc[data.index, column]
 
             _predictions = predict_known(data, labels)
@@ -229,7 +235,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     axs[0].set_xlim(-1, 3 * len(accuracies) - 1)
     axs[0].set_ylim(0, 1)
-    axs[0].legend(['Cytokine Data', 'CMTF'])
+    axs[0].legend(['Raw Data', 'CMTF'])
     ticks = [label.replace(' ', '\n') for label in accuracies.index]
     axs[0].set_xticks(
         np.arange(0.5, 3 * len(accuracies), 3)
@@ -277,7 +283,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     legend_lines.append(Line2D([0], [0], color='k', linestyle='-', linewidth=0.5))
     legend_lines.append(Line2D([0], [0], color='k', linestyle='--', linewidth=0.5))
-    legend_names.extend(['CMTF', 'Cytokine Only'])
+    legend_names.extend(['CMTF', 'Raw Data'])
 
     axs[1].set_xlim(0, 1)
     axs[1].set_ylim(0, 1)
@@ -310,7 +316,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     axs[2].set_xlim(-1, 3 * len(accuracies) - 1)
     axs[2].set_ylim(0, 1)
-    axs[2].legend(['Cytokine Data', 'CMTF'])
+    axs[2].legend(['Raw Data', 'CMTF'])
     axs[2].set_xticks(
         np.arange(0.5, 3 * len(val_accuracies), 3)
     )
@@ -514,6 +520,7 @@ def export_results(train_samples, train_probabilities, validation_samples,
 
 def makeFigure():
     plasma_cyto, serum_cyto = import_cytokines()
+    rna = import_rna()
     components, patient_data = get_factors()
     components = components[1][0]
 
@@ -522,6 +529,7 @@ def makeFigure():
         ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
         ('Serum Cytokines', serum_cyto.T),
         ('Serum IL-10', serum_cyto.loc['IL-10', :]),
+        ('RNA Modules', rna),
         ('CMTF', pd.DataFrame(
             components,
             index=patient_data.index,

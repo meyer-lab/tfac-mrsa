@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.metrics import r2_score, roc_curve
 
 from .common import getSetup
-from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines
+from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines, import_rna
 from ..predict import predict_known, predict_validation, predict_regression
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]
@@ -38,6 +38,9 @@ def run_validation(data_types, patient_data):
     for data_type in data_types:
         source = data_type[0]
         data = data_type[1]
+
+        data = data.reindex(index=patient_data.index)
+        data = data.dropna(axis=0)
         labels = patient_data.loc[data.index, 'status']
 
         _predictions = predict_validation(data, labels)
@@ -85,6 +88,9 @@ def run_cv(data_types, patient_data):
         for data_type in data_types:
             source = data_type[0]
             data = data_type[1]
+
+            data = data.reindex(index=patient_data.index)
+            data = data.dropna(axis=0)
             labels = patient_data.loc[data.index, column]
 
             _predictions = predict_known(data, labels)
@@ -514,6 +520,7 @@ def export_results(train_samples, train_probabilities, validation_samples,
 
 def makeFigure():
     plasma_cyto, serum_cyto = import_cytokines()
+    rna = import_rna()
     components, patient_data = get_factors()
     components = components[1][0]
 
@@ -522,6 +529,7 @@ def makeFigure():
         ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
         ('Serum Cytokines', serum_cyto.T),
         ('Serum IL-10', serum_cyto.loc['IL-10', :]),
+        ('RNA Modules', rna),
         ('CMTF', pd.DataFrame(
             components,
             index=patient_data.index,

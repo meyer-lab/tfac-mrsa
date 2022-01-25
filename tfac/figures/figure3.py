@@ -235,7 +235,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     axs[0].set_xlim(-1, 3 * len(accuracies) - 1)
     axs[0].set_ylim(0, 1)
-    axs[0].legend(['Cytokine Data', 'CMTF'])
+    axs[0].legend(['Raw Data', 'CMTF'])
     ticks = [label.replace(' ', '\n') for label in accuracies.index]
     axs[0].set_xticks(
         np.arange(0.5, 3 * len(accuracies), 3)
@@ -283,7 +283,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     legend_lines.append(Line2D([0], [0], color='k', linestyle='-', linewidth=0.5))
     legend_lines.append(Line2D([0], [0], color='k', linestyle='--', linewidth=0.5))
-    legend_names.extend(['CMTF', 'Cytokine Only'])
+    legend_names.extend(['CMTF', 'Raw Data'])
 
     axs[1].set_xlim(0, 1)
     axs[1].set_ylim(0, 1)
@@ -316,7 +316,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     axs[2].set_xlim(-1, 3 * len(accuracies) - 1)
     axs[2].set_ylim(0, 1)
-    axs[2].legend(['Cytokine Data', 'CMTF'])
+    axs[2].legend(['Raw Data', 'CMTF'])
     axs[2].set_xticks(
         np.arange(0.5, 3 * len(val_accuracies), 3)
     )

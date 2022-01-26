@@ -1,18 +1,8 @@
-from argparse import Namespace
-import os
-from os.path import abspath, dirname, exists, join
-import sys
+from os.path import abspath, dirname
 
-import gseapy as gp
-from iterativeWGCNA.iterativeWGCNA import IterativeWGCNA
 import matplotlib.pyplot as plt
-import matplotlib.transforms as transforms
-import mygene
-from natsort import natsorted
 import numpy as np
-import pandas as pd
 import seaborn as sns
-from sklearn.preprocessing import scale
 from tensorpack import perform_CMTF
 
 from .common import getSetup

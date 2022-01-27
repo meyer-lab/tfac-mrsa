@@ -116,7 +116,6 @@ def import_rna():
     # Always scale
     rna.loc[:, :] = scale(rna.to_numpy())
 
-    rna.sort_index(axis=1, inplace=True)
     return rna
 
 

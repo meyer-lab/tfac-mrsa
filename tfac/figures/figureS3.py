@@ -3,10 +3,9 @@ from os.path import abspath, dirname
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from tensorpack import perform_CMTF
 
 from .common import getSetup
-from ..dataImport import form_tensor, import_rna
+from ..dataImport import get_factors, import_rna
 
 plt.rcParams["svg.fonttype"] = "none"
 
@@ -16,8 +15,7 @@ PATH_HERE = dirname(abspath(__file__))
 
 def makeFigure():
     rna = import_rna()
-    tensor, matrix, _ = form_tensor()
-    t_fac = perform_CMTF(tensor, matrix)
+    t_fac, _ = get_factors()
     mod_expression = t_fac.mFactor
 
     fig_size = (4, 8)

@@ -1,10 +1,9 @@
 """
 This creates Figure S4 - Cytokine Correlation Plots
 """
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.stats import spearmanr
+from scipy.stats import pearsonr
 import seaborn as sns
 
 from .common import getSetup
@@ -13,7 +12,7 @@ from ..dataImport import import_cytokines
 
 def correlate_cytokines():
     """Creates correlation matrices for both cytokine sources."""
-    plasma, serum = import_cytokines()
+    plasma, serum = import_cytokines(scale_cyto=False)
     corr_plasma = pd.DataFrame(
         index=plasma.index[1:],
         columns=plasma.index[:-1],
@@ -21,13 +20,16 @@ def correlate_cytokines():
     )
     corr_serum = corr_plasma.copy()
 
+    plasma = plasma.apply(np.log)
+    serum = serum.apply(np.log)
+
     for source, corr_df in zip([plasma, serum], [corr_plasma, corr_serum]):
         for i in range(source.shape[0]):
             for j in range(i + 1, source.shape[0]):
                 col = source.index[i]
                 row = source.index[j]
 
-                corr, _ = spearmanr(
+                corr, _ = pearsonr(
                     source.loc[row, :],
                     source.loc[col, :]
                 )

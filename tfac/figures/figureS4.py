@@ -74,7 +74,7 @@ def makeFigure():
             np.arange(0.5, corr.shape[0], 1)
         )
         ax.set_xticklabels(
-            corr.index,
+            corr.columns,
             ha='center',
             va='top'
         )

@@ -1,9 +1,8 @@
 """
 This creates Figure S4 - Cytokine Correlation Plots
 """
+import scipy.cluster.hierarchy as sch
 import numpy as np
-import pandas as pd
-from scipy.stats import pearsonr
 import seaborn as sns
 
 from .common import getSetup
@@ -13,28 +12,8 @@ from ..dataImport import import_cytokines
 def correlate_cytokines():
     """Creates correlation matrices for both cytokine sources."""
     plasma, serum = import_cytokines(scale_cyto=False)
-    corr_plasma = pd.DataFrame(
-        index=plasma.index[1:],
-        columns=plasma.index[:-1],
-        dtype=float
-    )
-    corr_serum = corr_plasma.copy()
-
-    plasma = plasma.apply(np.log)
-    serum = serum.apply(np.log)
-
-    for source, corr_df in zip([plasma, serum], [corr_plasma, corr_serum]):
-        for i in range(source.shape[0]):
-            for j in range(i + 1, source.shape[0]):
-                col = source.index[i]
-                row = source.index[j]
-
-                corr, _ = pearsonr(
-                    source.loc[row, :],
-                    source.loc[col, :]
-                )
-
-                corr_df.loc[row, col] = corr
+    corr_plasma = plasma.T.corr()
+    corr_serum = serum.T.corr()
 
     return corr_plasma, corr_serum
 
@@ -42,6 +21,15 @@ def correlate_cytokines():
 def makeFigure():
     """ Get a list of the axis objects and create a figure. """
     corr_plasma, corr_serum = correlate_cytokines()
+
+    pairwise_distances = sch.distance.pdist(corr_plasma)
+    linkage = sch.linkage(pairwise_distances, method='complete')
+    cluster_distance_threshold = pairwise_distances.max()/2
+    idx_to_cluster_array = sch.fcluster(linkage, cluster_distance_threshold, 
+                                        criterion='distance')
+    idx = np.argsort(idx_to_cluster_array)
+    corr_plasma = corr_plasma.iloc[idx, :].T.iloc[idx, :]
+    corr_serum = corr_serum.iloc[idx, :].T.iloc[idx, :]
 
     fig_size = (10, 5)
     layout = {

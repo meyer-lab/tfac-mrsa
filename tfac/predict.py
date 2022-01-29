@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
-from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_predict
+from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_predict, cross_val_score
 
 from .dataImport import import_validation_patient_metadata
 
@@ -17,7 +17,7 @@ skf = RepeatedStratifiedKFold(
 
 def predict_validation(data, labels, predict_proba=False):
     """
-    Trains a LogisticRegressionCV model using samples with known outcomes,
+    Trains a model using samples with known outcomes,
     then predicts samples with unknown outcomes.
 
     Parameters:
@@ -146,7 +146,7 @@ def predict_regression(data, labels):
 
 def run_model(data, labels, return_coef=False):
     """
-    Runs provided LogisticRegressionCV model with the provided data
+    Builds a LogisticRegression model with the provided data
     and labels.
 
     Parameters:
@@ -157,7 +157,7 @@ def run_model(data, labels, return_coef=False):
     Returns:
         score (float): Accuracy for best-performing model (considers
             l1-ratio and C)
-        model (sklearn.LogisticRegressionCV)
+        model (sklearn.LogisticRegression)
     """
     if isinstance(labels, pd.Series):
         labels = labels.reset_index(drop=True)
@@ -174,30 +174,33 @@ def run_model(data, labels, return_coef=False):
     else:
         data = data[labels.index, :]
 
-    model = LogisticRegressionCV(
-        l1_ratios=[0.8],
-        solver="saga",
-        penalty="elasticnet",
-        n_jobs=-1,
-        cv=skf,
-        max_iter=100000,
-        scoring='balanced_accuracy',
-        multi_class='ovr'
-    )
-    model.fit(data, labels)
-    coef = model.coef_[0]
-    scores = np.mean(list(model.scores_.values())[0], axis=0)
+    if data.shape[0] > data.shape[1] * 10:
+        model = LogisticRegression(penalty="none", tol=1e-9, max_iter=10000)
+    else:
+        model = LogisticRegressionCV(
+            l1_ratios=[0.8],
+            solver="saga",
+            penalty="elasticnet",
+            n_jobs=-1,
+            cv=skf,
+            max_iter=100000,
+            scoring='balanced_accuracy',
+            multi_class='ovr'
+        )
+        model.fit(data, labels)
 
-    model = LogisticRegression(
-        C=model.C_[0],
-        l1_ratio=model.l1_ratio_[0],
-        solver="saga",
-        penalty="elasticnet",
-        max_iter=100000,
-    )
+        model = LogisticRegression(
+            C=model.C_[0],
+            l1_ratio=model.l1_ratio_[0],
+            solver="saga",
+            penalty="elasticnet",
+            max_iter=100000,
+        )
+
     model.fit(data, labels)
+    score = np.mean(cross_val_score(model, data, labels, cv=skf, n_jobs=-1))
 
     if return_coef:
-        return np.max(scores), model, coef
+        return score, model, np.squeeze(model.coef_)
     else:
-        return np.max(scores), model
+        return score, model

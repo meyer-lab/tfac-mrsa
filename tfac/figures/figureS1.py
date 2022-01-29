@@ -1,7 +1,6 @@
 """
 This creates Figure S1 - Full Cytokine plots
 """
-import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
 import seaborn as sns

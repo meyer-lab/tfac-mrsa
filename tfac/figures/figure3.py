@@ -6,7 +6,7 @@ from matplotlib.lines import Line2D
 import numpy as np
 from os.path import abspath, dirname, join
 import pandas as pd
-from sklearn.metrics import r2_score, roc_curve
+from sklearn.metrics import balanced_accuracy_score, r2_score, roc_curve
 
 from .common import getSetup
 from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines, import_rna
@@ -141,10 +141,7 @@ def get_accuracy(predicted, actual):
     predicted = predicted.astype(float)
     actual = actual.astype(float)
 
-    correct = [1 if predicted.loc[i] == actual.loc[i] else 0 for i in
-               predicted.index]
-
-    return np.mean(correct)
+    return balanced_accuracy_score(actual, predicted)
 
 
 def get_accuracies(samples):
@@ -177,8 +174,8 @@ def get_accuracies(samples):
         labels = actual.loc[col.index]
         cmtf_col = cmtf.loc[col.index]
 
-        accuracies.loc[d_type] = get_accuracy(col, actual)
-        cmtf_accuracies.loc[d_type] = get_accuracy(cmtf_col, labels)
+        accuracies.loc[d_type] = get_accuracy(labels, col)
+        cmtf_accuracies.loc[d_type] = get_accuracy(labels, cmtf_col)
 
     return accuracies, cmtf_accuracies
 
@@ -349,7 +346,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
         col = validation_probabilities.loc[:, d_type].dropna()
         cmtf_col = cmtf_probabilities.loc[col.index]
 
-        actual = validation_samples.loc[col.index, 'Actual'].astype(int)
+        actual = validation_samples.loc[col.index, 'Actual']
         fpr, tpr, _ = roc_curve(actual, col)
         cmtf_fpr, cmtf_tpr, _ = roc_curve(actual, cmtf_col)
 

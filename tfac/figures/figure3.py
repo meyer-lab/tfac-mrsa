@@ -93,9 +93,9 @@ def run_cv(data_types, patient_data):
             data = data.dropna(axis=0)
             labels = patient_data.loc[data.index, column]
 
-            _predictions = predict_known(data, labels)
+            _predictions, _ = predict_known(data, labels)
             if column == 'status':
-                _probabilities = predict_known(
+                _probabilities, _ = predict_known(
                     data,
                     labels,
                     method='predict_proba'

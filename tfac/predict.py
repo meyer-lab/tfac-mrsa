@@ -105,7 +105,7 @@ def predict_known(data, labels, method='predict'):
         index=labels.index
     )
 
-    return predictions
+    return predictions, model
 
 
 def predict_regression(data, labels):

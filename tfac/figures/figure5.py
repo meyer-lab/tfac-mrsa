@@ -34,18 +34,18 @@ def run_cv(components, patient_data):
     )
     probabilities = predictions.copy()
 
-    predictions.loc[:, 'Full'] = predict_known(components, labels)
-    probabilities.loc[:, 'Full'] = predict_known(
+    predictions.loc[:, 'Full'], _ = predict_known(components, labels)
+    probabilities.loc[:, 'Full'], _ = predict_known(
         components,
         labels,
         method='predict_proba'
     )
 
-    predictions.loc[:, '5_7'] = predict_known(
+    predictions.loc[:, '5_7'], _ = predict_known(
         components.loc[:, [5, 7]],
         labels
     )
-    probabilities.loc[:, '5_7'] = predict_known(
+    probabilities.loc[:, '5_7'], model_57 = predict_known(
         components.loc[:, [5, 7]],
         labels,
         method='predict_proba'
@@ -53,7 +53,7 @@ def run_cv(components, patient_data):
 
     predictions.loc[:, 'Actual'] = patient_data.loc[:, 'status']
 
-    return predictions, probabilities
+    return predictions, probabilities, model_57
 
 
 def get_accuracy(predicted, actual):
@@ -102,7 +102,8 @@ def get_accuracies(samples):
     return accuracies
 
 
-def plot_results(train_samples, train_probabilities, components, patient_data):
+def plot_results(train_samples, train_probabilities, model_57, components,
+                 patient_data):
     """
     Plots prediction model performance.
 
@@ -110,6 +111,7 @@ def plot_results(train_samples, train_probabilities, components, patient_data):
         train_samples (pandas.DataFrame): predictions for training samples
         train_probabilities (pandas.DataFrame): predicted probability of
             persistence for training samples
+        model_57 (sklearn.LogisticRegression): LR model using components 5 & 7
         components (pandas.DataFrame): CMTF components
         patient_data (pandas.DataFrame): patient metadata
 
@@ -181,14 +183,31 @@ def plot_results(train_samples, train_probabilities, components, patient_data):
     style = style.replace(0, 's')
     style = style.replace(1, 'o')
 
+    xx, yy = np.meshgrid(
+        np.linspace(-1.1, 1.1, 10),
+        np.linspace(-1.1, 1.1, 10)
+    )
+    grid = np.c_[xx.ravel(), yy.ravel()]
+    prob_map = model_57.predict_proba(grid)[:, 1].reshape(xx.shape)
+    axs[2].contour(
+        xx,
+        yy,
+        prob_map,
+        levels=[0.25, 0.5, 0.75],
+        colors=[COLOR_CYCLE[3], 'grey', COLOR_CYCLE[4]],
+        linestyles='--'
+    )
+
     for marker in ['s', 'o']:
         index = style.loc[style == marker].index
         axs[2].scatter(
             components.loc[index, 5],
             components.loc[index, 7],
             c=color.loc[index],
+            s=15,
             edgecolors='k',
-            marker=marker
+            marker=marker,
+            zorder=2
         )
 
     axs[2].set_xticks(np.arange(-1, 1.1, 0.5))
@@ -222,12 +241,14 @@ def makeFigure():
         columns=list(range(1, components.shape[1] + 1))
     )
 
-    train_samples, train_probabilities = run_cv(components, patient_data)
+    train_samples, train_probabilities, model_57 = \
+        run_cv(components, patient_data)
     train_samples = train_samples.astype(int)
 
     fig = plot_results(
         train_samples,
         train_probabilities,
+        model_57,
         components,
         patient_data
     )

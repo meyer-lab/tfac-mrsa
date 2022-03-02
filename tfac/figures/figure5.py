@@ -10,7 +10,7 @@ from sklearn.metrics import roc_curve
 
 from .common import getSetup
 from ..dataImport import import_validation_patient_metadata, get_factors
-from ..predict import predict_known
+from ..predict import get_accuracy, predict_known
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color']
 PATH_HERE = dirname(dirname(abspath(__file__)))
@@ -54,26 +54,6 @@ def run_cv(components, patient_data):
     predictions.loc[:, 'Actual'] = patient_data.loc[:, 'status']
 
     return predictions, probabilities, model_57
-
-
-def get_accuracy(predicted, actual):
-    """
-    Returns the accuracy for the provided predictions.
-
-    Parameters:
-        predicted (pandas.Series): predicted values for samples
-        actual (pandas.Series): actual values for samples
-
-    Returns:
-        float: accuracy of predicted values
-    """
-    predicted = predicted.astype(float)
-    actual = actual.astype(float)
-
-    correct = [1 if predicted.loc[i] == actual.loc[i] else 0 for i in
-               predicted.index]
-
-    return np.mean(correct)
 
 
 def get_accuracies(samples):

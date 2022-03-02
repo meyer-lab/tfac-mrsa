@@ -10,7 +10,7 @@ from sklearn.metrics import r2_score, roc_curve
 
 from .common import getSetup
 from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines, import_rna
-from ..predict import predict_known, predict_validation, predict_regression
+from ..predict import get_accuracy, predict_known, predict_validation, predict_regression
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]
 PATH_HERE = dirname(dirname(abspath(__file__)))
@@ -93,9 +93,9 @@ def run_cv(data_types, patient_data):
             data = data.dropna(axis=0)
             labels = patient_data.loc[data.index, column]
 
-            _predictions = predict_known(data, labels)
+            _predictions, _ = predict_known(data, labels)
             if column == 'status':
-                _probabilities = predict_known(
+                _probabilities, _ = predict_known(
                     data,
                     labels,
                     method='predict_proba'
@@ -125,26 +125,6 @@ def run_age_regression(data, patient_data):
     age_predictions.loc[:, 'Actual'] = labels.loc[age_predictions.index]
 
     return age_predictions
-
-
-def get_accuracy(predicted, actual):
-    """
-    Returns the accuracy for the provided predictions.
-
-    Parameters:
-        predicted (pandas.Series): predicted values for samples
-        actual (pandas.Series): actual values for samples
-
-    Returns:
-        float: accuracy of predicted values
-    """
-    predicted = predicted.astype(float)
-    actual = actual.astype(float)
-
-    correct = [1 if predicted.loc[i] == actual.loc[i] else 0 for i in
-               predicted.index]
-
-    return np.mean(correct)
 
 
 def get_accuracies(samples):

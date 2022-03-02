@@ -96,7 +96,7 @@ def get_predictions():
     )
     labels = patient_data.loc[:, 'status']
 
-    predictions = predict_known(data, labels)
+    predictions, _ = predict_known(data, labels)
     for i in predictions.index:
         if predictions.loc[i] == labels.loc[i]:
             predicted.loc[i, 'Correct'] = 1

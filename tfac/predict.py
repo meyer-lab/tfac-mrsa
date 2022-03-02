@@ -2,7 +2,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV
+from sklearn.linear_model import LinearRegression, LogisticRegression, \
+    LogisticRegressionCV
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_predict
 
 from .dataImport import import_validation_patient_metadata
@@ -105,7 +107,7 @@ def predict_known(data, labels, method='predict'):
         index=labels.index
     )
 
-    return predictions
+    return predictions, model
 
 
 def predict_regression(data, labels):
@@ -201,3 +203,22 @@ def run_model(data, labels, return_coef=False):
         return np.max(scores), model, coef
     else:
         return np.max(scores), model
+
+
+def get_accuracy(predicted, actual):
+    """
+    Returns the accuracy for the provided predictions.
+
+    Parameters:
+        predicted (pandas.Series): predicted values for samples
+        actual (pandas.Series): actual values for samples
+
+    Returns:
+        float: accuracy of predicted values
+    """
+    predicted = predicted.astype(float)
+    actual = actual.astype(float)
+    actual = actual.loc[predicted.index]
+
+    return balanced_accuracy_score(actual, predicted)
+

@@ -31,24 +31,28 @@ def impute_cv():
     tensor, matrix, patient_data = form_tensor()
     both_cyto = patient_data.loc[:, 'type'].str.contains('0Serum1Plasma')
 
-    tensor = tensor[both_cyto, :, :]
-    matrix = matrix[both_cyto, :]
-    imputed = np.zeros(tensor.shape)
+    imputed = np.full(tensor.shape, np.nan)
+    both_idx = np.where(both_cyto)[0]
+    print(both_idx)
 
     for k in range(tensor.shape[2]):
-        for i in range(tensor.shape[0]):
+        for i in both_idx:
             dropped = tensor.copy()
             dropped[i, :, k] = np.nan
             t_fac = perform_CMTF(
                 tensor,
                 matrix,
                 r=8,
-                maxiter=200,
-                progress=False
+                maxiter=400,
+                progress=True
             )
 
             _imputed = cp_to_tensor(t_fac)
             imputed[i, :, k] = _imputed[i, :, k]
+    
+    # Subset for subjects that have both samples
+    tensor = tensor[both_cyto, :, :]
+    imputed = imputed[both_cyto, :, :]
 
     return tensor, imputed
 

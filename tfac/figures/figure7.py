@@ -5,6 +5,8 @@ import matplotlib
 from matplotlib.patches import Patch
 import numpy as np
 from os.path import abspath, dirname
+import pandas as pd
+from scipy.stats import pearsonr
 from tensorpack import perform_CMTF
 from tensorly import cp_to_tensor
 
@@ -51,22 +53,61 @@ def impute_cv():
     return tensor, imputed
 
 
-def plot_results(tensor, imputed):
+def get_correlations(tensor, imputed):
     """
-    Plots prediction model performance.
+    Gets correlations between imputed and measured values.
 
     Parameters:
         tensor (numpy.array): cytokine measurements
         imputed (numpy.array): cytokine measurements predicted via CMTF
 
     Returns:
+        correlations (pandas.DataFrame): correlations between imputed and
+            measured cytokines
+    """
+    serum, _ = import_cytokines()
+    correlations = pd.DataFrame(
+        index=serum.index,
+        columns=['Imputed Serum', 'Imputed Plasma', 'Measured']
+    )
+
+    for cyto in range(tensor.shape[1]):
+        serum_imputed, _ = pearsonr(
+            imputed[:, cyto, 0],
+            tensor[:, cyto, 0]
+        )
+        plasma_imputed, _ = pearsonr(
+            imputed[:, cyto, 1],
+            tensor[:, cyto, 1]
+        )
+        measured, _ = pearsonr(
+            tensor[:, cyto, 0],
+            tensor[:, cyto, 1]
+        )
+
+        correlations.iloc[cyto, :] = [serum_imputed, plasma_imputed, measured]
+
+    return correlations
+
+
+def plot_results(tensor, imputed, correlations):
+    """
+    Plots prediction model performance.
+
+    Parameters:
+        tensor (numpy.array): cytokine measurements
+        imputed (numpy.array): cytokine measurements predicted via CMTF
+        correlations (pandas.DataFrame): correlations between imputed and
+            measured cytokines
+
+    Returns:
         fig (matplotlib.Figure): figure depicting imputed and actual cytokine
             measurements
     """
-    fig_size = (8, 4)
+    fig_size = (8, 6)
     layout = {
         'ncols': 1,
-        'nrows': 2,
+        'nrows': 3,
     }
     axs, fig, _ = getSetup(
         fig_size,
@@ -225,11 +266,55 @@ def plot_results(tensor, imputed):
         ['Imputed Serum', 'Measured Serum', 'Imputed Plasma', 'Measured Plasma']
     )
 
+    axs[2].bar(
+        np.arange(0, 4 * correlations.shape[0], 4),
+        correlations.loc[:, 'Imputed Serum'],
+        width=1,
+        color=COLOR_CYCLE[0]
+    )
+    axs[2].bar(
+        np.arange(1, 4 * correlations.shape[0], 4),
+        correlations.loc[:, 'Imputed Plasma'],
+        width=1,
+        color=COLOR_CYCLE[1]
+    )
+    axs[2].bar(
+        np.arange(2, 4 * correlations.shape[0], 4),
+        correlations.loc[:, 'Measured'],
+        width=1,
+        color=COLOR_CYCLE[2]
+    )
+
+    axs[2].set_xticks(
+        np.arange(1, 4 * correlations.shape[0], 4)
+    )
+    axs[2].set_xticklabels(
+        correlations.index,
+        rotation=45,
+        ha='right',
+        va='top'
+    )
+
+    axs[2].set_xlim([-2, 4 * correlations.shape[0]])
+    axs[2].set_xlabel('Cytokine')
+    axs[2].set_ylabel('Pearson Correlation')
+
+    legend_patches = [
+        Patch(color=COLOR_CYCLE[0]),
+        Patch(color=COLOR_CYCLE[1]),
+        Patch(color=COLOR_CYCLE[2])
+    ]
+    axs[2].legend(
+        legend_patches,
+        ['Imputed Serum', 'Imputed Plasma', 'Measured Serum v. Plasma']
+    )
+
     return fig
 
 
 def makeFigure():
     tensor, imputed = impute_cv()
-    fig = plot_results(tensor, imputed)
+    correlations = get_correlations(tensor, imputed)
+    fig = plot_results(tensor, imputed, correlations)
 
     return fig

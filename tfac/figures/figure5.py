@@ -3,6 +3,7 @@ Creates Figure 5 -- Reduced Model
 """
 import matplotlib
 from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 import numpy as np
 from os.path import abspath, dirname
 import pandas as pd
@@ -41,19 +42,34 @@ def run_cv(components, patient_data):
         method='predict_proba'
     )
 
-    predictions.loc[:, '5_7'], _ = predict_known(
-        components.loc[:, [5, 7]],
-        labels
-    )
-    probabilities.loc[:, '5_7'], model_57 = predict_known(
-        components.loc[:, [5, 7]],
-        labels,
-        method='predict_proba'
-    )
+    best_reduced = (0, (None, None), None)
+    persistence_components = [4, 5, 7]
+    for i in np.arange(len(persistence_components)):
+        for j in np.arange(i + 1, len(persistence_components)):
+            comp_1 = persistence_components[i]
+            comp_2 = persistence_components[j]
+
+            predictions[(comp_1, comp_2)], _ = predict_known(
+                components.loc[:, [comp_1, comp_2]],
+                labels
+            )
+            probabilities[(comp_1, comp_2)], model = \
+                predict_known(
+                    components.loc[:, [comp_1, comp_2]],
+                    labels,
+                    method='predict_proba'
+                )
+
+            reduced_accuracy = get_accuracy(
+                predictions[(comp_1, comp_2)],
+                patient_data.loc[:, 'status']
+            )
+            if reduced_accuracy > best_reduced[0]:
+                best_reduced = (reduced_accuracy, (comp_1, comp_2), model)
 
     predictions.loc[:, 'Actual'] = patient_data.loc[:, 'status']
 
-    return predictions, probabilities, model_57
+    return predictions, probabilities, best_reduced
 
 
 def get_accuracies(samples):
@@ -76,13 +92,13 @@ def get_accuracies(samples):
     )
 
     for d_type in d_types:
-        col = samples.loc[:, d_type]
-        accuracies.loc[d_type] = get_accuracy(col, actual)
+        col = samples[d_type]
+        accuracies[d_type] = get_accuracy(col, actual)
 
     return accuracies
 
 
-def plot_results(train_samples, train_probabilities, model_57, components,
+def plot_results(train_samples, train_probabilities, model, components,
                  patient_data):
     """
     Plots prediction model performance.
@@ -91,7 +107,7 @@ def plot_results(train_samples, train_probabilities, model_57, components,
         train_samples (pandas.DataFrame): predictions for training samples
         train_probabilities (pandas.DataFrame): predicted probability of
             persistence for training samples
-        model_57 (sklearn.LogisticRegression): LR model using components 5 & 7
+        model (tuple): Best LR model using 2 components
         components (pandas.DataFrame): CMTF components
         patient_data (pandas.DataFrame): patient metadata
 
@@ -112,48 +128,50 @@ def plot_results(train_samples, train_probabilities, model_57, components,
 
     accuracies = get_accuracies(train_samples)
     axs[0].bar(
-        [0, 1],
+        np.arange(len(accuracies)),
         accuracies,
-        color=COLOR_CYCLE[:2],
+        color=COLOR_CYCLE[:4],
         width=0.8
     )
 
-    axs[0].set_xlim(-0.5, 1.5)
+    axs[0].set_xlim(-1, len(accuracies))
     axs[0].set_ylim(0, 1)
     axs[0].set_xticks(
-        np.arange(0, 2, 1)
+        np.arange(len(accuracies))
     )
+
+    labels = ['All']
+    for comps in accuracies.index[1:]:
+        labels.append(f'{comps[0]} & {comps[1]}')
+
     axs[0].set_xticklabels(
-        ['All\nComponents', 'Components\n5 & 7'],
-        fontsize=9,
-        ma='center',
-        rotation=0,
+        labels,
+        rotation=45,
+        ha='right',
         va='top'
     )
+
+    axs[0].set_xlabel('Components')
     axs[0].set_ylabel('Prediction Accuracy')
 
     # AUC-ROC Curves
 
-    fpr_full, svc_tpr, _ = roc_curve(
-        train_samples.loc[:, 'Actual'],
-        train_probabilities.loc[:, 'Full']
-    )
-    fpr_5_7, tpr_5_7, _ = roc_curve(
-        train_samples.loc[:, 'Actual'],
-        train_probabilities.loc[:, '5_7']
-    )
+    for i, reduced in enumerate(train_probabilities.columns):
+        fpr, tpr, _ = roc_curve(
+            train_samples.loc[:, 'Actual'],
+            train_probabilities[reduced]
+        )
 
-    axs[1].plot(fpr_5_7, tpr_5_7, color=COLOR_CYCLE[0])
-    axs[1].plot(fpr_full, svc_tpr, color=COLOR_CYCLE[1])
+        axs[1].plot(fpr, tpr, color=COLOR_CYCLE[i])
 
     axs[1].set_xlim(0, 1)
     axs[1].set_ylim(0, 1)
     axs[1].set_xlabel('False Positive Rate')
     axs[1].set_ylabel('True Positive Rate')
-    axs[1].legend(['All Components', 'Components 5 & 7'])
+    axs[1].legend(labels)
     axs[1].plot([0, 1], [0, 1], color='k', linestyle='--')
 
-    # 5 v 7 scatter
+    # Best Model Scatter
 
     color = patient_data.loc[:, 'status'].astype(int)
     color = color.replace(0, COLOR_CYCLE[3])
@@ -168,7 +186,7 @@ def plot_results(train_samples, train_probabilities, model_57, components,
         np.linspace(-1.1, 1.1, 10)
     )
     grid = np.c_[xx.ravel(), yy.ravel()]
-    prob_map = model_57.predict_proba(grid)[:, 1].reshape(xx.shape)
+    prob_map = model[2].predict_proba(grid)[:, 1].reshape(xx.shape)
     axs[2].contour(
         xx,
         yy,
@@ -181,10 +199,10 @@ def plot_results(train_samples, train_probabilities, model_57, components,
     for marker in ['s', 'o']:
         index = style.loc[style == marker].index
         axs[2].scatter(
-            components.loc[index, 5],
-            components.loc[index, 7],
+            components.loc[index, model[1][0]],
+            components.loc[index, model[1][1]],
             c=color.loc[index],
-            s=15,
+            s=10,
             edgecolors='k',
             marker=marker,
             zorder=2
@@ -195,8 +213,8 @@ def plot_results(train_samples, train_probabilities, model_57, components,
     axs[2].set_yticks(np.arange(-1, 1.1, 0.5))
     axs[2].set_ylim([-1.1, 1.1])
 
-    axs[2].set_xlabel('Component 5')
-    axs[2].set_ylabel('Component 7')
+    axs[2].set_xlabel(f'Component {model[1][0]}')
+    axs[2].set_ylabel(f'Component {model[1][1]}')
 
     legend_markers = [
         Line2D([0], [0], lw=4, color=COLOR_CYCLE[3], label='Resolver'),
@@ -218,17 +236,17 @@ def makeFigure():
     components = pd.DataFrame(
         components,
         index=patient_data.index,
-        columns=list(range(1, components.shape[1] + 1))
+        columns=list(np.arange(1, components.shape[1] + 1))
     )
 
-    train_samples, train_probabilities, model_57 = \
+    train_samples, train_probabilities, model = \
         run_cv(components, patient_data)
     train_samples = train_samples.astype(int)
 
     fig = plot_results(
         train_samples,
         train_probabilities,
-        model_57,
+        model,
         components,
         patient_data
     )

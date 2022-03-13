@@ -130,7 +130,7 @@ def plot_results(train_samples, train_probabilities, model, components,
     axs[0].bar(
         np.arange(len(accuracies)),
         accuracies,
-        color=COLOR_CYCLE[:4],
+        color=COLOR_CYCLE[:7],
         width=0.8
     )
 

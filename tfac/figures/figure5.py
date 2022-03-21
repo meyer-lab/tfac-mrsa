@@ -43,7 +43,7 @@ def run_cv(components, patient_data):
     )
 
     best_reduced = (0, (None, None), None)
-    persistence_components = [4, 5, 6, 7]
+    persistence_components = [2, 3, 4, 5]
     for i in np.arange(len(persistence_components)):
         for j in np.arange(i + 1, len(persistence_components)):
             comp_1 = persistence_components[i]

@@ -6,7 +6,7 @@ from matplotlib.patches import Patch
 import numpy as np
 from os.path import abspath, dirname
 import pandas as pd
-from scipy.stats import pearsonr
+from sklearn.metrics import r2_score
 from tensorpack import perform_CMTF
 from tensorly import cp_to_tensor
 
@@ -53,51 +53,51 @@ def impute_cv():
     return tensor, imputed
 
 
-def get_correlations(tensor, imputed):
+def get_r2_scores(tensor, imputed):
     """
-    Gets correlations between imputed and measured values.
+    Gets r2_scores between imputed and measured values.
 
     Parameters:
         tensor (numpy.array): cytokine measurements
         imputed (numpy.array): cytokine measurements predicted via CMTF
 
     Returns:
-        correlations (pandas.DataFrame): correlations between imputed and
+        r2_scores (pandas.DataFrame): r2_scores between imputed and
             measured cytokines
     """
     serum, _ = import_cytokines()
-    correlations = pd.DataFrame(
+    r2_scores = pd.DataFrame(
         index=serum.index,
         columns=['Imputed Serum', 'Imputed Plasma', 'Measured']
     )
 
     for cyto in range(tensor.shape[1]):
-        serum_imputed, _ = pearsonr(
+        serum_imputed = r2_score(
             imputed[:, cyto, 0],
             tensor[:, cyto, 0]
         )
-        plasma_imputed, _ = pearsonr(
+        plasma_imputed = r2_score(
             imputed[:, cyto, 1],
             tensor[:, cyto, 1]
         )
-        measured, _ = pearsonr(
+        measured = r2_score(
             tensor[:, cyto, 0],
             tensor[:, cyto, 1]
         )
 
-        correlations.iloc[cyto, :] = [serum_imputed, plasma_imputed, measured]
+        r2_scores.iloc[cyto, :] = [serum_imputed, plasma_imputed, measured]
 
-    return correlations
+    return r2_scores
 
 
-def plot_results(tensor, imputed, correlations):
+def plot_results(tensor, imputed, r2_scores):
     """
     Plots prediction model performance.
 
     Parameters:
         tensor (numpy.array): cytokine measurements
         imputed (numpy.array): cytokine measurements predicted via CMTF
-        correlations (pandas.DataFrame): correlations between imputed and
+        r2_scores (pandas.DataFrame): r2_scores between imputed and
             measured cytokines
 
     Returns:
@@ -266,38 +266,40 @@ def plot_results(tensor, imputed, correlations):
         ['Imputed Serum', 'Measured Serum', 'Imputed Plasma', 'Measured Plasma']
     )
 
+    r2_scores = r2_scores.clip(lower=0.02)
     axs[2].bar(
-        np.arange(0, 4 * correlations.shape[0], 4),
-        correlations.loc[:, 'Imputed Serum'],
+        np.arange(0, 4 * r2_scores.shape[0], 4),
+        r2_scores.loc[:, 'Imputed Serum'],
         width=1,
         color=COLOR_CYCLE[0]
     )
     axs[2].bar(
-        np.arange(1, 4 * correlations.shape[0], 4),
-        correlations.loc[:, 'Imputed Plasma'],
+        np.arange(1, 4 * r2_scores.shape[0], 4),
+        r2_scores.loc[:, 'Imputed Plasma'],
         width=1,
         color=COLOR_CYCLE[1]
     )
     axs[2].bar(
-        np.arange(2, 4 * correlations.shape[0], 4),
-        correlations.loc[:, 'Measured'],
+        np.arange(2, 4 * r2_scores.shape[0], 4),
+        r2_scores.loc[:, 'Measured'],
         width=1,
         color=COLOR_CYCLE[2]
     )
 
     axs[2].set_xticks(
-        np.arange(1, 4 * correlations.shape[0], 4)
+        np.arange(1, 4 * r2_scores.shape[0], 4)
     )
     axs[2].set_xticklabels(
-        correlations.index,
+        r2_scores.index,
         rotation=45,
         ha='right',
         va='top'
     )
 
-    axs[2].set_xlim([-2, 4 * correlations.shape[0]])
+    axs[2].set_xlim([-2, 4 * r2_scores.shape[0]])
+    axs[2].set_ylim([0, 1])
     axs[2].set_xlabel('Cytokine')
-    axs[2].set_ylabel('Pearson Correlation')
+    axs[2].set_ylabel(r'$R^2$ Score')
 
     legend_patches = [
         Patch(color=COLOR_CYCLE[0]),
@@ -314,7 +316,7 @@ def plot_results(tensor, imputed, correlations):
 
 def makeFigure():
     tensor, imputed = impute_cv()
-    correlations = get_correlations(tensor, imputed)
-    fig = plot_results(tensor, imputed, correlations)
+    r2_scores = get_r2_scores(tensor, imputed)
+    fig = plot_results(tensor, imputed, r2_scores)
 
     return fig

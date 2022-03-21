@@ -170,5 +170,5 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=6):
             types, and cohort
     """
     tensor, rna, patient_data = form_tensor(variance_scaling)
-    t_fac = perform_CMTF(tensor, rna, r=r, maxiter=400, progress=False)
+    t_fac = perform_CMTF(tensor, rna, r=r, maxiter=800, progress=False)
     return t_fac, patient_data

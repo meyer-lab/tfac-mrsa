@@ -8,9 +8,9 @@ from os.path import abspath, dirname, join
 import pandas as pd
 from sklearn.metrics import r2_score, roc_curve
 
-from .common import getSetup, get_data_types
-from ..dataImport import import_validation_patient_metadata
-from ..predict import predict_known, predict_validation, predict_regression
+from .common import getSetup
+from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines, import_rna
+from ..predict import get_accuracy, predict_known, predict_validation, predict_regression
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]
 PATH_HERE = dirname(dirname(abspath(__file__)))
@@ -38,6 +38,9 @@ def run_validation(data_types, patient_data):
     for data_type in data_types:
         source = data_type[0]
         data = data_type[1]
+
+        data = data.reindex(index=patient_data.index)
+        data = data.dropna(axis=0)
         labels = patient_data.loc[data.index, 'status']
 
         _predictions = predict_validation(data, labels)
@@ -85,11 +88,14 @@ def run_cv(data_types, patient_data):
         for data_type in data_types:
             source = data_type[0]
             data = data_type[1]
+
+            data = data.reindex(index=patient_data.index)
+            data = data.dropna(axis=0)
             labels = patient_data.loc[data.index, column]
 
-            _predictions = predict_known(data, labels)
+            _predictions, _ = predict_known(data, labels)
             if column == 'status':
-                _probabilities = predict_known(
+                _probabilities, _ = predict_known(
                     data,
                     labels,
                     method='predict_proba'
@@ -112,33 +118,13 @@ def run_age_regression(data, patient_data):
         patient_data (pandas.DataFrame): patient metadata, including age
     """
     labels = patient_data.loc[:, 'age']
-    age_predictions = predict_regression(data, labels)
+    age_predictions, _ = predict_regression(data, labels)
     age_predictions.name = 'CMTF'
 
     age_predictions = pd.DataFrame(age_predictions)
     age_predictions.loc[:, 'Actual'] = labels.loc[age_predictions.index]
 
     return age_predictions
-
-
-def get_accuracy(predicted, actual):
-    """
-    Returns the accuracy for the provided predictions.
-
-    Parameters:
-        predicted (pandas.Series): predicted values for samples
-        actual (pandas.Series): actual values for samples
-
-    Returns:
-        float: accuracy of predicted values
-    """
-    predicted = predicted.astype(float)
-    actual = actual.astype(float)
-
-    correct = [1 if predicted.loc[i] == actual.loc[i] else 0 for i in
-               predicted.index]
-
-    return np.mean(correct)
 
 
 def get_accuracies(samples):
@@ -157,10 +143,12 @@ def get_accuracies(samples):
 
     d_types = samples.columns
     accuracies = pd.Series(
-        index=d_types
+        index=d_types,
+        dtype=float
     )
     cmtf_accuracies = pd.Series(
-        index=d_types
+        index=d_types,
+        dtype=float
     )
 
     for d_type in d_types:
@@ -227,7 +215,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     axs[0].set_xlim(-1, 3 * len(accuracies) - 1)
     axs[0].set_ylim(0, 1)
-    axs[0].legend(['Cytokine Data', 'CMTF'])
+    axs[0].legend(['Raw Data', 'CMTF'])
     ticks = [label.replace(' ', '\n') for label in accuracies.index]
     axs[0].set_xticks(
         np.arange(0.5, 3 * len(accuracies), 3)
@@ -275,7 +263,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     legend_lines.append(Line2D([0], [0], color='k', linestyle='-', linewidth=0.5))
     legend_lines.append(Line2D([0], [0], color='k', linestyle='--', linewidth=0.5))
-    legend_names.extend(['CMTF', 'Cytokine Only'])
+    legend_names.extend(['CMTF', 'Raw Data'])
 
     axs[1].set_xlim(0, 1)
     axs[1].set_ylim(0, 1)
@@ -308,7 +296,7 @@ def plot_results(train_samples, train_probabilities, validation_samples,
 
     axs[2].set_xlim(-1, 3 * len(accuracies) - 1)
     axs[2].set_ylim(0, 1)
-    axs[2].legend(['Cytokine Data', 'CMTF'])
+    axs[2].legend(['Raw Data', 'CMTF'])
     axs[2].set_xticks(
         np.arange(0.5, 3 * len(val_accuracies), 3)
     )
@@ -511,16 +499,34 @@ def export_results(train_samples, train_probabilities, validation_samples,
 
 
 def makeFigure():
-    data_types, patient_data = get_data_types()
+    plasma_cyto, serum_cyto = import_cytokines()
+    rna = import_rna()
+    components, patient_data = get_factors()
+    components = components[1][0]
+
+    data_types = [
+        ('Plasma Cytokines', plasma_cyto.T),
+        ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
+        ('Serum Cytokines', serum_cyto.T),
+        ('Serum IL-10', serum_cyto.loc['IL-10', :]),
+        ('RNA Modules', rna),
+        ('CMTF', pd.DataFrame(
+            components,
+            index=patient_data.index,
+            columns=list(range(1, components.shape[1] + 1))
+        )
+        )
+    ]
+
     validation_samples, validation_probabilities = \
         run_validation(data_types, patient_data)
     train_samples, train_probabilities, sex_predictions, race_predictions = \
         run_cv(data_types, patient_data)
     age_predictions = run_age_regression(data_types[-1][-1], patient_data)
 
-    export_results(train_samples, train_probabilities, validation_samples,
-                   validation_probabilities, sex_predictions, race_predictions,
-                   age_predictions)
+    # export_results(train_samples, train_probabilities, validation_samples,
+    #                validation_probabilities, sex_predictions, race_predictions,
+    #                age_predictions)
 
     age_predictions = age_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
     sex_predictions = sex_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)

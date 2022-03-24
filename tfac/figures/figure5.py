@@ -3,7 +3,6 @@ Creates Figure 5 -- Reduced Model
 """
 import matplotlib
 from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
 import numpy as np
 from os.path import abspath, dirname
 import pandas as pd

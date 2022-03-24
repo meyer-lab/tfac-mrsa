@@ -8,8 +8,7 @@ from sklearn.preprocessing import scale
 from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-
-OPTIMAL_SCALING = 2 ** 3.0
+OPTIMAL_SCALING = 2 ** 5.0
 
 
 @lru_cache

@@ -50,12 +50,14 @@ def import_validation_patient_metadata():
 
 
 @lru_cache
-def import_cytokines(scale_cyto=True, transpose=True):
+def import_cytokines(scale_cyto=True, transpose=True, fix_lod=True):
     """
     Return plasma and serum cytokine data.
 
     Parameters:
         scale_cyto (bool, default:True): scale cytokine values
+        transpose (bool): transpose resulting cytokine matrices
+        fix_lod (bool): sets consistent LoD across cohorts
 
     Returns:
         plasma_cyto (pandas.DataFrame): plasma cytokine data
@@ -71,6 +73,13 @@ def import_cytokines(scale_cyto=True, transpose=True):
         delimiter=',',
         index_col=0
     )
+
+    if fix_lod:
+        limits = form_limit_tensor()
+        limits = np.nan_to_num(limits, 0)
+        minimums = limits.max(axis=0)
+        plasma_cyto.clip(lower=minimums[:, 1], axis=1, inplace=True)
+        serum_cyto.clip(lower=minimums[:, 0], axis=1, inplace=True)
 
     plasma_cyto['IL-12(p70)'] = np.clip(plasma_cyto['IL-12(p70)'], 1.0, np.inf)
     serum_cyto['IL-12(p70)'] = np.clip(serum_cyto['IL-12(p70)'], 1.0, np.inf)

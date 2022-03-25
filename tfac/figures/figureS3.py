@@ -33,7 +33,7 @@ def makeFigure():
     sns.heatmap(
         mod_expression.astype(float),
         center=0,
-        cmap='vlag',
+        cmap="PRGn",
         vmax=bound,
         vmin=-bound,
         cbar_kws={

@@ -197,6 +197,7 @@ def plot_results(train_samples, train_probabilities, model, components,
         yy,
         prob_map,
         cmap=cmap,
+        levels=[0.25, 0.5, 0.75],
         linestyles='--'
     )
 

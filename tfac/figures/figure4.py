@@ -12,7 +12,8 @@ from sklearn.preprocessing import scale
 from sklearn.utils import resample
 
 from .common import getSetup
-from ..dataImport import form_tensor, import_cytokines, get_factors
+from ..dataImport import form_tensor, import_cytokines, get_factors, \
+    reorder_table
 from ..predict import run_model, predict_regression
 
 N_BOOTSTRAP = 30
@@ -104,6 +105,7 @@ def tfac_setup():
         columns=col_names,
         index=["Serum", "Plasma"]
     )
+    cytos = reorder_table(cytos)
 
     return subjects, cytos, source, pat_info, factors
 

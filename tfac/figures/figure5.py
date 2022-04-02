@@ -50,13 +50,15 @@ def run_cv(components, patient_data):
 
             predictions[(comp_1, comp_2)], _ = predict_known(
                 components.loc[:, [comp_1, comp_2]],
-                labels
+                labels,
+                svc=True
             )
             probabilities[(comp_1, comp_2)], model = \
                 predict_known(
                     components.loc[:, [comp_1, comp_2]],
                     labels,
-                    method='predict_proba'
+                    method='predict_proba',
+                    svc=True
                 )
 
             reduced_accuracy = get_accuracy(

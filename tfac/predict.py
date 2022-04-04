@@ -257,7 +257,11 @@ def run_svc(data, labels):
     else:
         data = data[labels.index, :]
 
-    gamma_center = 1 / (data.shape[1] * np.nanvar(data.values))
+    if isinstance(data, pd.DataFrame):
+        gamma_center = 1 / (data.shape[1] * np.nanvar(data.values))
+    else:
+        gamma_center = 1 / (data.shape[1] * np.nanvar(data))
+
     gammas = np.logspace(-4, 4, 9, base=gamma_center)
     cs = np.logspace(-4, 4, 9)
 

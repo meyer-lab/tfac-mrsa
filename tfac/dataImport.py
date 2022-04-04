@@ -9,7 +9,7 @@ from sklearn.preprocessing import scale
 from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-OPTIMAL_SCALING = 2 ** 5.0
+OPTIMAL_SCALING = 2 ** 4.0
 
 
 @lru_cache
@@ -78,6 +78,16 @@ def import_cytokines(scale_cyto=True, transpose=True):
     # IL-3 is almost entirely missing
     plasma_cyto.drop("IL-3", axis=1, inplace=True)
     serum_cyto.drop("IL-3", axis=1, inplace=True)
+
+    # Dropping cytokines with large cohort differences
+    plasma_cyto.drop("IL-13", axis=1, inplace=True)
+    serum_cyto.drop("IL-13", axis=1, inplace=True)
+    plasma_cyto.drop("IL-4", axis=1, inplace=True)
+    serum_cyto.drop("IL-4", axis=1, inplace=True)
+    plasma_cyto.drop("IL-5", axis=1, inplace=True)
+    serum_cyto.drop("IL-5", axis=1, inplace=True)
+    plasma_cyto.drop("IL-1b", axis=1, inplace=True)
+    serum_cyto.drop("IL-1b", axis=1, inplace=True)
 
     if scale_cyto:
         plasma_cyto = plasma_cyto.transform(np.log)
@@ -157,7 +167,7 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
 
 
 @lru_cache
-def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
+def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=7):
     """
     Return the factorization results.
 

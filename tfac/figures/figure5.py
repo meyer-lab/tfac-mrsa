@@ -233,7 +233,9 @@ def plot_results(train_samples, train_probabilities, model, components,
     cyto_factors = t_fac.factors[1]
     axs[3].scatter(
         cyto_factors[:, model[1][0]],
-        cyto_factors[:, model[1][1]]
+        cyto_factors[:, model[1][1]],
+        s=10,
+        edgecolors='k'
     )
 
     diffs = abs(cyto_factors[:, model[1][0]] - cyto_factors[:, model[1][1]])
@@ -242,7 +244,9 @@ def plot_results(train_samples, train_probabilities, model, components,
         axs[3].scatter(
             cyto_factors[cyto, model[1][0]],
             cyto_factors[cyto, model[1][1]],
-            color=COLOR_CYCLE[1]
+            color=COLOR_CYCLE[1],
+            s=10,
+            edgecolors='k'
         )
         axs[3].text(
             cyto_factors[cyto, model[1][0]] + 0.15,
@@ -267,7 +271,9 @@ def plot_results(train_samples, train_probabilities, model, components,
     rna_factors = t_fac.mFactor
     axs[4].scatter(
         rna_factors[:, model[1][0]],
-        rna_factors[:, model[1][1]]
+        rna_factors[:, model[1][1]],
+        s=10,
+        edgecolors='k'
     )
 
     diffs = abs(rna_factors[:, model[1][0]] - rna_factors[:, model[1][1]])
@@ -276,7 +282,9 @@ def plot_results(train_samples, train_probabilities, model, components,
         axs[4].scatter(
             rna_factors[module, model[1][0]],
             rna_factors[module, model[1][1]],
-            color=COLOR_CYCLE[1]
+            color=COLOR_CYCLE[1],
+            s=10,
+            edgecolors='k'
         )
         axs[4].text(
             rna_factors[module, model[1][0]] + 0.15,

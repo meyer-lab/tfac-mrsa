@@ -44,6 +44,7 @@ def run_cv(components, patient_data):
 
     best_reduced = (0, (None, None), None)
     persistence_components = [3, 6, 7]
+
     for i in np.arange(len(persistence_components)):
         for j in np.arange(i + 1, len(persistence_components)):
             comp_1 = persistence_components[i]
@@ -228,30 +229,33 @@ def plot_results(train_samples, train_probabilities, model, components,
     # Cytokine factor matrices
 
     plasma, _ = import_cytokines()
-    cytokines = plasma.index.values
+    cyto_factors = pd.DataFrame(
+        t_fac.factors[1],
+        index=plasma.index,
+        columns=np.arange(1, components.shape[1] + 1)
+    )
 
-    cyto_factors = t_fac.factors[1]
     axs[3].scatter(
-        cyto_factors[:, model[1][0]],
-        cyto_factors[:, model[1][1]],
+        cyto_factors.loc[:, model[1][0]],
+        cyto_factors.loc[:, model[1][1]],
         s=10,
         edgecolors='k'
     )
 
-    diffs = abs(cyto_factors[:, model[1][0]] - cyto_factors[:, model[1][1]])
-    top_cyto = np.argsort(diffs)[-3:]
+    cyto_diffs = abs(cyto_factors.loc[:, model[1][0]] - cyto_factors.loc[:, model[1][1]])
+    top_cyto = cyto_diffs.sort_values(ascending=False)[:3].index
     for cyto in top_cyto:
         axs[3].scatter(
-            cyto_factors[cyto, model[1][0]],
-            cyto_factors[cyto, model[1][1]],
+            cyto_factors.loc[cyto, model[1][0]],
+            cyto_factors.loc[cyto, model[1][1]],
             color=COLOR_CYCLE[1],
             s=10,
             edgecolors='k'
         )
         axs[3].text(
-            cyto_factors[cyto, model[1][0]] + 0.15,
-            cyto_factors[cyto, model[1][1]] - 0.22,
-            cytokines[cyto],
+            cyto_factors.loc[cyto, model[1][0]] + 0.15,
+            cyto_factors.loc[cyto, model[1][1]] - 0.22,
+            cyto,
             ha='right'
         )
 
@@ -266,30 +270,33 @@ def plot_results(train_samples, train_probabilities, model, components,
     # RNA factor matrices
 
     rna = import_rna()
-    modules = rna.columns.values
+    rna_factors = pd.DataFrame(
+        t_fac.mFactor,
+        index=rna.columns,
+        columns=np.arange(1, components.shape[1] + 1)
+    )
 
-    rna_factors = t_fac.mFactor
     axs[4].scatter(
-        rna_factors[:, model[1][0]],
-        rna_factors[:, model[1][1]],
+        rna_factors.loc[:, model[1][0]],
+        rna_factors.loc[:, model[1][1]],
         s=10,
         edgecolors='k'
     )
 
-    diffs = abs(rna_factors[:, model[1][0]] - rna_factors[:, model[1][1]])
-    top_rna = np.argsort(diffs)[-3:]
+    rna_diffs = abs(rna_factors.loc[:, model[1][0]] - rna_factors.loc[:, model[1][1]])
+    top_rna = rna_diffs.sort_values(ascending=False)[:3].index
     for module in top_rna:
         axs[4].scatter(
-            rna_factors[module, model[1][0]],
-            rna_factors[module, model[1][1]],
+            rna_factors.loc[module, model[1][0]],
+            rna_factors.loc[module, model[1][1]],
             color=COLOR_CYCLE[1],
             s=10,
             edgecolors='k'
         )
         axs[4].text(
-            rna_factors[module, model[1][0]] + 0.15,
-            rna_factors[module, model[1][1]] - 0.22,
-            modules[module],
+            rna_factors.loc[module, model[1][0]] + 0.15,
+            rna_factors.loc[module, model[1][1]] - 0.22,
+            module,
             ha='right'
         )
 

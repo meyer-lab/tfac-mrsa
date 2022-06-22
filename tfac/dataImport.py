@@ -4,7 +4,6 @@ from functools import lru_cache
 
 import numpy as np
 import pandas as pd
-from pyppca import ppca
 import scipy.cluster.hierarchy as sch
 from sklearn.preprocessing import scale
 from statsmodels.multivariate.pca import PCA

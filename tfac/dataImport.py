@@ -4,8 +4,11 @@ from functools import lru_cache
 
 import numpy as np
 import pandas as pd
+from pyppca import ppca
 import scipy.cluster.hierarchy as sch
 from sklearn.preprocessing import scale
+from statsmodels.multivariate.pca import PCA
+import tensorly as tl
 from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
@@ -172,6 +175,32 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     tensor, rna, patient_data = form_tensor(variance_scaling)
     t_fac = perform_CMTF(tensor, rna, r=r, maxiter=800, progress=False)
     return t_fac, patient_data
+
+
+def get_pca_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
+    """
+    Returns factorization results using PCA.
+
+    Parameters:
+        variance_scaling (float, default:1.0): RNA/cytokine variance scaling
+        r (int, default:8): PCA components to use
+
+    Returns:
+        components (numpy.array): PCA components
+        patient_data (pandas.DataFrame): patient data, including status, data
+            types, and cohort
+        var_explained (float): variance explained by PCA
+    """
+    tensor, rna, patient_data = form_tensor(variance_scaling)
+
+    unfolded_tensor = tl.unfold(tensor, 0)
+    stacked = np.hstack((unfolded_tensor, rna))
+
+    pca = PCA(stacked, ncomp=r, missing='fill-em')
+    components = pca.factors / abs(pca.factors).max(axis=0)
+    var_explained = pca.rsquare[-1]
+
+    return components, patient_data, var_explained
 
 
 def reorder_table(df):

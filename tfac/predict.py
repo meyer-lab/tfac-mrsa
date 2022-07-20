@@ -5,7 +5,9 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression, LogisticRegression, \
     LogisticRegressionCV
 from sklearn.metrics import balanced_accuracy_score
-from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_predict
+from sklearn.model_selection import cross_val_predict, cross_val_score, \
+    RepeatedStratifiedKFold, StratifiedKFold
+from sklearn.svm import SVC
 
 from .dataImport import import_validation_patient_metadata
 
@@ -65,7 +67,7 @@ def predict_validation(data, labels, predict_proba=False):
     return predictions
 
 
-def predict_known(data, labels, method='predict'):
+def predict_known(data, labels, method='predict', svc=False):
     """
     Predicts outcomes for all samples in data via cross-validation.
 
@@ -74,6 +76,7 @@ def predict_known(data, labels, method='predict'):
         labels (pandas.Series): labels for samples in data
         method (str, default: 'predict'): prediction method to use; accepts any
             of ‘predict’, ‘predict_proba’, ‘predict_log_proba’, or ‘decision_function’
+        svc (bool): sets model to be svc
 
     Returns:
         predictions (pandas.Series): predictions for samples
@@ -85,7 +88,10 @@ def predict_known(data, labels, method='predict'):
     else:
         data = data.loc[labels.index, :]
 
-    _, model = run_model(data, labels)
+    if svc:
+        _, model = run_svc(data, labels)
+    else:
+        _, model = run_model(data, labels)
 
     if isinstance(data, pd.Series):
         data = data.values.reshape(-1, 1)
@@ -222,3 +228,60 @@ def get_accuracy(predicted, actual):
 
     return balanced_accuracy_score(actual, predicted)
 
+
+def run_svc(data, labels):
+    """
+    Runs SVC model with the provided data and labels.
+
+    Parameters:
+        data (pandas.DataFrame): DataFrame of CMTF components
+        labels (pandas.Series): Labels for provided data
+
+    Returns:
+        score (float): Accuracy for best-performing model (considers
+            l1-ratio and C)
+        model (sklearn.LogisticRegressionCV)
+    """
+    if isinstance(labels, pd.Series):
+        labels = labels.reset_index(drop=True)
+    else:
+        labels = pd.Series(labels)
+
+    labels = labels[labels != 'Unknown']
+
+    if isinstance(data, pd.Series):
+        data = data.iloc[labels.index]
+        data = data.values.reshape(-1, 1)
+    elif isinstance(data, pd.DataFrame):
+        data = data.iloc[labels.index, :]
+    else:
+        data = data[labels.index, :]
+
+    gamma_center = 1 / (data.shape[1] * np.nanvar(data.values))
+    gammas = np.logspace(-4, 4, 9, base=gamma_center)
+    cs = np.logspace(-4, 4, 9)
+
+    best = (None, None, 0)
+    for c in cs:
+        for gamma in gammas:
+            model = SVC(C=c, gamma=gamma)
+            kf = StratifiedKFold(n_splits=10)
+            acc = cross_val_score(
+                model,
+                data,
+                labels,
+                cv=kf,
+                scoring='balanced_accuracy'
+            ).mean()
+
+            if acc > best[-1]:
+                best = (c, gamma, acc)
+
+    model = SVC(
+        C=best[0],
+        gamma=best[1],
+        probability=True
+    )
+    model.fit(data, labels)
+
+    return best[2], model

@@ -44,21 +44,22 @@ def run_cv(components, patient_data):
 
     best_reduced = (0, (None, None), None)
     persistence_components = [3, 6, 7]
-
     for i in np.arange(len(persistence_components)):
         for j in np.arange(i + 1, len(persistence_components)):
             comp_1 = persistence_components[i]
             comp_2 = persistence_components[j]
 
-            predictions[(comp_1, comp_2)], _ = predict_known(
+            predictions[(comp_1, comp_2)], model = predict_known(
                 components.loc[:, [comp_1, comp_2]],
-                labels
+                labels,
+                svc=True
             )
-            probabilities[(comp_1, comp_2)], model = \
+            probabilities[(comp_1, comp_2)], _ = \
                 predict_known(
                     components.loc[:, [comp_1, comp_2]],
                     labels,
-                    method='predict_proba'
+                    method='predict_proba',
+                    svc=True
                 )
 
             reduced_accuracy = get_accuracy(
@@ -184,17 +185,21 @@ def plot_results(train_samples, train_probabilities, model, components,
     style = style.replace(1, 'o')
 
     xx, yy = np.meshgrid(
-        np.linspace(-1.1, 1.1, 10),
-        np.linspace(-1.1, 1.1, 10)
+        np.linspace(-1.1, 1.1, 5),
+        np.linspace(-1.1, 1.1, 5)
     )
     grid = np.c_[xx.ravel(), yy.ravel()]
     prob_map = model[2].predict_proba(grid)[:, 1].reshape(xx.shape)
+
+    cmap = matplotlib.colors.ListedColormap(
+        [COLOR_CYCLE[3], 'grey', COLOR_CYCLE[4]]
+    )
     axs[2].contour(
         xx,
         yy,
         prob_map,
+        cmap=cmap,
         levels=[0.25, 0.5, 0.75],
-        colors=[COLOR_CYCLE[3], 'grey', COLOR_CYCLE[4]],
         linestyles='--'
     )
 

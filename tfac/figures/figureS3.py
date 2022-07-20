@@ -2,10 +2,11 @@ from os.path import abspath, dirname
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from .common import getSetup
-from ..dataImport import get_factors, import_rna
+from ..dataImport import get_factors, import_rna, reorder_table
 
 plt.rcParams["svg.fonttype"] = "none"
 
@@ -16,7 +17,12 @@ PATH_HERE = dirname(abspath(__file__))
 def makeFigure():
     rna = import_rna()
     t_fac, _ = get_factors()
-    mod_expression = t_fac.mFactor
+    mod_expression = pd.DataFrame(
+        t_fac.mFactor,
+        index=rna.columns,
+        columns=range(1, 9)
+    )
+    mod_expression = reorder_table(mod_expression)
 
     fig_size = (4, 8)
     layout = {
@@ -33,7 +39,7 @@ def makeFigure():
     sns.heatmap(
         mod_expression.astype(float),
         center=0,
-        cmap='vlag',
+        cmap='PRGn',
         vmax=bound,
         vmin=-bound,
         cbar_kws={
@@ -49,7 +55,7 @@ def makeFigure():
             mod_expression.shape[0]
         ),
     )
-    ax.set_yticklabels(rna.columns, rotation=0)
+    ax.set_yticklabels(mod_expression.index, rotation=0)
     ax.set_xlabel('Component', fontsize=12)
     ax.set_ylabel('Module', fontsize=12)
 

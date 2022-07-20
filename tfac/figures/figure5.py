@@ -3,14 +3,14 @@ Creates Figure 5 -- Reduced Model
 """
 import matplotlib
 from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
 import numpy as np
 from os.path import abspath, dirname
 import pandas as pd
 from sklearn.metrics import roc_curve
 
 from .common import getSetup
-from ..dataImport import import_validation_patient_metadata, get_factors
+from ..dataImport import import_validation_patient_metadata, get_factors, \
+    import_cytokines, import_rna
 from ..predict import get_accuracy, predict_known
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color']
@@ -43,7 +43,8 @@ def run_cv(components, patient_data):
     )
 
     best_reduced = (0, (None, None), None)
-    persistence_components = [4, 5, 6, 7]
+    persistence_components = [3, 6, 7]
+
     for i in np.arange(len(persistence_components)):
         for j in np.arange(i + 1, len(persistence_components)):
             comp_1 = persistence_components[i]
@@ -99,7 +100,7 @@ def get_accuracies(samples):
 
 
 def plot_results(train_samples, train_probabilities, model, components,
-                 patient_data):
+                 t_fac, patient_data):
     """
     Plots prediction model performance.
 
@@ -109,15 +110,16 @@ def plot_results(train_samples, train_probabilities, model, components,
             persistence for training samples
         model (tuple): Best LR model using 2 components
         components (pandas.DataFrame): CMTF components
+        t_fac (CPTensor): CMTF factorization result
         patient_data (pandas.DataFrame): patient metadata
 
     Returns:
         fig (matplotlib.Figure): figure depicting predictions for all samples
     """
-    fig_size = (6, 2)
+    fig_size = (6, 4)
     layout = {
         'ncols': 3,
-        'nrows': 1,
+        'nrows': 2,
     }
     axs, fig, _ = getSetup(
         fig_size,
@@ -224,6 +226,90 @@ def plot_results(train_samples, train_probabilities, model, components,
     ]
     axs[2].legend(handles=legend_markers)
 
+    # Cytokine factor matrices
+
+    plasma, _ = import_cytokines()
+    cyto_factors = pd.DataFrame(
+        t_fac.factors[1],
+        index=plasma.index,
+        columns=np.arange(1, components.shape[1] + 1)
+    )
+
+    axs[3].scatter(
+        cyto_factors.loc[:, model[1][0]],
+        cyto_factors.loc[:, model[1][1]],
+        s=10,
+        edgecolors='k'
+    )
+
+    cyto_diffs = abs(cyto_factors.loc[:, model[1][0]] - cyto_factors.loc[:, model[1][1]])
+    top_cyto = cyto_diffs.sort_values(ascending=False)[:3].index
+    for cyto in top_cyto:
+        axs[3].scatter(
+            cyto_factors.loc[cyto, model[1][0]],
+            cyto_factors.loc[cyto, model[1][1]],
+            color=COLOR_CYCLE[1],
+            s=10,
+            edgecolors='k'
+        )
+        axs[3].text(
+            cyto_factors.loc[cyto, model[1][0]] + 0.15,
+            cyto_factors.loc[cyto, model[1][1]] - 0.22,
+            cyto,
+            ha='right'
+        )
+
+    axs[3].set_xticks(np.arange(-1, 1.1, 0.5))
+    axs[3].set_xlim([-1.1, 1.1])
+    axs[3].set_yticks(np.arange(-1, 1.1, 0.5))
+    axs[3].set_ylim([-1.1, 1.1])
+
+    axs[3].set_xlabel(f'Component {model[1][0]}')
+    axs[3].set_ylabel(f'Component {model[1][1]}')
+
+    # RNA factor matrices
+
+    rna = import_rna()
+    rna_factors = pd.DataFrame(
+        t_fac.mFactor,
+        index=rna.columns,
+        columns=np.arange(1, components.shape[1] + 1)
+    )
+
+    axs[4].scatter(
+        rna_factors.loc[:, model[1][0]],
+        rna_factors.loc[:, model[1][1]],
+        s=10,
+        edgecolors='k'
+    )
+
+    rna_diffs = abs(rna_factors.loc[:, model[1][0]] - rna_factors.loc[:, model[1][1]])
+    top_rna = rna_diffs.sort_values(ascending=False)[:3].index
+    for module in top_rna:
+        axs[4].scatter(
+            rna_factors.loc[module, model[1][0]],
+            rna_factors.loc[module, model[1][1]],
+            color=COLOR_CYCLE[1],
+            s=10,
+            edgecolors='k'
+        )
+        axs[4].text(
+            rna_factors.loc[module, model[1][0]] + 0.15,
+            rna_factors.loc[module, model[1][1]] - 0.22,
+            module,
+            ha='right'
+        )
+
+    axs[4].set_xticks(np.arange(-1, 1.1, 0.5))
+    axs[4].set_xlim([-1.1, 1.1])
+    axs[4].set_yticks(np.arange(-1, 1.1, 0.5))
+    axs[4].set_ylim([-1.1, 1.1])
+
+    axs[4].set_xlabel(f'Component {model[1][0]}')
+    axs[4].set_ylabel(f'Component {model[1][1]}')
+
+    axs[5].remove()
+
     return fig
 
 
@@ -248,6 +334,7 @@ def makeFigure():
         train_probabilities,
         model,
         components,
+        t_fac,
         patient_data
     )
 

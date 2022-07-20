@@ -12,7 +12,8 @@ from sklearn.preprocessing import scale
 from sklearn.utils import resample
 
 from .common import getSetup
-from ..dataImport import form_tensor, import_cytokines, get_factors
+from ..dataImport import form_tensor, import_cytokines, get_factors, \
+    reorder_table
 from ..predict import run_model, predict_regression
 
 N_BOOTSTRAP = 30
@@ -104,6 +105,7 @@ def tfac_setup():
         columns=col_names,
         index=["Serum", "Plasma"]
     )
+    cytos = reorder_table(cytos)
 
     return subjects, cytos, source, pat_info, factors
 
@@ -330,10 +332,10 @@ def plot_results(weights, subjects, cytos, source, pat_info):
 
     axs[0].set_xlabel('Model Coefficient')
     axs[0].set_xlim(-3, 3)
-    axs[0].set_ylim(-3, 60)
-    axs[0].set_yticks(np.arange(0.5, 60, 7))
+    axs[0].set_ylim(-3, 53)
+    axs[0].set_yticks(np.arange(0.5, 53, 7))
     axs[0].set_yticklabels(
-        [f'Cmp. {i}' for i in range(1, 10)]
+        [f'Cmp. {i}' for i in range(1, 9)]
     )
 
     plt.subplots_adjust(left=0.1, right=0.925, top=0.95)

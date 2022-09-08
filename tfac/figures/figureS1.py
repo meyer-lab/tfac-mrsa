@@ -1,6 +1,7 @@
 """
 This creates Figure S1 - Full Cytokine plots
 """
+from matplotlib.patches import PathPatch
 import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
@@ -8,6 +9,41 @@ import seaborn as sns
 
 from .common import getSetup
 from ..dataImport import form_tensor, import_cytokines
+
+
+def adjust_box_widths(g, fac):
+    """
+    Adjust the widths of a seaborn-generated boxplot.
+
+    Function adapted from: https://github.com/mwaskom/seaborn/issues/1076
+    """
+    # iterating through Axes instances
+    for ax in g.axes:
+
+        # iterating through axes artists:
+        for c in ax.get_children():
+
+            # searching for PathPatches
+            if isinstance(c, PathPatch):
+                # getting current width of box:
+                p = c.get_path()
+                verts = p.vertices
+                verts_sub = verts[:-1]
+                xmin = np.min(verts_sub[:, 0])
+                xmax = np.max(verts_sub[:, 0])
+                xmid = 0.5*(xmin+xmax)
+                xhalf = 0.5*(xmax - xmin)
+
+                # setting new width of box
+                xmin_new = xmid-fac*xhalf
+                xmax_new = xmid+fac*xhalf
+                verts_sub[verts_sub[:, 0] == xmin, 0] = xmin_new
+                verts_sub[verts_sub[:, 0] == xmax, 0] = xmax_new
+
+                # setting new width of median line
+                for l in ax.lines:
+                    if np.all(l.get_xdata() == [xmin, xmax]):
+                        l.set_xdata([xmin_new, xmax_new])
 
 
 def fig_S1_setup():
@@ -35,7 +71,14 @@ def cytokine_boxplot(cyto_slice, cytokines, patInfo, axx):
     ser = pd.DataFrame(cyto_slice, index=cytokines, columns=patInfo.columns).T
     patInfo = patInfo.T["status"]
     ser = ser.join(patInfo).dropna().reset_index().melt(id_vars=["sid", "status"])
-    b = sns.boxplot(data=ser, x="variable", y="value", hue="status", ax=axx)
+    b = sns.boxplot(
+        data=ser,
+        x="variable",
+        y="value",
+        hue="status",
+        linewidth=1,
+        ax=axx
+    )
     b.set_xticklabels(b.get_xticklabels(), rotation=30, ha="right")
     b.set_xlabel("Cytokine")
     b.set_ylabel("Normalized cytokine level")
@@ -65,5 +108,7 @@ def makeFigure():
 
     cytokine_boxplot(plasma_slice, cytokines, patInfo, ax[2])
     ax[2].set_title("Normalized Plasma Cytokine Level by Outcome")
+
+    adjust_box_widths(f, 0.75)
 
     return f

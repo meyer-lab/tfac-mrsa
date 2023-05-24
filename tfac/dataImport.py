@@ -11,7 +11,7 @@ import tensorly as tl
 from tensorpack import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-OPTIMAL_SCALING = 2 ** 5.0
+OPTIMAL_SCALING = 2 ** 6.0
 
 
 @lru_cache
@@ -107,7 +107,7 @@ def import_rna():
         rna (pandas.DataFrame): RNA expression modules
     """
     rna = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'tpm_modules.txt'),
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'lm_tpm.txt'),
         delimiter=',',
         index_col=0,
         engine="c",
@@ -172,7 +172,8 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
             types, and cohort
     """
     tensor, rna, patient_data = form_tensor(variance_scaling)
-    t_fac = perform_CMTF(tensor, rna, r=r, maxiter=800, progress=False)
+    np.random.seed(42)
+    t_fac = perform_CMTF(tensor, rna, r=r)
     return t_fac, patient_data
 
 

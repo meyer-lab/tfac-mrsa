@@ -203,6 +203,29 @@ def get_pca_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     return components, patient_data, var_explained
 
 
+def import_cibersort_results():
+    """
+    Imports CIBERSORTx results.
+
+    Returns:
+        cs_results (pandas.DataFrame): CIBERSORTx results mapping each
+            component to immune cell mixtures
+    """
+    cs_results = pd.read_csv(
+        join(
+            PATH_HERE,
+            'tfac',
+            'data',
+            'mrsa',
+            'CIBERSORTx_tfac_results.csv'
+        ),
+        index_col=0
+    )
+    cs_results = cs_results.T.iloc[:-3, :]
+
+    return cs_results
+
+
 def reorder_table(df):
     """
     Reorder a table's rows using heirarchical clustering. Taken from

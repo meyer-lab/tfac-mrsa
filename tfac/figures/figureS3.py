@@ -1,30 +1,33 @@
-from os.path import abspath, dirname
+from os.path import abspath, dirname, join
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
 from .common import getSetup
-from ..dataImport import get_factors, import_rna, reorder_table
+from ..dataImport import import_cibersort_results
 
-plt.rcParams["svg.fonttype"] = "none"
-
-COLOR_CYCLE = plt.rcParams['axes.prop_cycle'].by_key()['color']
-PATH_HERE = dirname(abspath(__file__))
+PATH_HERE = dirname(dirname(dirname(abspath(__file__))))
 
 
 def makeFigure():
-    rna = import_rna()
-    t_fac, _ = get_factors()
-    mod_expression = pd.DataFrame(
-        t_fac.mFactor,
-        index=rna.columns,
-        columns=range(1, 9)
-    )
-    mod_expression = reorder_table(mod_expression)
+    cs_results = import_cibersort_results()
+    fig = plot_results(cs_results)
 
-    fig_size = (4, 8)
+    return fig
+
+
+def plot_results(cs_results):
+    """
+    Plots cibersort immune cell mixtures.
+
+    Parameters:
+        cs_results (pandas.DataFrame): component associations to LM22 cells
+
+    Returns:
+        fig (matplotlib.Figure): heatmap of components associations to immune
+            cell types
+    """
+    fig_size = (2, 6)
     layout = {
         'ncols': 1,
         'nrows': 1
@@ -35,28 +38,32 @@ def makeFigure():
     )
     ax = axs[0]
 
-    bound = abs(mod_expression).max().max()
+    scaled = cs_results / cs_results.max(axis=0)
     sns.heatmap(
-        mod_expression.astype(float),
-        center=0,
-        cmap='PRGn',
-        vmax=bound,
-        vmin=-bound,
-        cbar_kws={
-            'label': 'Component Association'
-        },
-        ax=ax
+        scaled,
+        ax=ax,
+        vmin=0,
+        vmax=1,
+        annot=cs_results.round(2),
+        cmap="PRGn",
+        cbar=False
     )
 
-    ax.set_xticklabels(range(1, mod_expression.shape[1] + 1))
-    ax.set_yticks(
-        np.arange(
-            0.5,
-            mod_expression.shape[0]
-        ),
+    ax.set_xticklabels(
+        [f'Cmp. {i}' for i in cs_results.columns],
+        rotation=45,
+        ha='right',
+        ma='center',
+        va='top'
     )
-    ax.set_yticklabels(mod_expression.index, rotation=0)
-    ax.set_xlabel('Component', fontsize=12)
-    ax.set_ylabel('Module', fontsize=12)
+    ax.set_xlabel('')
+    ax.set_yticklabels(
+        cs_results.index,
+        ha='right',
+        ma='right',
+        va='center',
+        rotation=0
+    )
+    ax.set_ylabel('Immune Cell')
 
     return fig

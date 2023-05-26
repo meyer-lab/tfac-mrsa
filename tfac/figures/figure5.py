@@ -4,17 +4,15 @@ Creates Figure 5 -- Reduced Model
 import matplotlib
 from matplotlib.lines import Line2D
 import numpy as np
-from os.path import abspath, dirname
 import pandas as pd
 from sklearn.metrics import roc_curve
 
 from .common import getSetup
 from ..dataImport import import_validation_patient_metadata, get_factors, \
-    import_cytokines, import_rna
+    import_cytokines, import_cibersort_results
 from ..predict import get_accuracy, predict_known
 
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color']
-PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
 def run_cv(components, patient_data):
@@ -43,7 +41,7 @@ def run_cv(components, patient_data):
     )
 
     best_reduced = (0, (None, None), None)
-    persistence_components = [3, 6, 7]
+    persistence_components = [3, 7, 8]
     for i in np.arange(len(persistence_components)):
         for j in np.arange(i + 1, len(persistence_components)):
             comp_1 = persistence_components[i]
@@ -185,8 +183,8 @@ def plot_results(train_samples, train_probabilities, model, components,
     style = style.replace(1, 'o')
 
     xx, yy = np.meshgrid(
-        np.linspace(-1.1, 1.1, 5),
-        np.linspace(-1.1, 1.1, 5)
+        np.arange(-1.1, 1.15, 0.05),
+        np.arange(-1.1, 1.15, 0.05)
     )
     grid = np.c_[xx.ravel(), yy.ravel()]
     prob_map = model[2].predict_proba(grid)[:, 1].reshape(xx.shape)
@@ -199,7 +197,7 @@ def plot_results(train_samples, train_probabilities, model, components,
         yy,
         prob_map,
         cmap=cmap,
-        levels=[0.25, 0.5, 0.75],
+        levels=np.arange(0.3, 0.75, 0.1),
         linestyles='--'
     )
 
@@ -258,10 +256,11 @@ def plot_results(train_samples, train_probabilities, model, components,
             edgecolors='k'
         )
         axs[3].text(
-            cyto_factors.loc[cyto, model[1][0]] + 0.15,
-            cyto_factors.loc[cyto, model[1][1]] - 0.22,
+            cyto_factors.loc[cyto, model[1][0]] + 0.05,
+            cyto_factors.loc[cyto, model[1][1]] + 0.05,
             cyto,
-            ha='right'
+            ha='left',
+            va='bottom'
         )
 
     axs[3].set_xticks(np.arange(-1, 1.1, 0.5))
@@ -274,12 +273,8 @@ def plot_results(train_samples, train_probabilities, model, components,
 
     # RNA factor matrices
 
-    rna = import_rna()
-    rna_factors = pd.DataFrame(
-        t_fac.mFactor,
-        index=rna.columns,
-        columns=np.arange(1, components.shape[1] + 1)
-    )
+    rna_factors = import_cibersort_results()
+    rna_factors /= rna_factors.max(axis=0)
 
     axs[4].scatter(
         rna_factors.loc[:, model[1][0]],
@@ -298,17 +293,27 @@ def plot_results(train_samples, train_probabilities, model, components,
             s=10,
             edgecolors='k'
         )
-        axs[4].text(
-            rna_factors.loc[module, model[1][0]] + 0.15,
-            rna_factors.loc[module, model[1][1]] - 0.22,
-            module,
-            ha='right'
-        )
+        if rna_factors.loc[module, model[1][1]] > 0.5:
+            axs[4].text(
+                rna_factors.loc[module, model[1][0]],
+                rna_factors.loc[module, model[1][1]] - 0.05,
+                module,
+                ha='center',
+                va='top'
+            )
+        else:
+            axs[4].text(
+                rna_factors.loc[module, model[1][0]],
+                rna_factors.loc[module, model[1][1]] + 0.05,
+                module,
+                ha='center',
+                va='bottom'
+            )
 
     axs[4].set_xticks(np.arange(-1, 1.1, 0.5))
-    axs[4].set_xlim([-1.1, 1.1])
+    axs[4].set_xlim([-0.1, 1.1])
     axs[4].set_yticks(np.arange(-1, 1.1, 0.5))
-    axs[4].set_ylim([-1.1, 1.1])
+    axs[4].set_ylim([-0.1, 1.1])
 
     axs[4].set_xlabel(f'Component {model[1][0]}')
     axs[4].set_ylabel(f'Component {model[1][1]}')

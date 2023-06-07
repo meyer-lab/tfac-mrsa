@@ -8,7 +8,8 @@ import scipy.cluster.hierarchy as sch
 from sklearn.preprocessing import scale
 from statsmodels.multivariate.pca import PCA
 import tensorly as tl
-from tensorpack import perform_CMTF
+
+from .cmtf import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
 OPTIMAL_SCALING = 2 ** 6.0

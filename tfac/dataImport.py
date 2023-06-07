@@ -197,7 +197,7 @@ def get_pca_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     unfolded_tensor = tl.unfold(tensor, 0)
     stacked = np.hstack((unfolded_tensor, rna))
 
-    pca = PCA(stacked, ncomp=r, missing='fill-em')
+    pca = PCA(stacked, ncomp=r, missing='fill-em', method='nipals')
     components = pca.factors / abs(pca.factors).max(axis=0)
     var_explained = pca.rsquare[-1]
 

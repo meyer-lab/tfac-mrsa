@@ -174,7 +174,7 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     """
     tensor, rna, patient_data = form_tensor(variance_scaling)
     np.random.seed(42)
-    t_fac = perform_CMTF(tensor, rna, r=r)
+    t_fac = perform_CMTF(tensor, rna, r=r, maxiter=500)
     return t_fac, patient_data
 
 

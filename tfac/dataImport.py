@@ -12,7 +12,7 @@ import tensorly as tl
 from .cmtf import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-OPTIMAL_SCALING = 2 ** 6.0
+OPTIMAL_SCALING = 2 ** 8.0
 
 
 @lru_cache
@@ -174,7 +174,7 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     """
     tensor, rna, patient_data = form_tensor(variance_scaling)
     np.random.seed(42)
-    t_fac = perform_CMTF(tensor, rna, r=r, maxiter=500)
+    t_fac = perform_CMTF(tensor, rna, r=r, maxiter=1000)
     return t_fac, patient_data
 
 

@@ -5,7 +5,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import PowerTransformer, scale
 from statsmodels.multivariate.pca import PCA
 import tensorly as tl
 
@@ -202,6 +202,28 @@ def get_pca_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     var_explained = pca.rsquare[-1]
 
     return components, patient_data, var_explained
+
+
+def get_cibersort_results(power_transform=True):
+    """
+    Returns CIBERSORTx results.
+
+    Returns:
+        cs_results (pandas.DataFrame): CIBERSORTx results
+    """
+    cs_results = pd.read_csv(
+        join(PATH_HERE, 'tfac', 'data', 'cibersortx', 'cibersort_citeseq.txt'),
+        delimiter='\t',
+        index_col=0
+    )
+    cs_results = cs_results.loc[cs_results.loc[:, 'P-value'] < 0.01, :]
+    cs_results = cs_results.iloc[:, :-3]
+
+    if power_transform:
+        transformer = PowerTransformer()
+        cs_results[:] = transformer.fit_transform(cs_results)
+
+    return cs_results
 
 
 def reorder_table(df):

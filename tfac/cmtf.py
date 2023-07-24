@@ -18,7 +18,7 @@ from tensorpack.cmtf import (
 tl.set_backend("numpy")
 
 
-def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=50, progress=True):
+def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
     """Perform CMTF decomposition."""
     assert tOrig.dtype == float
     assert mOrig.dtype == float
@@ -55,6 +55,7 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=50, progress=True):
         tFac.mFactor = np.linalg.lstsq(
             tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None
         )[0].T
+        tFac.mFactor = tl.qr(tFac.mFactor)[0]
 
         # Solve for subjects factors
         kr = khatri_rao(tFac.factors, skip_matrix=0)

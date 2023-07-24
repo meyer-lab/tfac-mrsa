@@ -11,7 +11,7 @@ output/figure%.svg: tfac/figures/figure%.py
 	poetry run fbuild $*
 
 test:
-	poetry run pytest -s -x -v
+	poetry run pytest -s -x -v --full-trace
 
 clean:
 	rm -rf coverage.xml junit.xml

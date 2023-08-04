@@ -6,14 +6,11 @@ import sys
 import logging
 import time
 
-import pandas as pd
 import seaborn as sns
 import matplotlib
 from matplotlib import gridspec, pyplot as plt
 import svgutils.transform as st
-from tensorpack import perform_CMTF
 
-from ..dataImport import import_cytokines, form_tensor
 
 matplotlib.use('AGG')
 

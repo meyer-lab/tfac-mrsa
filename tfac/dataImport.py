@@ -8,10 +8,11 @@ import scipy.cluster.hierarchy as sch
 from sklearn.preprocessing import scale
 from statsmodels.multivariate.pca import PCA
 import tensorly as tl
-from tensorpack import perform_CMTF
+
+from .cmtf import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-OPTIMAL_SCALING = 2 ** 6.0
+OPTIMAL_SCALING = 2 ** 5.0
 
 
 @lru_cache
@@ -107,7 +108,7 @@ def import_rna():
         rna (pandas.DataFrame): RNA expression modules
     """
     rna = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'lm_tpm.txt'),
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_tpm.txt.zip'),
         delimiter=',',
         index_col=0,
         engine="c",
@@ -173,7 +174,7 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     """
     tensor, rna, patient_data = form_tensor(variance_scaling)
     np.random.seed(42)
-    t_fac = perform_CMTF(tensor, rna, r=r)
+    t_fac = perform_CMTF(tensor, rna, r=r, maxiter=1000)
     return t_fac, patient_data
 
 
@@ -196,7 +197,7 @@ def get_pca_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     unfolded_tensor = tl.unfold(tensor, 0)
     stacked = np.hstack((unfolded_tensor, rna))
 
-    pca = PCA(stacked, ncomp=r, missing='fill-em')
+    pca = PCA(stacked, ncomp=r, missing='fill-em', method='nipals')
     components = pca.factors / abs(pca.factors).max(axis=0)
     var_explained = pca.rsquare[-1]
 

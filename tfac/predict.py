@@ -102,7 +102,7 @@ def predict_known(data, labels, method='predict', svc=False):
         labels,
         cv=10,
         method=method,
-        n_jobs=-1
+        n_jobs=3
     )
 
     if len(predictions.shape) > 1:
@@ -137,7 +137,7 @@ def predict_regression(data, labels):
         data,
         labels,
         cv=10,
-        n_jobs=-1
+        n_jobs=3
     )
 
     if len(predictions.shape) > 1:
@@ -186,7 +186,7 @@ def run_model(data, labels, return_coef=False):
         l1_ratios=[0.8],
         solver="saga",
         penalty="elasticnet",
-        n_jobs=-1,
+        n_jobs=3,
         cv=skf,
         max_iter=100000,
         scoring='balanced_accuracy',

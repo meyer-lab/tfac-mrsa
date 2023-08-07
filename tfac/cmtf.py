@@ -2,10 +2,13 @@
 Coupled Matrix Tensor Factorization
 """
 
+import os
 from copy import deepcopy
 import numpy as np
 import tensorly as tl
-from tensorly.tenalg import khatri_rao, svd_interface
+from tensorly.tenalg.svd import randomized_svd
+from tensorly.tenalg.core_tenalg import khatri_rao
+from statsmodels.multivariate.pca import PCA
 from tqdm import tqdm
 from tensorpack.cmtf import (
     cp_normalize,
@@ -19,11 +22,27 @@ from tensorpack.cmtf import (
 tl.set_backend("numpy")
 
 
-def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True, linesearch: bool=True):
+class PCArand(PCA):
+    def _compute_eig(self):
+        """
+        Override slower SVD methods
+        """
+        _, s, v = randomized_svd(self.transformed_data, self._ncomp)
+
+        self.eigenvals = s ** 2.0
+        self.eigenvecs = v.T
+
+
+def perform_CMTF(tOrig, mOrig, r=8, tol=1e-6, maxiter=300, progress=None, linesearch: bool=True):
     """Perform CMTF decomposition."""
     assert tOrig.dtype == float
     assert mOrig.dtype == float
     factors = [np.ones((tOrig.shape[i], r)) for i in range(tOrig.ndim)]
+
+    # Check if verbose was not set
+    if progress is None:
+        # Check if this is an automated build
+        progress = "CI" not in os.environ
 
     acc_pow: float = 2.0  # Extrapolate to the iteration^(1/acc_pow) ahead
     acc_fail: int = 0  # How many times acceleration have failed
@@ -31,14 +50,8 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True, linese
 
     # SVD init mode 0
     unfold = np.hstack((tl.unfold(tOrig, 0), mOrig))
-    factors[0] = svd_interface(
-        np.nan_to_num(unfold),
-        mask=np.isnan(unfold),
-        method="randomized_svd",
-        n_eigenvecs=r,
-        random_state=0,
-        n_iter_mask_imputation=20,
-    )[0]
+    pca = PCArand(unfold, ncomp=r, missing='fill-em')
+    factors[0] = pca.factors
     tFac = tl.cp_tensor.CPTensor((None, factors))
 
     # Pre-unfold
@@ -120,4 +133,4 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True, linese
     tFac = sort_factors(tFac)
     tFac.R2X = R2X
 
-    return tFac
+    return tFac, pca

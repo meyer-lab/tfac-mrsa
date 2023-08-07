@@ -8,6 +8,7 @@ import scipy.cluster.hierarchy as sch
 from sklearn.preprocessing import scale
 from statsmodels.multivariate.pca import PCA
 import tensorly as tl
+from tensorly.tenalg.svd import randomized_svd
 
 from .cmtf import perform_CMTF
 
@@ -176,6 +177,17 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     np.random.seed(42)
     t_fac = perform_CMTF(tensor, rna, r=r, maxiter=1000)
     return t_fac, patient_data
+
+
+class PCArand(PCA):
+    def _compute_eig(self):
+        """
+        Override slower SVD methods
+        """
+        _, s, v = randomized_svd(self.transformed_data, self._ncomp)
+
+        self.eigenvals = s ** 2.0
+        self.eigenvecs = v.T
 
 
 def get_pca_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):

@@ -2,6 +2,7 @@
 Coupled Matrix Tensor Factorization
 """
 
+from copy import deepcopy
 import numpy as np
 import tensorly as tl
 from tensorly.tenalg import khatri_rao, svd_interface
@@ -18,11 +19,15 @@ from tensorpack.cmtf import (
 tl.set_backend("numpy")
 
 
-def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
+def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True, linesearch: bool=True):
     """Perform CMTF decomposition."""
     assert tOrig.dtype == float
     assert mOrig.dtype == float
     factors = [np.ones((tOrig.shape[i], r)) for i in range(tOrig.ndim)]
+
+    acc_pow: float = 2.0  # Extrapolate to the iteration^(1/acc_pow) ahead
+    acc_fail: int = 0  # How many times acceleration have failed
+    max_fail: int = 4  # Increase acc_pow with one after max_fail failure
 
     # SVD init mode 0
     unfold = np.hstack((tl.unfold(tOrig, 0), mOrig))
@@ -46,7 +51,9 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
     uniqueInfo = np.unique(np.isfinite(unfolded.T), axis=1, return_inverse=True)
 
     tq = tqdm(range(maxiter), disable=(not progress))
-    for _ in tq:
+    for iter in tq:
+        tFac_old = deepcopy(tFac)
+
         for m in [1, 2]:
             kr = khatri_rao(tFac.factors, skip_matrix=m)
             tFac.factors[m] = mlstsq(kr, tl.unfold(tOrig, m).T).T
@@ -64,6 +71,43 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
 
         R2X_last = R2X
         R2X = calcR2X(tFac, tOrig, mOrig)
+
+        # Initiate line search
+        if linesearch and iter % 2 == 0 and iter > 3:
+            jump = iter ** (1.0 / acc_pow)
+
+            # Estimate error with line search
+            tFac_ls = deepcopy(tFac)
+
+            tFac_ls.factors = [
+                tFac_old.factors[ii] + (f - tFac_old.factors[ii]) * jump
+                for ii, f in enumerate(tFac.factors)
+            ]
+            tFac_ls.mFactor = tFac_old.mFactor + (tFac.mFactor - tFac_old.mFactor)
+
+            R2X_ls = calcR2X(tFac_ls, tOrig, mOrig)
+
+            if R2X_ls > R2X:
+                acc_fail = 0
+                R2X = R2X_ls
+                tFac = tFac_ls
+
+                if progress:
+                    print(f"Accepted line search jump of {jump}.")
+            else:
+                acc_fail += 1
+
+                if progress:
+                    print(f"Line search failed for jump of {jump}.")
+
+                if acc_fail == max_fail:
+                    acc_pow += 1.0
+                    acc_fail = 0
+
+                    if progress:
+                        print("Reducing acceleration.")
+
+
         tq.set_postfix(R2X=R2X, delta=R2X - R2X_last, refresh=False)
         assert R2X > 0.0
 

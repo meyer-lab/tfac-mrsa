@@ -9,6 +9,8 @@ from ..dataImport import form_tensor, get_factors, get_pca_factors
 from ..predict import run_model
 from tensorpack import calcR2X
 
+from cProfile import Profile
+
 
 def get_r2x_results():
     """
@@ -22,10 +24,12 @@ def get_r2x_results():
         r2x_v_components (pandas.Series): R2X vs. number of CMTF components
         r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
     """
+    pf = Profile()
+    pf.enable()
     # R2X v. Components
     tensor, matrix, patient_data = form_tensor()
     labels = patient_data.loc[:, 'status']
-    components = 12
+    components = 5
 
     r2x_v_components = pd.DataFrame(
         columns=['CMTF', 'PCA'],
@@ -47,6 +51,10 @@ def get_r2x_results():
             run_model(t_fac.factors[0], labels)[0]
         acc_v_components.loc[n_components, 'PCA'] = \
             run_model(pca_components, labels)[0]
+        
+    pf.disable()
+    pf.dump_stats("profile")
+    return
 
     # R2X v. Scaling
     scalingV = np.logspace(-10, 10, base=2, num=21)

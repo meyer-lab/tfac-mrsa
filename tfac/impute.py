@@ -3,7 +3,7 @@
 import numpy as np
 from statsmodels.multivariate.pca import PCA
 from .dataImport import form_tensor
-from tensorpack import perform_CMTF, calcR2X
+from .cmtf import perform_CMTF, calcR2X
 
 
 def flatten_to_mat(tensor, matrix=None):

@@ -109,6 +109,6 @@ def makeFigure():
     cytokine_boxplot(plasma_slice, cytokines, patInfo, ax[2])
     ax[2].set_title("Normalized Plasma Cytokine Level by Outcome")
 
-    adjust_box_widths(f, 0.75)
+    # adjust_box_widths(f, 0.75)
 
     return f

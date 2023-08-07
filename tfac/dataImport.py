@@ -12,7 +12,7 @@ import tensorly as tl
 from .cmtf import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-OPTIMAL_SCALING = 2 ** 8.0
+OPTIMAL_SCALING = 2 ** 5.0
 
 
 @lru_cache

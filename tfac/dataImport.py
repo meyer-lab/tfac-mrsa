@@ -12,7 +12,7 @@ import tensorly as tl
 from .cmtf import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-OPTIMAL_SCALING = 2 ** 5.0
+OPTIMAL_SCALING = 2 ** 8.0
 
 
 @lru_cache
@@ -212,7 +212,7 @@ def get_cibersort_results(power_transform=True):
         cs_results (pandas.DataFrame): CIBERSORTx results
     """
     cs_results = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'cibersortx', 'cibersort_citeseq.txt'),
+        join(PATH_HERE, 'tfac', 'data', 'cibersortx', 'cibersort_lm22.txt'),
         delimiter='\t',
         index_col=0
     )

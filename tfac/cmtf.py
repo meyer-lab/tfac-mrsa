@@ -75,7 +75,6 @@ def perform_CMTF(tOrig, mOrig, r=8, tol=1e-6, maxiter=300, progress=None, linese
         tFac.mFactor = np.linalg.lstsq(
             tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None
         )[0].T
-        tFac.mFactor = tl.qr(tFac.mFactor)[0]
 
         # Solve for subjects factors
         kr = khatri_rao(tFac.factors, skip_matrix=0)

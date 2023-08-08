@@ -109,7 +109,7 @@ def import_rna():
         rna (pandas.DataFrame): RNA expression modules
     """
     rna = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_tpm.txt.zip'),
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_combat_tpm.txt.zip'),
         delimiter=',',
         index_col=0,
         engine="c",

@@ -101,7 +101,7 @@ def predict_known(data, labels, method='predict', svc=False):
         labels,
         cv=10,
         method=method,
-        n_jobs=3
+        n_jobs=6
     )
 
     if len(predictions.shape) > 1:
@@ -136,7 +136,7 @@ def predict_regression(data, labels):
         data,
         labels,
         cv=10,
-        n_jobs=3
+        n_jobs=6
     )
 
     if len(predictions.shape) > 1:

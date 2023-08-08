@@ -319,7 +319,7 @@ def plot_results(train_samples, train_probabilities, model, components,
 
 
 def makeFigure():
-    t_fac, patient_data = get_factors()
+    t_fac, _, patient_data = get_factors()
     val_data = import_validation_patient_metadata()
     patient_data.loc[val_data.index, 'status'] = val_data.loc[:, 'status']
 

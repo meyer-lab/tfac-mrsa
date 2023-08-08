@@ -82,7 +82,7 @@ def get_predictions():
     Returns:
         predictions (pandas.Series): model predictions for each sample
     """
-    components, patient_data = get_factors()
+    components, _, patient_data = get_factors()
     patient_data = patient_data.loc[:, ['status', 'type']]
     components = components[1][0]
 

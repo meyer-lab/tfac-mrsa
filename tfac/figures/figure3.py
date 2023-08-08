@@ -501,7 +501,7 @@ def export_results(train_samples, train_probabilities, validation_samples,
 def makeFigure():
     plasma_cyto, serum_cyto = import_cytokines()
     rna = import_rna()
-    components, patient_data = get_factors()
+    components, _, patient_data = get_factors()
     components = components[1][0]
 
     data_types = [

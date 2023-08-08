@@ -1,3 +1,6 @@
+"""
+This creates Figure S3 - RNA-Seq Associations to Components
+"""
 from os.path import abspath, dirname
 
 import matplotlib.pyplot as plt
@@ -16,7 +19,7 @@ PATH_HERE = dirname(abspath(__file__))
 
 def makeFigure():
     rna = import_rna()
-    t_fac, _ = get_factors()
+    t_fac, _, _ = get_factors()
     mod_expression = pd.DataFrame(
         t_fac.mFactor,
         index=rna.columns,

@@ -2,9 +2,13 @@
 Coupled Matrix Tensor Factorization
 """
 
+import os
+from copy import deepcopy
 import numpy as np
 import tensorly as tl
-from tensorly.tenalg import khatri_rao, svd_interface
+from tensorly.tenalg.svd import randomized_svd
+from tensorly.tenalg.core_tenalg import khatri_rao
+from statsmodels.multivariate.pca import PCA
 from tqdm import tqdm
 from tensorpack.cmtf import (
     cp_normalize,
@@ -17,22 +21,36 @@ from tensorpack.cmtf import (
 tl.set_backend("numpy")
 
 
-def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
+class PCArand(PCA):
+    def _compute_eig(self):
+        """
+        Override slower SVD methods
+        """
+        _, s, v = randomized_svd(self.transformed_data, self._ncomp)
+
+        self.eigenvals = s ** 2.0
+        self.eigenvecs = v.T
+
+
+def perform_CMTF(tOrig, mOrig, r=8, tol=1e-6, maxiter=300, progress=None, linesearch: bool=True):
     """Perform CMTF decomposition."""
     assert tOrig.dtype == float
     assert mOrig.dtype == float
     factors = [np.ones((tOrig.shape[i], r)) for i in range(tOrig.ndim)]
 
+    # Check if verbose was not set
+    if progress is None:
+        # Check if this is an automated build
+        progress = "CI" not in os.environ
+
+    acc_pow: float = 2.0  # Extrapolate to the iteration^(1/acc_pow) ahead
+    acc_fail: int = 0  # How many times acceleration have failed
+    max_fail: int = 4  # Increase acc_pow with one after max_fail failure
+
     # SVD init mode 0
     unfold = np.hstack((tl.unfold(tOrig, 0), mOrig))
-    factors[0] = svd_interface(
-        np.nan_to_num(unfold),
-        mask=np.isnan(unfold),
-        method="randomized_svd",
-        n_eigenvecs=r,
-        random_state=0,
-        n_iter_mask_imputation=20,
-    )[0]
+    pca = PCArand(unfold, ncomp=r, missing='fill-em')
+    factors[0] = pca.factors
     tFac = tl.cp_tensor.CPTensor((None, factors))
 
     # Pre-unfold
@@ -45,7 +63,9 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
     uniqueInfo = np.unique(np.isfinite(unfolded.T), axis=1, return_inverse=True)
 
     tq = tqdm(range(maxiter), disable=(not progress))
-    for _ in tq:
+    for iter in tq:
+        tFac_old = deepcopy(tFac)
+
         for m in [1, 2]:
             kr = khatri_rao(tFac.factors, skip_matrix=m)
             tFac.factors[m] = mlstsq(kr, tl.unfold(tOrig, m).T).T
@@ -54,7 +74,6 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
         tFac.mFactor = np.linalg.lstsq(
             tFac.factors[0][missingM, :], mOrig[missingM, :], rcond=None
         )[0].T
-        tFac.mFactor = tl.qr(tFac.mFactor)[0]
 
         # Solve for subjects factors
         kr = khatri_rao(tFac.factors, skip_matrix=0)
@@ -63,6 +82,43 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
 
         R2X_last = R2X
         R2X = calcR2X(tFac, tOrig, mOrig)
+
+        # Initiate line search
+        if linesearch and iter % 2 == 0 and iter > 3:
+            jump = iter ** (1.0 / acc_pow)
+
+            # Estimate error with line search
+            tFac_ls = deepcopy(tFac)
+
+            tFac_ls.factors = [
+                tFac_old.factors[ii] + (f - tFac_old.factors[ii]) * jump
+                for ii, f in enumerate(tFac.factors)
+            ]
+            tFac_ls.mFactor = tFac_old.mFactor + (tFac.mFactor - tFac_old.mFactor)
+
+            R2X_ls = calcR2X(tFac_ls, tOrig, mOrig)
+
+            if R2X_ls > R2X:
+                acc_fail = 0
+                R2X = R2X_ls
+                tFac = tFac_ls
+
+                if progress:
+                    print(f"Accepted line search jump of {jump}.")
+            else:
+                acc_fail += 1
+
+                if progress:
+                    print(f"Line search failed for jump of {jump}.")
+
+                if acc_fail == max_fail:
+                    acc_pow += 1.0
+                    acc_fail = 0
+
+                    if progress:
+                        print("Reducing acceleration.")
+
+
         tq.set_postfix(R2X=R2X, delta=R2X - R2X_last, refresh=False)
         assert R2X > 0.0
 
@@ -75,4 +131,4 @@ def perform_CMTF(tOrig, mOrig, r=9, tol=1e-6, maxiter=100, progress=True):
     tFac = sort_factors(tFac)
     tFac.R2X = R2X
 
-    return tFac
+    return tFac, pca

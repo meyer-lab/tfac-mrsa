@@ -43,7 +43,7 @@ def run_cv(components, patient_data):
     )
 
     best_reduced = (0, (None, None), None)
-    persistence_components = [2, 5, 8]
+    persistence_components = [1, 2, 4, 6]
     for i in np.arange(len(persistence_components)):
         for j in np.arange(i + 1, len(persistence_components)):
             comp_1 = persistence_components[i]
@@ -185,8 +185,8 @@ def plot_results(train_samples, train_probabilities, model, components,
     style = style.replace(1, 'o')
 
     xx, yy = np.meshgrid(
-        np.linspace(-1.1, 1.1, 5),
-        np.linspace(-1.1, 1.1, 5)
+        np.linspace(-1.1, 1.1, 23),
+        np.linspace(-1.1, 1.1, 23)
     )
     grid = np.c_[xx.ravel(), yy.ravel()]
     prob_map = model[2].predict_proba(grid)[:, 1].reshape(xx.shape)
@@ -199,7 +199,7 @@ def plot_results(train_samples, train_probabilities, model, components,
         yy,
         prob_map,
         cmap=cmap,
-        levels=[0.25, 0.5, 0.75],
+        levels=[0.3, 0.4, 0.5, 0.6, 0.7],
         linestyles='--'
     )
 
@@ -288,23 +288,6 @@ def plot_results(train_samples, train_probabilities, model, components,
         edgecolors='k'
     )
 
-    rna_diffs = abs(rna_factors.loc[:, model[1][0]] - rna_factors.loc[:, model[1][1]])
-    top_rna = rna_diffs.sort_values(ascending=False)[:3].index
-    for module in top_rna:
-        axs[4].scatter(
-            rna_factors.loc[module, model[1][0]],
-            rna_factors.loc[module, model[1][1]],
-            color=COLOR_CYCLE[1],
-            s=10,
-            edgecolors='k'
-        )
-        axs[4].text(
-            rna_factors.loc[module, model[1][0]] + 0.15,
-            rna_factors.loc[module, model[1][1]] - 0.22,
-            module,
-            ha='right'
-        )
-
     axs[4].set_xticks(np.arange(-1, 1.1, 0.5))
     axs[4].set_xlim([-1.1, 1.1])
     axs[4].set_yticks(np.arange(-1, 1.1, 0.5))
@@ -319,7 +302,7 @@ def plot_results(train_samples, train_probabilities, model, components,
 
 
 def makeFigure():
-    t_fac, patient_data = get_factors()
+    t_fac, _, patient_data = get_factors()
     val_data = import_validation_patient_metadata()
     patient_data.loc[val_data.index, 'status'] = val_data.loc[:, 'status']
 

@@ -79,7 +79,7 @@ def tfac_setup():
             components
         pat_info (pandas.DataFrame): patient meta-data
     """
-    factors, pat_info = get_factors()
+    factors, _, pat_info = get_factors()
     plasma, _ = import_cytokines()
     cytokines = plasma.index
 

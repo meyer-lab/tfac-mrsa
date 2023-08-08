@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .common import getSetup
-from ..dataImport import form_tensor, get_factors, get_pca_factors
+from ..dataImport import form_tensor, get_factors
 from ..predict import run_model
 from tensorpack import calcR2X
 
@@ -39,14 +39,13 @@ def get_r2x_results():
     )
     for n_components in r2x_v_components.index:
         print(f"Starting decomposition with {n_components} components.")
-        t_fac, _ = get_factors(r=n_components)
-        pca_components, _, pca_var = get_pca_factors(r=n_components)
+        t_fac, pcaFac, _ = get_factors(r=n_components)
         r2x_v_components.loc[n_components, 'CMTF'] = t_fac.R2X
-        r2x_v_components.loc[n_components, 'PCA'] = pca_var
+        r2x_v_components.loc[n_components, 'PCA'] = pcaFac.rsquare[-1]
         acc_v_components.loc[n_components, 'CMTF'] = \
             run_model(t_fac.factors[0], labels)[0]
         acc_v_components.loc[n_components, 'PCA'] = \
-            run_model(pca_components, labels)[0]
+            run_model(pcaFac.scores, labels)[0]
 
     # R2X v. Scaling
     scalingV = np.logspace(-10, 10, base=2, num=21)
@@ -61,15 +60,14 @@ def get_r2x_results():
     )
     for scaling in r2x_v_scaling.index:
         tensor, matrix, _ = form_tensor(scaling)
-        t_fac, _ = get_factors(variance_scaling=scaling)
-        pca_components, _, _ = get_pca_factors(r=n_components)
+        t_fac, pcaFac, _ = get_factors(variance_scaling=scaling)
         r2x_v_scaling.loc[scaling, "Total"] = t_fac.R2X
         r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
         r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)
         acc_v_scaling.loc[scaling, 'CMTF'] = \
             run_model(t_fac.factors[0], labels)[0]
         acc_v_scaling.loc[scaling, 'PCA'] = \
-            run_model(pca_components, labels)[0]
+            run_model(pcaFac.scores, labels)[0]
 
     return r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling
 

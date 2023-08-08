@@ -19,7 +19,7 @@ skf = RepeatedStratifiedKFold(
 )
 
 
-def predict_validation(data, labels, predict_proba=False):
+def predict_validation(data, labels: pd.Series) -> tuple[pd.Series, pd.Series]:
     """
     Trains a LogisticRegressionCV model using samples with known outcomes,
     then predicts samples with unknown outcomes.
@@ -55,16 +55,15 @@ def predict_validation(data, labels, predict_proba=False):
 
     model.fit(train_data, train_labels)
 
-    if predict_proba:
-        predicted = model.predict_proba(test_data)
-        predicted = predicted[:, -1]
-    else:
-        predicted = model.predict(test_data)
+    probabilities = model.predict_proba(test_data)[:, -1]
+    probabilities = pd.Series(probabilities)
+    probabilities.index = test_labels.index
 
+    predicted = model.predict(test_data)
     predictions = pd.Series(predicted)
     predictions.index = test_labels.index
 
-    return predictions
+    return predictions, probabilities
 
 
 def predict_known(data, labels, method='predict', svc=False):
@@ -152,7 +151,7 @@ def predict_regression(data, labels):
     return predictions, model.coef_
 
 
-def run_model(data, labels, return_coef=False):
+def run_model(data, labels) -> tuple[float, LogisticRegression]:
     """
     Runs provided LogisticRegressionCV model with the provided data
     and labels.
@@ -182,18 +181,21 @@ def run_model(data, labels, return_coef=False):
     else:
         data = data[labels.index, :]
 
+    print("Start")
+
     model = LogisticRegressionCV(
         l1_ratios=[0.8],
         solver="saga",
         penalty="elasticnet",
-        n_jobs=3,
+        n_jobs=6,
         cv=skf,
         max_iter=100000,
         scoring='balanced_accuracy',
-        multi_class='ovr'
+        multi_class='ovr',
     )
+
+    print("End")
     model.fit(data, labels)
-    coef = model.coef_[0]
     scores = np.mean(list(model.scores_.values())[0], axis=0)
 
     model = LogisticRegression(
@@ -205,10 +207,7 @@ def run_model(data, labels, return_coef=False):
     )
     model.fit(data, labels)
 
-    if return_coef:
-        return np.max(scores), model, coef
-    else:
-        return np.max(scores), model
+    return np.max(scores), model
 
 
 def get_accuracy(predicted, actual):

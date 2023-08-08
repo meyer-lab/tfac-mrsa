@@ -53,9 +53,9 @@ def bootstrap_weights(components):
             if target == 'age':
                 _, _coef = predict_regression(data, labels)
             else:
-                _, _, _coef = run_model(data, labels, return_coef=True)
+                _, _model = run_model(data, labels)
 
-            coef.append(_coef)
+            coef.append(model.coef_[0])
 
         coef = scale(coef, axis=1)
         weights.loc[(target, 'Mean'), :] = np.mean(coef, axis=0)

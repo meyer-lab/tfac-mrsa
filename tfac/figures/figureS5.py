@@ -39,8 +39,7 @@ def run_validation(data_types, patient_data):
         data = data.dropna(axis=0)
         labels = patient_data.loc[data.index, 'status']
 
-        _predictions = predict_validation(data, labels)
-        _probabilities = predict_validation(data, labels, predict_proba=True)
+        _predictions, _ = predict_validation(data, labels)
         predictions.loc[_predictions.index, source] = _predictions
 
     predictions.loc[:, 'Actual'] = validation_meta.loc[:, 'status']

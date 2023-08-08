@@ -1,115 +1,200 @@
 """
-Creates Figure 2 -- CMTF Plotting
+Creates Figure S5 -- PCA Model Performance Comparison
 """
+import matplotlib
 import numpy as np
+from os.path import abspath, dirname
 import pandas as pd
 
 from .common import getSetup
-from ..dataImport import form_tensor, get_factors, get_pca_factors
-from ..predict import run_model
-from tensorpack import calcR2X
+from ..dataImport import import_validation_patient_metadata, get_factors, import_cytokines, import_rna
+from ..predict import get_accuracy, predict_known, predict_validation, predict_regression
+
+COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color'][2:]
+PATH_HERE = dirname(dirname(abspath(__file__)))
 
 
-def get_r2x_results():
+def run_validation(data_types, patient_data):
     """
-    Calculates CMTF R2X with regards to the number of CMTF components and
-    RNA/cytokine scaling.
+    Predicts validation samples.
 
     Parameters:
-        None
+        data_types (list[tuple]): data sources to predict
+        patient_data (pandas.DataFrame): patient metadata
 
     Returns:
-        r2x_v_components (pandas.Series): R2X vs. number of CMTF components
-        r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
+        predictions (pandas.Series): predictions for each data source
     """
-    # R2X v. Components
+    predictions = pd.DataFrame(
+        index=patient_data.index
+    )
+    predictions = predictions.loc[patient_data['status'] == 'Unknown']
+    validation_meta = import_validation_patient_metadata()
 
-    tensor, matrix, patient_data = form_tensor()
-    labels = patient_data.loc[:, 'status']
-    components = 12
+    for data_type in data_types:
+        source = data_type[0]
+        data = data_type[1]
 
-    r2x_v_components = pd.DataFrame(
-        columns=['CMTF', 'PCA'],
-        index=np.arange(2, components + 1),
+        data = data.reindex(index=patient_data.index)
+        data = data.dropna(axis=0)
+        labels = patient_data.loc[data.index, 'status']
+
+        _predictions = predict_validation(data, labels)
+        _probabilities = predict_validation(data, labels, predict_proba=True)
+        predictions.loc[_predictions.index, source] = _predictions
+
+    predictions.loc[:, 'Actual'] = validation_meta.loc[:, 'status']
+    return predictions
+
+
+def run_cv(data_types, patient_data):
+    """
+    Predicts samples with known outcomes via cross-validation.
+
+    Parameters:
+        data_types (list[tuple]): data sources to predict
+        patient_data (pandas.DataFrame): patient metadata
+
+    Returns:
+        predictions (pandas.Series): predictions for each data source
+    """
+    predictions = pd.DataFrame(
+        index=patient_data.index
+    )
+
+    for data_type in data_types:
+        source = data_type[0]
+        data = data_type[1]
+
+        data = data.reindex(index=patient_data.index)
+        data = data.dropna(axis=0)
+        labels = patient_data.loc[data.index, 'status']
+
+        _predictions, _ = predict_known(data, labels)
+        predictions.loc[_predictions.index, source] = _predictions
+
+    predictions.loc[:, 'Actual'] = patient_data.loc[:, 'status']
+
+    return predictions
+
+
+def run_age_regression(data, patient_data):
+    """
+    Predicts patient age from provided data.
+
+    Parameters:
+        data (pandas.DataFrame): data to predict age
+        patient_data (pandas.DataFrame): patient metadata, including age
+    """
+    labels = patient_data.loc[:, 'age']
+    age_predictions, _ = predict_regression(data, labels)
+    age_predictions.name = 'CMTF'
+
+    age_predictions = pd.DataFrame(age_predictions)
+    age_predictions.loc[:, 'Actual'] = labels.loc[age_predictions.index]
+
+    return age_predictions
+
+
+def get_accuracies(samples):
+    """
+    Calculates prediction accuracy for samples with known outcomes.
+
+    Parameters:
+        samples (pandas.DataFrame): predictions for different models
+
+    Returns:
+        accuracies (pandas.Series): model accuracy w/r to each model type
+    """
+    cmtf = samples.loc[:, 'CMTF']
+    pca = samples.loc[:, 'PCA']
+    actual = samples.loc[:, 'Actual']
+    samples = samples.drop(['CMTF', 'PCA', 'Actual'], axis=1)
+
+    d_types = samples.columns
+    accuracies = pd.Series(
+        index=d_types,
         dtype=float
     )
-    acc_v_components = pd.DataFrame(
-        columns=['CMTF', 'PCA'],
-        index=np.arange(2, components + 1).tolist(),
+    cmtf_accuracies = pd.Series(
+        index=d_types,
         dtype=float
     )
-    for n_components in r2x_v_components.index:
-        print(f"Starting decomposition with {n_components} components.")
-        t_fac, _ = get_factors(r=n_components)
-        pca_components, _, pca_var = get_pca_factors(r=n_components)
-        r2x_v_components.loc[n_components, 'CMTF'] = t_fac.R2X
-        r2x_v_components.loc[n_components, 'PCA'] = pca_var
-        acc_v_components.loc[n_components, 'CMTF'] = \
-            run_model(t_fac.factors[0], labels)[0]
-        acc_v_components.loc[n_components, 'PCA'] = \
-            run_model(pca_components, labels)[0]
+    pca_accuracies = cmtf_accuracies.copy()
 
-    # R2X v. Scaling
-    scalingV = np.logspace(-10, 10, base=2, num=21)
-    r2x_v_scaling = pd.DataFrame(
-        index=scalingV,
-        columns=["Total", "Tensor", "Matrix"]
-    )
-    acc_v_scaling = pd.DataFrame(
-        columns=['CMTF', 'PCA'],
-        index=scalingV.tolist(),
-        dtype=float
-    )
-    for scaling in r2x_v_scaling.index:
-        tensor, matrix, _ = form_tensor(scaling)
-        t_fac, _ = get_factors(variance_scaling=scaling)
-        pca_components, _, _ = get_pca_factors(r=n_components)
-        r2x_v_scaling.loc[scaling, "Total"] = t_fac.R2X
-        r2x_v_scaling.loc[scaling, "Tensor"] = calcR2X(t_fac, tIn=tensor)
-        r2x_v_scaling.loc[scaling, "Matrix"] = calcR2X(t_fac, mIn=matrix)
-        acc_v_scaling.loc[scaling, 'CMTF'] = \
-            run_model(t_fac.factors[0], labels)[0]
-        acc_v_scaling.loc[scaling, 'PCA'] = \
-            run_model(pca_components, labels)[0]
+    for d_type in d_types:
+        col = samples.loc[:, d_type]
+        col = col.dropna()
+        labels = actual.loc[col.index]
+        cmtf_col = cmtf.loc[col.index]
+        pca_col = pca.loc[col.index]
 
-    return r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling
+        accuracies.loc[d_type] = get_accuracy(col, actual)
+        cmtf_accuracies.loc[d_type] = get_accuracy(cmtf_col, labels)
+        pca_accuracies.loc[d_type] = get_accuracy(pca_col, labels)
+
+    return accuracies, cmtf_accuracies, pca_accuracies
 
 
-def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
-                 acc_v_scaling):
+def plot_results(train_samples, validation_samples):
     """
     Plots prediction model performance.
 
     Parameters:
-        r2x_v_components (pandas.Series): R2X vs. number of CMTF components
-        r2x_v_scaling (pandas.Series): R2X vs. RNA/cytokine scaling
-        acc_v_components (pandas.Series): accuracy vs. number of CMTF components
-        acc_v_scaling (pondas.Series): accuracy vs. RNA/cytokine scaling
+        train_samples (pandas.DataFrame): predictions for training samples
+        validation_samples (pandas.DataFrame): predictions for validation
+            cohort samples
 
     Returns:
-        fig (matplotlib.Figure): figure depicting CMTF parameterization plots
+        fig (matplotlib.Figure): figure depicting predictions for all samples
     """
-    fig_size = (5, 5)
+    fig_size = (5, 2.5)
     layout = {
         'ncols': 2,
-        'nrows': 2
+        'nrows': 1,
     }
     axs, fig, _ = getSetup(
         fig_size,
         layout
     )
 
-    # R2X v. Components
+    # Cross-validation Accuracies
 
-    axs[0].plot(r2x_v_components.index, r2x_v_components.loc[:, 'CMTF'])
-    axs[0].plot(r2x_v_components.index, r2x_v_components.loc[:, 'PCA'])
-    axs[0].legend(['CMTF', 'PCA'])
-    axs[0].set_ylabel('R2X')
-    axs[0].set_xlabel('Number of Components')
+    train_samples = train_samples.loc[train_samples['Actual'] != 'Unknown']
+    accuracies, train_cmtf, train_pca = get_accuracies(train_samples)
+    axs[0].bar(
+        np.arange(0, 4 * len(accuracies), 4),
+        accuracies,
+        width=1
+    )
+    axs[0].bar(
+        np.arange(1, 4 * len(accuracies), 4),
+        train_pca,
+        width=1
+    )
+    axs[0].bar(
+        np.arange(2, 4 * len(train_cmtf), 4),
+        train_cmtf,
+        width=1
+    )
+
+    axs[0].set_xlim(-1, 4 * len(accuracies) - 1)
     axs[0].set_ylim(0, 1)
-    axs[0].set_xticks(r2x_v_components.index)
+    axs[0].legend(['Raw Data', 'PCA', 'CMTF'])
+    ticks = [label.replace(' ', '\n') for label in accuracies.index]
+    axs[0].set_xticks(
+        np.arange(0.5, 4 * len(accuracies), 4)
+    )
+    axs[0].set_xticklabels(
+        ticks,
+        fontsize=9,
+        ma='right',
+        rotation=90,
+        va='top'
+    )
+    axs[0].set_ylabel('Prediction Accuracy')
     axs[0].text(
-        -0.25,
+        -0.35,
         0.9,
         'A',
         fontsize=14,
@@ -117,75 +202,79 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
         transform=axs[0].transAxes
     )
 
-    # R2X v. Scaling
+    # Validation Accuracies
 
-    r2x_v_scaling.plot(ax=axs[1])
-    axs[1].legend(
-        ['Total', 'Cytokine', 'RNA']
+    val_accuracies, val_cmtf, val_pca = get_accuracies(validation_samples)
+    axs[1].bar(
+        np.arange(0, 4 * len(val_accuracies), 4),
+        val_accuracies,
+        width=1
     )
-    axs[1].set_xscale("log")
-    axs[1].set_ylabel('R2X')
-    axs[1].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
+    axs[1].bar(
+        np.arange(1, 4 * len(val_accuracies), 4),
+        val_pca,
+        width=1
+    )
+    axs[1].bar(
+        np.arange(2, 4 * len(val_cmtf), 4),
+        val_cmtf,
+        width=1
+    )
+
+    axs[1].set_xlim(-1, 4 * len(accuracies) - 1)
     axs[1].set_ylim(0, 1)
-    axs[1].tick_params(axis='x', pad=-3)
-    axs[1].text(
-        -0.25,
-        0.9,
-        'B',
-        fontsize=14,
-        fontweight='bold',
-        transform=axs[1].transAxes
+    axs[1].legend(['Raw Data', 'PCA', 'CMTF'])
+    axs[1].set_xticks(
+        np.arange(0.5, 4 * len(val_accuracies), 4)
     )
-
-    # Accuracy v. Components
-
-    axs[2].plot(acc_v_components.index, acc_v_components.loc[:, 'CMTF'])
-    axs[2].plot(acc_v_components.index, acc_v_components.loc[:, 'PCA'])
-    axs[2].legend(['CMTF', 'PCA'])
-    axs[2].set_ylabel('Prediction Accuracy')
-    axs[2].set_xlabel('Number of Components')
-    axs[2].set_xticks(acc_v_components.index)
-    axs[2].set_ylim([0.45, 0.75])
-    axs[2].text(
-        -0.25,
+    axs[1].set_xticklabels(
+        ticks,
+        fontsize=9,
+        ma='right',
+        rotation=90,
+        va='top'
+    )
+    axs[1].set_ylabel('Prediction Accuracy')
+    axs[1].text(
+        -0.35,
         0.9,
         'C',
         fontsize=14,
         fontweight='bold',
-        transform=axs[2].transAxes
-    )
-
-    # Accuracy v. Scaling
-
-    axs[3].semilogx(acc_v_scaling.index, acc_v_scaling.loc[:, 'CMTF'], base=2)
-    axs[3].semilogx(acc_v_scaling.index, acc_v_scaling.loc[:, 'PCA'], base=2)
-    axs[3].legend(['CMTF', 'PCA'])
-    axs[3].set_ylabel('Prediction Accuracy')
-    axs[3].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
-    axs[3].set_yticks(np.arange(0.5, 0.75, 0.05))
-    axs[3].set_ylim([0.5, 0.7])
-    axs[3].set_xticks(np.logspace(-10, 10, base=2, num=11))
-    axs[3].tick_params(axis='x', pad=-3)
-    axs[3].text(
-        -0.25,
-        0.9,
-        'D',
-        fontsize=14,
-        fontweight='bold',
-        transform=axs[3].transAxes
+        transform=axs[1].transAxes
     )
 
     return fig
 
 
 def makeFigure():
-    r2x_v_components, acc_v_components, r2x_v_scaling, acc_v_scaling = get_r2x_results()
+    plasma_cyto, serum_cyto = import_cytokines()
+    rna = import_rna()
+    components, pcaFac, patient_data = get_factors()
+    components = components[1][0]
+    pca_components = pcaFac.scores
 
-    fig = plot_results(
-        r2x_v_components,
-        r2x_v_scaling,
-        acc_v_components,
-        acc_v_scaling
-    )
+    data_types = [
+        ('Plasma Cytokines', plasma_cyto.T),
+        ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
+        ('Serum Cytokines', serum_cyto.T),
+        ('Serum IL-10', serum_cyto.loc['IL-10', :]),
+        ('RNA Modules', rna),
+        ('PCA', pd.DataFrame(
+            pca_components,
+            index=patient_data.index,
+            columns=list(range(1, components.shape[1] + 1))
+        )),
+        ('CMTF', pd.DataFrame(
+            components,
+            index=patient_data.index,
+            columns=list(range(1, components.shape[1] + 1))
+        ))
+    ]
+
+    validation_samples = run_validation(data_types, patient_data)
+    train_samples = run_cv(data_types, patient_data)
+
+    fig = plot_results(train_samples, validation_samples)
 
     return fig

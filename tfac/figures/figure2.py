@@ -144,7 +144,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[2].set_xlabel('Number of Components')
     axs[2].set_xticks(acc_v_components.index)
     axs[2].set_yticks(np.arange(0.5, 0.8, 0.05))
-    axs[2].set_ylim([0.45, 0.75])
+    axs[2].set_ylim([0.5, 0.7])
     axs[2].text(
         -0.25,
         0.9,

@@ -53,7 +53,7 @@ def makeFigure():
 
     ax.set_xticklabels(range(1, mod_expression.shape[1] + 1))
     ax.set_yticks([])
-    ax.set_yticklabels(mod_expression.index, rotation=0)
+    ax.set_yticklabels([])
     ax.set_xlabel('Component', fontsize=12)
     ax.set_ylabel('Module', fontsize=12)
 

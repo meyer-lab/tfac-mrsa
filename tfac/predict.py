@@ -229,13 +229,14 @@ def get_accuracy(predicted, actual):
     return balanced_accuracy_score(actual, predicted)
 
 
-def run_svc(data, labels):
+def run_svc(data, labels, gamma=1E-3):
     """
     Runs SVC model with the provided data and labels.
 
     Parameters:
         data (pandas.DataFrame): DataFrame of CMTF components
         labels (pandas.Series): Labels for provided data
+        gamma (float, default:1E-3) Gamma value for SVC (rbf kernel)
 
     Returns:
         score (float): Accuracy for best-performing model (considers
@@ -257,31 +258,27 @@ def run_svc(data, labels):
     else:
         data = data[labels.index, :]
 
-    gamma_center = 1 / (data.shape[1] * np.nanvar(data.values))
-    gammas = np.logspace(-4, 4, 9, base=gamma_center)
     cs = np.logspace(-4, 4, 9)
-
-    best = (None, None, 0)
+    best = (None, 0)
     for c in cs:
-        for gamma in gammas:
-            model = SVC(C=c, gamma=gamma)
-            kf = StratifiedKFold(n_splits=10)
-            acc = cross_val_score(
-                model,
-                data,
-                labels,
-                cv=kf,
-                scoring='balanced_accuracy'
-            ).mean()
+        model = SVC(C=c, gamma=gamma)
+        kf = StratifiedKFold(n_splits=10)
+        acc = cross_val_score(
+            model,
+            data,
+            labels,
+            cv=kf,
+            scoring='balanced_accuracy'
+        ).mean()
 
-            if acc > best[-1]:
-                best = (c, gamma, acc)
+        if acc > best[-1]:
+            best = (c, acc)
 
     model = SVC(
         C=best[0],
-        gamma=best[1],
+        gamma=gamma,
         probability=True
     )
     model.fit(data, labels)
 
-    return best[2], model
+    return best[1], model

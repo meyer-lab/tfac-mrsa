@@ -6,14 +6,11 @@ import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
 from sklearn.preprocessing import scale
-from statsmodels.multivariate.pca import PCA
-import tensorly as tl
-from tensorly.tenalg.svd import randomized_svd
 
 from .cmtf import perform_CMTF
 
 PATH_HERE = dirname(dirname(abspath(__file__)))
-OPTIMAL_SCALING = 2 ** 8.0
+OPTIMAL_SCALING = 2 ** 7.0
 
 
 @lru_cache
@@ -109,7 +106,7 @@ def import_rna():
         rna (pandas.DataFrame): RNA expression modules
     """
     rna = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_tpm.txt.zip'),
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'rna_combat_tpm.txt.zip'),
         delimiter=',',
         index_col=0,
         engine="c",
@@ -192,5 +189,5 @@ def reorder_table(df):
             clustering
     """
     y = sch.linkage(df.to_numpy(), method='centroid')
-    index = sch.dendrogram(y, orientation='right')['leaves']
+    index = sch.dendrogram(y, orientation='right', no_plot=True)['leaves']
     return df.iloc[index, :]

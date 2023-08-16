@@ -499,42 +499,55 @@ def export_results(train_samples, train_probabilities, validation_samples,
 
 
 def makeFigure():
-    plasma_cyto, serum_cyto = import_cytokines()
-    rna = import_rna()
-    components, _, patient_data = get_factors()
-    components = components[1][0]
-
-    data_types = [
-        ('Plasma Cytokines', plasma_cyto.T),
-        ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
-        ('Serum Cytokines', serum_cyto.T),
-        ('Serum IL-10', serum_cyto.loc['IL-10', :]),
-        ('RNA Modules', rna),
-        ('CMTF', pd.DataFrame(
-            components,
-            index=patient_data.index,
-            columns=list(range(1, components.shape[1] + 1))
-        )
-        )
-    ]
-
-    validation_samples, validation_probabilities = \
-        run_validation(data_types, patient_data)
-    train_samples, train_probabilities, sex_predictions, race_predictions = \
-        run_cv(data_types, patient_data)
-    age_predictions = run_age_regression(data_types[-1][-1], patient_data)
-
-    # export_results(train_samples, train_probabilities, validation_samples,
-    #                validation_probabilities, sex_predictions, race_predictions,
-    #                age_predictions)
-
-    age_predictions = age_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
-    sex_predictions = sex_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
-    race_predictions = \
-        race_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
-
-    fig = plot_results(train_samples, train_probabilities, validation_samples,
-                       validation_probabilities, sex_predictions,
-                       race_predictions, age_predictions)
+    fig_size = (5, 5)
+    layout = {
+        'ncols': 2,
+        'nrows': 3,
+        'height_ratios': [1, 1, 0.1]
+    }
+    axs, fig, _ = getSetup(
+        fig_size,
+        layout
+    )
 
     return fig
+
+    # plasma_cyto, serum_cyto = import_cytokines()
+    # rna = import_rna()
+    # components, _, patient_data = get_factors()
+    # components = components[1][0]
+    #
+    # data_types = [
+    #     ('Plasma Cytokines', plasma_cyto.T),
+    #     ('Plasma IL-10', plasma_cyto.loc['IL-10', :]),
+    #     ('Serum Cytokines', serum_cyto.T),
+    #     ('Serum IL-10', serum_cyto.loc['IL-10', :]),
+    #     ('RNA Modules', rna),
+    #     ('CMTF', pd.DataFrame(
+    #         components,
+    #         index=patient_data.index,
+    #         columns=list(range(1, components.shape[1] + 1))
+    #     )
+    #     )
+    # ]
+    #
+    # validation_samples, validation_probabilities = \
+    #     run_validation(data_types, patient_data)
+    # train_samples, train_probabilities, sex_predictions, race_predictions = \
+    #     run_cv(data_types, patient_data)
+    # age_predictions = run_age_regression(data_types[-1][-1], patient_data)
+    #
+    # # export_results(train_samples, train_probabilities, validation_samples,
+    # #                validation_probabilities, sex_predictions, race_predictions,
+    # #                age_predictions)
+    #
+    # age_predictions = age_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
+    # sex_predictions = sex_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
+    # race_predictions = \
+    #     race_predictions.loc[:, ['CMTF', 'Actual']].dropna(axis=1)
+    #
+    # fig = plot_results(train_samples, train_probabilities, validation_samples,
+    #                    validation_probabilities, sex_predictions,
+    #                    race_predictions, age_predictions)
+    #
+    # return fig

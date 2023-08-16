@@ -1,9 +1,8 @@
 """ Evaluate the ability of CMTF to impute data. """
 
 import numpy as np
-from statsmodels.multivariate.pca import PCA
 from .dataImport import form_tensor
-from .cmtf import perform_CMTF, calcR2X
+from .cmtf import perform_CMTF, calcR2X, PCArand
 
 
 def flatten_to_mat(tensor, matrix=None):
@@ -104,7 +103,7 @@ def impute_accuracy(missingCube, missingGlyCube, comps, PCAcompare=True):
         CMTFR2X[ii] = calcR2X(recon_cmtf, tIn=imputeCube, mIn=imputeGlyCube)
 
         if PCAcompare:
-            outt = PCA(missingMat, ncomp=nComp, missing="fill-em", standardize=False, demean=False, normalize=False)
+            outt = PCArand(missingMat, ncomp=nComp, missing="fill-em", standardize=False, demean=False, normalize=False)
             recon_pca = outt.scores @ outt.loadings.T
             PCAR2X[ii] = calcR2X(recon_pca, mIn=imputeMat)
 

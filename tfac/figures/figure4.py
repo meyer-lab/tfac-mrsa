@@ -53,7 +53,8 @@ def bootstrap_weights(components):
             if target == 'age':
                 _, _coef = predict_regression(data, labels)
             else:
-                _, _, _coef = run_model(data, labels, return_coef=True)
+                _, _model = run_model(data, labels)
+                _coef = _model.coef_
 
             coef.append(_coef)
 

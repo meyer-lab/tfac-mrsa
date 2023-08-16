@@ -40,7 +40,6 @@ def run_validation(data_types, patient_data):
         labels = patient_data.loc[data.index, 'status']
 
         _predictions = predict_validation(data, labels)
-        _probabilities = predict_validation(data, labels, predict_proba=True)
         predictions.loc[_predictions.index, source] = _predictions
 
     predictions.loc[:, 'Actual'] = validation_meta.loc[:, 'status']

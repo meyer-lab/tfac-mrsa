@@ -18,7 +18,7 @@ from tensorpack.cmtf import (
     calcR2X,
 )
 
-
+OPTIMAL_RANK = 8
 tl.set_backend("numpy")
 
 
@@ -33,7 +33,7 @@ class PCArand(PCA):
         self.eigenvecs = v.T
 
 
-def perform_CMTF(tOrig, mOrig, r=8, tol=1e-6, maxiter=300, progress=None, linesearch: bool=True):
+def perform_CMTF(tOrig, mOrig, r=OPTIMAL_RANK, tol=1e-6, maxiter=300, progress=None, linesearch: bool=True):
     """Perform CMTF decomposition."""
     assert tOrig.dtype == float
     assert mOrig.dtype == float

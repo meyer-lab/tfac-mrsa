@@ -1,14 +1,13 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr
 import seaborn as sns
 
 from tfac.dataImport import get_cibersort_results, get_factors, reorder_table
 from tfac.figures.common import getSetup
 
 
-def main():
+def makeFigure():
     cs_results = get_cibersort_results(citeseq=True)
     t_fac, _, meta = get_factors()
 
@@ -34,7 +33,7 @@ def main():
             correlations.loc[cell, component] = corr
             p_values.loc[cell, component] = p
 
-    fig_size = (5, 5)
+    fig_size = (4, 5)
     layout = {
         'ncols': 1,
         'nrows': 1
@@ -74,9 +73,3 @@ def main():
 
     ax.set_ylabel('Cell Type')
     ax.set_xlabel('Component')
-
-    plt.show()
-
-
-if __name__ == '__main__':
-    main()

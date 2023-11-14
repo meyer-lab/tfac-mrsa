@@ -7,7 +7,7 @@ import pandas as pd
 from .common import getSetup
 from ..dataImport import form_tensor, get_factors
 from ..predict import run_model
-from tensorpack import calcR2X
+from ..cmtf import calcR2X, PCArand
 
 
 def get_r2x_results():
@@ -41,7 +41,18 @@ def get_r2x_results():
         print(f"Starting decomposition with {n_components} components.")
         t_fac, pcaFac, _ = get_factors(r=n_components)
         r2x_v_components.loc[n_components, 'CMTF'] = t_fac.R2X
-        r2x_v_components.loc[n_components, 'PCA'] = pcaFac.rsquare[-1]
+        pca = PCArand(
+            pcaFac.data,
+            ncomp=n_components,
+            standardize=False,
+            demean=True,
+            normalize=True,
+            missing='fill-em'
+        )
+        r2x_v_components.loc[n_components, 'PCA'] = calcR2X(
+            pca.projection,
+            mIn=pca.data
+        )
         acc_v_components.loc[n_components, 'CMTF'] = \
             run_model(t_fac.factors[0], labels)[0]
         acc_v_components.loc[n_components, 'PCA'] = \

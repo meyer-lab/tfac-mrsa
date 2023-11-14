@@ -3,6 +3,7 @@ Creates Figure 5 -- Reduced Model
 """
 import matplotlib
 from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 import numpy as np
 from os.path import abspath, dirname
 import pandas as pd
@@ -18,13 +19,14 @@ PATH_HERE = dirname(dirname(abspath(__file__)))
 PERSISTENCE_COMPONENTS = [1, 2, 4, 6]
 
 
-def run_cv(components, patient_data):
+def run_cv(components, patient_data, svc=True):
     """
     Predicts samples with known outcomes via cross-validation.
 
     Parameters:
         components (numpy.array): CMTF components
         patient_data (pandas.DataFrame): patient metadata
+        svc (bool, default: True): use svc for classification
 
     Returns:
         predictions (pandas.Series): predictions for each data source
@@ -36,22 +38,23 @@ def run_cv(components, patient_data):
     )
     probabilities = predictions.copy()
 
-    predictions.loc[:, 'Full (LR)'], _ = predict_known(components, labels)
-    probabilities.loc[:, 'Full (LR)'], _ = predict_known(
+    predictions.loc[:, 'Full'], _ = predict_known(components, labels, svc=svc)
+    probabilities.loc[:, 'Full'], _ = predict_known(
         components,
         labels,
-        method='predict_proba'
+        method='predict_proba',
+        svc=svc
     )
 
     predictions.loc[:, '1, 2, 4 & 6'], _ = predict_known(
         components.loc[:, PERSISTENCE_COMPONENTS],
         labels,
-        svc=True
+        svc=svc
     )
     probabilities.loc[:, '1, 2, 4 & 6'], _ = predict_known(
         components.loc[:, PERSISTENCE_COMPONENTS],
         labels,
-        svc=True,
+        svc=svc,
         method='predict_proba'
     )
 
@@ -66,12 +69,12 @@ def run_cv(components, patient_data):
     predictions.loc[:, '2, 4 + 6'], model = predict_known(
         summed,
         labels,
-        svc=True
+        svc=svc
     )
     probabilities.loc[:, '2, 4 + 6'], _ = predict_known(
         summed,
         labels,
-        svc=True,
+        svc=svc,
         method='predict_proba'
     )
 
@@ -81,19 +84,19 @@ def run_cv(components, patient_data):
         predictions[name], _ = predict_known(
             components.loc[:,  reduced],
             labels,
-            svc=True
+            svc=svc
         )
         probabilities[name], _ = \
             predict_known(
                 components.loc[:, reduced],
                 labels,
                 method='predict_proba',
-                svc=True
+                svc=svc
             )
 
     predictions.loc[:, 'Actual'] = patient_data.loc[:, 'status']
 
-    return predictions, probabilities, model
+    return predictions.astype(int), probabilities, model
 
 
 def get_accuracies(samples):
@@ -122,7 +125,7 @@ def get_accuracies(samples):
     return accuracies
 
 
-def plot_results(predictions, probabilities, model, components,
+def plot_results(predictions, probabilities, lr_predictions, model, components,
                  t_fac, patient_data):
     """
     Plots prediction model performance.
@@ -131,6 +134,7 @@ def plot_results(predictions, probabilities, model, components,
         predictions (pandas.DataFrame): predictions for training samples
         probabilities (pandas.DataFrame): predicted probability of
             persistence for training samples
+        lr_predictions (pandas.DataFrame): LR predictions for training samples
         model (sklearn.SVM): Best reduced SVM model
         components (pandas.DataFrame): CMTF components
         t_fac (CPTensor): CMTF factorization result
@@ -139,7 +143,7 @@ def plot_results(predictions, probabilities, model, components,
     Returns:
         fig (matplotlib.Figure): figure depicting predictions for all samples
     """
-    fig_size = (6, 2.5)
+    fig_size = (6, 2)
     layout = {
         'ncols': 3,
         'nrows': 1,
@@ -152,17 +156,36 @@ def plot_results(predictions, probabilities, model, components,
     # Cross-validation Accuracies
 
     accuracies = get_accuracies(predictions)
+    lr_accuracies = get_accuracies(lr_predictions)
     axs[0].bar(
-        np.arange(len(accuracies)),
+        np.arange(0, 5 * len(accuracies), 5),
         accuracies,
-        color=COLOR_CYCLE[:7],
-        width=0.8
+        color=COLOR_CYCLE[:len(accuracies)],
+        width=2,
+    )
+    axs[0].bar(
+        np.arange(2, 5 * len(lr_accuracies), 5),
+        lr_accuracies,
+        color=COLOR_CYCLE[:len(accuracies)],
+        width=2,
+        hatch='//',
+    )
+    axs[0].legend(
+        [
+            Patch(facecolor='black', edgecolor='white'),
+            Patch(facecolor='black', edgecolor='white', hatch='//')
+        ],
+        [
+            'SVM',
+            'LR'
+        ],
+        handleheight=1,
+        handlelength=3
     )
 
-    axs[0].set_xlim(-1, len(accuracies))
     axs[0].set_ylim(0, 1)
     axs[0].set_xticks(
-        np.arange(len(accuracies))
+        np.arange(1, 5 * len(accuracies), 5)
     )
 
     labels = accuracies.index
@@ -263,13 +286,17 @@ def makeFigure():
         columns=list(np.arange(1, components.shape[1] + 1))
     )
 
-    predictions, probabilities, model = \
-        run_cv(components, patient_data)
-    predictions = predictions.astype(int)
+    predictions, probabilities, model = run_cv(components, patient_data)
+    lr_predictions, lr_probabilities, _ = run_cv(
+        components,
+        patient_data,
+        svc=False
+    )
 
     fig = plot_results(
         predictions,
         probabilities,
+        lr_predictions,
         model,
         components,
         t_fac,

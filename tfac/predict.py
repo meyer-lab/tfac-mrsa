@@ -19,7 +19,7 @@ skf = RepeatedStratifiedKFold(
 )
 
 
-def predict_validation(data, labels, predict_proba=False):
+def predict_validation(data, labels, predict_proba=False, svc=False):
     """
     Trains a LogisticRegressionCV model using samples with known outcomes,
     then predicts samples with unknown outcomes.
@@ -29,6 +29,7 @@ def predict_validation(data, labels, predict_proba=False):
         labels (pandas.Series): labels for samples in data
         predict_proba (bool, default: False): predict probability of positive
             case
+        svc (bool): sets model to be svc
 
     Returns:
         predictions (pandas.Series): predictions for samples with unknown
@@ -47,7 +48,10 @@ def predict_validation(data, labels, predict_proba=False):
         train_data = data.loc[train_labels.index, :]
         test_data = data.loc[test_labels.index, :]
 
-    _, model = run_model(train_data, train_labels)
+    if svc:
+        _, model = run_svc(data, labels)
+    else:
+        _, model = run_model(data, labels)
 
     if isinstance(data, pd.Series):
         train_data = train_data.values.reshape(-1, 1)

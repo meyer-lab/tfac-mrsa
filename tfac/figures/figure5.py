@@ -15,9 +15,9 @@ from ..dataImport import import_validation_patient_metadata, get_factors, \
 from ..predict import get_accuracy, predict_known
 
 SCATTER_COLORS = {
-    '2': 'red',
-    '4': 'cyan',
-    '6': 'green',
+    '2': '#C03B30',
+    '4': '#00A651',
+    '6': '#3C7136',
     'shared': 'black',
     'neither': '#D3D3D3'
 }

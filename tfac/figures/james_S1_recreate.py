@@ -5,9 +5,11 @@ from os.path import join, dirname, abspath
 import pandas as pd
 import numpy as np
 from scipy import sparse
-# plot 1 is the pearson coefficients of serum and plasma cytokine levels
 
-#start by importing cytokine data
+from scipy.stats import pearsonr
+import seaborn as sns
+
+from tfac.figures.common import getSetup
 
 """
 Since we will be grabbing data from files present in tfac-mrsa,
@@ -16,12 +18,33 @@ we need to define our starting point. home/jamesp/Playground/tfac-mrsa
 PATH_HERE = dirname(dirname(dirname(abspath(__file__))))
 OPTIMAL_SCALING = 2 ** 7.0
 
-def import_cytokines(scale_cyto=True):
+def import_patient_metadata():
+    """
+    Returns patient meta data, including cohort and outcome.
+
+    Returns:
+        patient_data (pandas.DataFrame): Patient outcomes and cohorts
+    """
+    patient_data = pd.read_csv(
+        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'patient_metadata.txt'),
+        delimiter=',',
+        index_col=0
+    )
+
+    # Drop patients with only RNAseq
+    patient_data = patient_data.loc[patient_data["type"] != "2RNAseq", :]
+
+    return patient_data
+# #debug
+# print(import_patient_metadata())
+
+def import_cytokines(scale_cyto=True, transpose=True):
     """
     Return 2 matrices containing 1) plasma_ctyo data and 2) serum_cyto data
     
     Parameters:
-        scale default:True log scale the concentrations
+        scale default:True | log scale the concentrations
+        transpose default:True | want cytokine labels as indeces (axis=0) 
     
     Returns:
         plasma_ctyo (pandas.DataFrame)
@@ -58,30 +81,28 @@ def import_cytokines(scale_cyto=True):
         serum_cyto = serum_cyto.transform(np.log)
         serum_cyto -= serum_cyto.mean(axis=0)
 
+    """
+    If sample isn't represnted in patients, remove it from cytokines.
+    Do this by reindexing cyto data by the intersection of patient index
+    and cyto index
+    """
+    patients = set(import_patient_metadata().index)
+    plasma_cyto = plasma_cyto.reindex(set(plasma_cyto.index).intersection(patients))
+    serum_cyto = serum_cyto.reindex(set(serum_cyto.index).intersection(patients))
+    print(f"plasma_cyto shape post-importation, pre-transpose: {plasma_cyto.shape}")
+    print(f"serum_cyto shape post-importation, pre-transpose: {serum_cyto.shape}")
+
+
+    # transpose by default so that we expect cytokine labels as indeces (axis=0)
+    if transpose:
+        plasma_cyto = plasma_cyto.T
+        serum_cyto = serum_cyto.T
+
     return plasma_cyto, serum_cyto
 
-# debug line
-plasma_cyto, serum_cyto = import_cytokines()
+# # debug line
+# plasma_cyto, serum_cyto = import_cytokines()
 
-def import_patient_metadata():
-    """
-    Returns patient meta data, including cohort and outcome.
-
-    Returns:
-        patient_data (pandas.DataFrame): Patient outcomes and cohorts
-    """
-    patient_data = pd.read_csv(
-        join(PATH_HERE, 'tfac', 'data', 'mrsa', 'patient_metadata.txt'),
-        delimiter=',',
-        index_col=0
-    )
-
-    # Drop patients with only RNAseq
-    patient_data = patient_data.loc[patient_data["type"] != "2RNAseq", :]
-
-    return patient_data
-#debug
-print(import_patient_metadata())
 
 def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
     """
@@ -95,7 +116,7 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
         tensor (numpy.array): tensor of cytokine data
     """
     #import relevant datasets, not doing RNA yet
-    plasma_cyto, serum_cyto = import_cytokines()
+    plasma_cyto, serum_cyto = import_cytokines(transpose=False)
     patient_data = import_patient_metadata()
     print(f"plasma_cyto shape before reindex: {plasma_cyto.shape} (Patient, Cytokine)")
     print(f"serum_cyto shape before reindex: {serum_cyto.shape} (Patient, Cytokine)")
@@ -122,7 +143,71 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
     return np.copy(tensor), patient_data
 
 def fig_S1_setup():
+    # we're only interested in plasma cytokines so we shove RNA into _
     tensor, patInfo = form_tensor()
+    plasma, _ = import_cytokines() # we just need cytokine list
 
-#debug
-form_tensor()
+    # collect cytokines from the labels of the plasma data and the number
+    cytokines = plasma.index
+    n_cytokines = len(cytokines)
+
+    print(f"tensor is shape {tensor.shape} after creation")
+    tensor = tensor.T
+    patInfo = patInfo.T
+    serum_slice = tensor[0, :, :]
+    plasma_slice = tensor[1, :, :]
+    print(f"tensor is shape {tensor.shape} during slice collection (mode 1)")
+
+    # concatenate the serum and plasma slices across the index (37,177)+(37,177)=(74, 177)
+    test = pd.concat([pd.DataFrame(serum_slice), pd.DataFrame(plasma_slice)])
+    print(f"concatenated serum+plasma slices shape: {test.shape}")
+
+    # drop any patients (axis=1) that only have either serum or plasma cytokine (axis=0) data
+    test = test.dropna(axis=1)
+    # we are trying to generate the pearson coefficients between serum and plasma
+
+    """
+    Setup a pearson list, then for every i in 34 cytokines append the
+    cytokine string and pearsonr calc of test row i (index i) with
+    test row i+n_cytokines (+n_cyto to get to plasma concat section). Do
+    this while ensuring everything is a numpy float in the pears list.
+    Turn pears back into a pandas DataFrame
+    """
+    pears = []
+    for i in range(n_cytokines):
+        pears.append([cytokines[i], pearsonr(test.iloc[i, :].to_numpy(dtype=float), test.iloc[i + n_cytokines, :].to_numpy(dtype=float))[0]])
+    pears = pd.DataFrame(pears).sort_values(1) # sort by incerasing pearson correlation (column 1)
+    print(f"shape of pears: {pears.shape}")
+
+    return pears, serum_slice, plasma_slice, cytokines, patInfo
+
+# #debug
+# fig_S1_setup()
+
+def makeFigure():
+    """Skipping boxplot section for now"""
+
+    # list of axis objects (plots)
+    fig_size = (8, 3)
+    layout = {
+        "ncols": 1,
+        "nrows": 1
+    } #single plot for now
+
+    # cheating by using getSetup without understanding it for now
+    ax, f, _ = getSetup(
+        fig_size,
+        layout
+    )
+
+    pears, serum_slice, plasma_slice, cytokines, patIfno = fig_S1_setup()
+    a = sns.pointplot(data=pears, x=0, y=1, join=False, ax=ax[0])
+    a.set_xticklabels(a.get_xticklabels(), rotation=30, ha="right")
+    a.set_xlabel("Cytokine")
+    a.set_ylabel("Pearson's correlation")
+    a.set_title("Serum-Plasma Cytokine Level Correlation")
+
+    return f
+
+fig = makeFigure()
+fig.savefig("./JamesS1ByHand.png")

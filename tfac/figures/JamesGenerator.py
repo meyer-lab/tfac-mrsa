@@ -15,7 +15,7 @@ for figure in figModules[2:4]:
         print(f"Calling: {figure.__name__}.makefigure()")
         print(figure)
         fig = figure.makeFigure()
-        fig.savefig(f"./JamesIter{figure.__name__}.png")
+        fig.savefig(f"./output/james/JamesIter{figure.__name__}.svg")
 
 
 """

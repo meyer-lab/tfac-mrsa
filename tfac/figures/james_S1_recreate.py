@@ -71,7 +71,11 @@ def import_cytokines(scale_cyto=True, transpose=True):
     # plasma_cyto_percents = ((plasma_cyto_percents - plasma_cyto["IL-3"].mean(axis=0)) / plasma_cyto["IL-3"].mean(axis=0))*100
     # print(plasma_cyto_percents)
 
-    # Drop IL-3 since it's low relative to others, see commented block just above
+    """
+    Not only is IL-3 low relative to the others (x3 smaller minimum)
+    it is also suspected that it was below the detection limit of the
+    machine.
+    """
     plasma_cyto.drop("IL-3", axis=1, inplace=True)
     serum_cyto.drop("IL-3", axis=1, inplace=True)
 
@@ -175,6 +179,7 @@ def fig_S1_setup():
     """
     pears = []
     for i in range(n_cytokines):
+        print(f"appending {cytokines[i]}: {pearsonr(test.iloc[i, :].to_numpy(dtype=float), test.iloc[i + n_cytokines, :].to_numpy(dtype=float))[0]}")
         pears.append([cytokines[i], pearsonr(test.iloc[i, :].to_numpy(dtype=float), test.iloc[i + n_cytokines, :].to_numpy(dtype=float))[0]])
     pears = pd.DataFrame(pears).sort_values(1) # sort by incerasing pearson correlation (column 1)
     print(f"shape of pears: {pears.shape}")
@@ -184,30 +189,80 @@ def fig_S1_setup():
 # #debug
 # fig_S1_setup()
 
+def cytokine_boxplot(cyto_slice, cytokines, patInfo:pd.DataFrame, axx):
+    ser = pd.DataFrame(cyto_slice, index=cytokines, columns=patInfo.columns).T
+    print(f"Shape of ser before drop of na and concat with patInfo: {ser.shape}")
+    patInfo = patInfo.T["status"] # strips patInfo of everything but "status" index, then transposes
+
+    """
+    We're going to add patient status into the ser dataFrame,
+    remove NaN values (patients 177->129), reset_index to 0->... 
+    and adding the old index into new column, then melt columns except
+    identifiers "sid" and "status" (expands the data across cytokines
+    [129*37=4773])
+    """
+    ser = ser.join(patInfo).dropna().reset_index().melt(id_vars=["sid", "status"])
+    print(f"shape of ser post-op: {ser.shape}")
+
+    # feed ser into seaborn boxplot 
+    b = sns.boxplot(
+        data=ser,
+        x="variable",
+        y="value",
+        hue="status",
+        linewidth=1,
+        ax=axx
+    )
+    b.set_xticklabels(b.get_xticklabels(), rotation=30, ha="right")
+    b.set_xlabel("Cytokine")
+    b.set_ylabel("Normalized cytokine level")
+
 def makeFigure():
-    """Skipping boxplot section for now"""
+    """Now we are adding the boxplots in"""
 
     # list of axis objects (plots)
-    fig_size = (8, 3)
+    fig_size = (8, 8)
     layout = {
         "ncols": 1,
-        "nrows": 1
-    } #single plot for now
+        "nrows": 3
+    } # adding 2 more rows for the boxplot subplots.
 
-    # cheating by using getSetup without understanding it for now
+    """
+    getSetup() takes in fig_size (in inchest) and layout
+    (how subplots are organized). It makes a figure with those dimensions
+    using plt.figure() and gridspec.Gridspec(). Then, if x (index) is not 
+    in empts or multz (leave space empty or span subplots), it makes an 
+    ax list object that runs through nrows*ncols=total_subplots,
+    adding a figure subplot for each by indexing Gridspec instance
+    to access SubplotSpec (location in the grid nrows(i), ncols(i)).
+    I still do not understand multz functionality.
+    """
     ax, f, _ = getSetup(
         fig_size,
         layout
-    )
+    ) # returns ax (storing SubplotSpec[location of subplot]) and figure f
 
-    pears, serum_slice, plasma_slice, cytokines, patIfno = fig_S1_setup()
+    pears, serum_slice, plasma_slice, cytokines, patInfo = fig_S1_setup()
     a = sns.pointplot(data=pears, x=0, y=1, join=False, ax=ax[0])
     a.set_xticklabels(a.get_xticklabels(), rotation=30, ha="right")
     a.set_xlabel("Cytokine")
     a.set_ylabel("Pearson's correlation")
     a.set_title("Serum-Plasma Cytokine Level Correlation")
 
+    
+    cytokine_boxplot(serum_slice, cytokines, patInfo, ax[1])
+    ax[1].set_title("Normalized Serum Cytokine Level by Outcome")
+
+    cytokine_boxplot(plasma_slice, cytokines, patInfo, ax[2])
+    ax[2].set_title("Normalized Plasma Cytokine Level by Outcome")
+
     return f
 
+"""
+path is relative to the current path in the running terminal,
+which may be anywhere to run the .py file of choice using VScode.
+It is not necessarily within the same folder as the running .py file.
+PATH_HERE is a convenient way to get to the 'root' of the project.
+"""
 fig = makeFigure()
-fig.savefig("./JamesS1ByHand.png")
+fig.savefig(f"{PATH_HERE}/output/james/JamesS1ByHand_Full_tfacTest.svg", format="svg")

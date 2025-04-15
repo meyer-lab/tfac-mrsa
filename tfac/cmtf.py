@@ -19,7 +19,7 @@ from tensorpack.cmtf import (
     calcR2X,
 )
 
-
+OPTIMAL_RANK = 8
 tl.set_backend("numpy")
 
 

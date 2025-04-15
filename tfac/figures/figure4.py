@@ -54,7 +54,7 @@ def bootstrap_weights(components):
                 _, _coef = predict_regression(data, labels)
             else:
                 _, _model = run_model(data, labels)
-                _coef = _model.coef_
+                _coef = _model.coef_.squeeze()
 
             coef.append(_coef)
 

@@ -341,10 +341,7 @@ def plot_results(predictions, probabilities, model, components,
                 overlap = list(top_overlap[0] & top_overlap[1])
                 overlap.extend(list(bot_overlap[0] & bot_overlap[1]))
                 matrix.loc[overlap, 'label'] = 'shared'
-                matrix.loc[:, 'label'] = matrix.loc[
-                    :,
-                    'label'
-                ].astype('category')
+                matrix['label'] = matrix['label'].astype('category')
 
                 cvs = ds.Canvas(
                     plot_width=200,

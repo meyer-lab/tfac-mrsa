@@ -8,6 +8,7 @@ from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import cross_val_predict, cross_val_score, \
     RepeatedStratifiedKFold, StratifiedKFold
 from sklearn.svm import SVC
+from sklearn.base import BaseEstimator
 
 from .dataImport import import_validation_patient_metadata
 
@@ -71,7 +72,7 @@ def predict_validation(data, labels, predict_proba=False, svc=False):
     return predictions
 
 
-def predict_known(data, labels, method='predict', svc=False):
+def predict_known(data, labels: pd.Series, method: str="predict", svc=False) -> tuple[pd.Series, BaseEstimator]:
     """
     Predicts outcomes for all samples in data via cross-validation.
 
@@ -98,14 +99,14 @@ def predict_known(data, labels, method='predict', svc=False):
         _, model = run_model(data, labels)
 
     if isinstance(data, pd.Series):
-        data = data.values.reshape(-1, 1)
+        data = data.values.astype(float).reshape((-1, 1))
 
     predictions = cross_val_predict(
         model,
         data,
         labels,
         cv=10,
-        method=method,
+        method=method, # type: ignore
         n_jobs=3
     )
 
@@ -134,7 +135,7 @@ def predict_regression(data, labels):
     model = LinearRegression()
 
     if isinstance(data, pd.Series):
-        data = data.values.reshape(-1, 1)
+        data = data.values.astype(float).reshape(-1, 1)
 
     predictions = cross_val_predict(
         model,
@@ -156,7 +157,7 @@ def predict_regression(data, labels):
     return predictions, model.coef_
 
 
-def run_model(data, labels, return_coef=False):
+def run_model(data, labels) -> tuple[float, LogisticRegression]:
     """
     Runs provided LogisticRegressionCV model with the provided data
     and labels.
@@ -164,7 +165,6 @@ def run_model(data, labels, return_coef=False):
     Parameters:
         data (pandas.DataFrame): DataFrame of CMTF components
         labels (pandas.Series): Labels for provided data
-        return_coef (bool, default: False): return model coefficients
 
     Returns:
         score (float): Accuracy for best-performing model (considers
@@ -180,7 +180,7 @@ def run_model(data, labels, return_coef=False):
 
     if isinstance(data, pd.Series):
         data = data.iloc[labels.index]
-        data = data.values.reshape(-1, 1)
+        data = data.values.astype(float).reshape(-1, 1)
     elif isinstance(data, pd.DataFrame):
         data = data.iloc[labels.index, :]
     else:
@@ -190,8 +190,8 @@ def run_model(data, labels, return_coef=False):
         l1_ratios=[0.8],
         solver="saga",
         penalty="elasticnet",
-        n_jobs=3,
-        cv=skf,
+        n_jobs=6,
+        cv=skf, # type: ignore
         max_iter=100000,
         scoring='balanced_accuracy',
         multi_class='ovr'
@@ -209,10 +209,7 @@ def run_model(data, labels, return_coef=False):
     )
     model.fit(data, labels)
 
-    if return_coef:
-        return np.max(scores), model, coef
-    else:
-        return np.max(scores), model
+    return np.max(scores), model
 
 
 def get_accuracy(predicted, actual):
@@ -233,7 +230,7 @@ def get_accuracy(predicted, actual):
     return balanced_accuracy_score(actual, predicted)
 
 
-def run_svc(data, labels, gamma=1E-3):
+def run_svc(data, labels, gamma=1E-3) -> tuple[float, SVC]:
     """
     Runs SVC model with the provided data and labels.
 
@@ -256,14 +253,14 @@ def run_svc(data, labels, gamma=1E-3):
 
     if isinstance(data, pd.Series):
         data = data.iloc[labels.index]
-        data = data.values.reshape(-1, 1)
+        data = data.values.astype(float).reshape(-1, 1)
     elif isinstance(data, pd.DataFrame):
         data = data.iloc[labels.index, :]
     else:
         data = data[labels.index, :]
 
     cs = np.logspace(-4, 4, 9)
-    best = (None, 0)
+    best = (1.0, 0)
     for c in cs:
         model = SVC(C=c, gamma=gamma)
         kf = StratifiedKFold(n_splits=10)

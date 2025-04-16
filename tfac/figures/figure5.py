@@ -1,6 +1,7 @@
 """
 Creates Figure 5 -- Reduced Model
 """
+import datashader as ds
 import matplotlib
 from matplotlib.lines import Line2D
 import numpy as np
@@ -13,6 +14,13 @@ from ..dataImport import import_validation_patient_metadata, get_factors, \
     import_cytokines
 from ..predict import get_accuracy, predict_known
 
+SCATTER_COLORS = {
+    '2': '#C03B30',
+    '4': '#00A651',
+    '6': '#3C7136',
+    'shared': 'black',
+    'neither': '#D3D3D3'
+}
 COLOR_CYCLE = matplotlib.rcParams['axes.prop_cycle'].by_key()['color']
 PATH_HERE = dirname(dirname(abspath(__file__)))
 PERSISTENCE_COMPONENTS = [1, 2, 4, 6]
@@ -273,12 +281,13 @@ def plot_results(predictions, probabilities, model, components,
         comp_axs
     ):
         for component, ax in zip(PERSISTENCE_COMPONENTS[1:], row):
-            ax.set_axisbelow(True)
-            ax.set_xticks(np.arange(-1, 1.1, 0.5))
-            ax.set_yticks(np.arange(-1, 1.1, 0.5))
-            ax.grid(True)
             matrix = factor.drop(component, axis=1)
             if name == 'Cytokines':
+                ax.set_xticks(np.arange(-1.5, 1.6, 0.5))
+                ax.set_yticks(np.arange(-1.5, 1.6, 0.5))
+                ax.grid(True)
+
+                ax.set_axisbelow(True)
                 important = matrix.loc[abs(matrix).max(axis=1) > 0.75, :].index
                 ax.scatter(
                     matrix.drop(important).iloc[:, 0],
@@ -308,24 +317,15 @@ def plot_results(predictions, probabilities, model, components,
                     ax.set_xlim([-1.1, 1.1])
                     ax.set_ylim([-1.1, 1.1])
             else:
-                ax.scatter(
-                    matrix.iloc[:, 0],
-                    matrix.iloc[:, 1],
-                    alpha=0.5,
-                    c='grey',
-                    edgecolors='k',
-                    s=6
-                )
+                ax.set_xticks([])
+                ax.set_yticks([])
+                ax.grid(False)
+
                 top_overlap = []
                 bot_overlap = []
-                for comp in matrix.columns:
-                    if comp == 2:
-                        color = 'red'
-                    elif comp == 4:
-                        color = 'cyan'
-                    else:
-                        color = 'green'
-
+                matrix.columns = matrix.columns.astype(str)
+                matrix.loc[:, 'label'] = 'neither'
+                for comp in matrix.columns[:-1]:
                     matrix = matrix.sort_values(by=comp, ascending=True)
                     important = pd.concat(
                         [
@@ -334,29 +334,40 @@ def plot_results(predictions, probabilities, model, components,
                         ],
                         axis=0
                     )
+                    matrix.loc[important.index, 'label'] = comp
                     top_overlap.append(set(important.index[-500:]))
                     bot_overlap.append(set(important.index[:500]))
-                    ax.scatter(
-                        important.iloc[:, 0],
-                        important.iloc[:, 1],
-                        c=color,
-                        edgecolors='k',
-                        s=6,
-                        linewidths=0.25
-                    )
 
                 overlap = list(top_overlap[0] & top_overlap[1])
                 overlap.extend(list(bot_overlap[0] & bot_overlap[1]))
-                ax.scatter(
-                    matrix.loc[overlap].iloc[:, 0],
-                    matrix.loc[overlap].iloc[:, 1],
-                    c='black',
-                    s=6,
-                    linewidths=0.25
-                )
+                matrix.loc[overlap, 'label'] = 'shared'
+                matrix['label'] = matrix['label'].astype('category')
 
-                ax.set_xlim([-1.6, 1.6])
-                ax.set_ylim([-1.6, 1.6])
+                cvs = ds.Canvas(
+                    plot_width=200,
+                    plot_height=200,
+                    x_range=(-1.6, 1.6),
+                    y_range=(-1.6, 1.6)
+                )
+                agg = cvs.points(
+                    matrix,
+                    matrix.columns[0],
+                    matrix.columns[1],
+                    agg=ds.count_cat('label')
+                )
+                result = ds.tf.shade(
+                    agg,
+                    color_key=SCATTER_COLORS,
+                    how='eq_hist',
+                    min_alpha=255
+                )
+                result = ds.tf.set_background(result, 'white')
+                img_rev = result.data[::-1]
+                mpl_img = np.dstack(
+                    [img_rev & 0x0000FF, (img_rev & 0x00FF00) >> 8,
+                     (img_rev & 0xFF0000) >> 16]
+                )
+                ax.imshow(mpl_img)
 
             ax.set_xlabel(f'Component {matrix.columns[0]}')
             ax.set_ylabel(f'Component {matrix.columns[1]}')

@@ -5,6 +5,7 @@ Coupled Matrix Tensor Factorization
 import os
 from copy import deepcopy
 import numpy as np
+import numpy.typing as npt
 import tensorly as tl
 from tensorly.tenalg.svd import randomized_svd
 from tensorly.tenalg.core_tenalg import khatri_rao
@@ -18,6 +19,7 @@ from tensorpack.cmtf import (
     calcR2X,
 )
 
+OPTIMAL_RANK = 8
 tl.set_backend("numpy")
 
 
@@ -28,15 +30,38 @@ class PCArand(PCA):
         """
         _, s, v = randomized_svd(self.transformed_data, self._ncomp)
 
-        self.eigenvals = s ** 2.0
+        self.eigenvals = s**2.0
         self.eigenvecs = v.T
 
 
-def perform_CMTF(tOrig, mOrig, r=8, tol=1e-6, maxiter=300, progress=None, linesearch: bool=True):
+class CMTFTensor(tl.cp_tensor.CPTensor):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.mFactor = None
+
+
+def perform_CMTF(
+    tOrig: npt.NDArray[np.float64],
+    mOrig: npt.NDArray[np.float64],
+    r: int = 8,
+    tol: float = 1e-6,
+    maxiter: int = 300,
+    progress=None,
+    linesearch: bool = True,
+):
     """Perform CMTF decomposition."""
     assert tOrig.dtype == float
     assert mOrig.dtype == float
-    factors = [np.ones((tOrig.shape[i], r)) for i in range(tOrig.ndim)]
+    factors = [np.ones((tOrig.shape[i], r), dtype=float) for i in range(tOrig.ndim)]
+
+    # Check if verbose was not set
+    if progress is None:
+        # Check if this is an automated build
+        progress = "CI" not in os.environ
+
+    acc_pow: float = 2.0  # Extrapolate to the iteration^(1/acc_pow) ahead
+    acc_fail: int = 0  # How many times acceleration have failed
+    max_fail: int = 4  # Increase acc_pow with one after max_fail failure
 
     # Check if verbose was not set
     if progress is None:
@@ -49,9 +74,9 @@ def perform_CMTF(tOrig, mOrig, r=8, tol=1e-6, maxiter=300, progress=None, linese
 
     # SVD init mode 0
     unfold = np.hstack((tl.unfold(tOrig, 0), mOrig))
-    pca = PCArand(unfold, ncomp=r, missing='fill-em')
-    factors[0] = pca.factors
-    tFac = tl.cp_tensor.CPTensor((None, factors))
+    pca = PCArand(unfold, ncomp=r, missing="fill-em")
+    factors[0] = np.array(pca.factors, dtype=float)
+    tFac = CMTFTensor((None, factors))
 
     # Pre-unfold
     unfolded = np.hstack((tl.unfold(tOrig, 0), mOrig))
@@ -102,14 +127,8 @@ def perform_CMTF(tOrig, mOrig, r=8, tol=1e-6, maxiter=300, progress=None, linese
                 acc_fail = 0
                 R2X = R2X_ls
                 tFac = tFac_ls
-
-                if progress:
-                    print(f"Accepted line search jump of {jump}.")
             else:
                 acc_fail += 1
-
-                if progress:
-                    print(f"Line search failed for jump of {jump}.")
 
                 if acc_fail == max_fail:
                     acc_pow += 1.0
@@ -117,7 +136,6 @@ def perform_CMTF(tOrig, mOrig, r=8, tol=1e-6, maxiter=300, progress=None, linese
 
                     if progress:
                         print("Reducing acceleration.")
-
 
         tq.set_postfix(R2X=R2X, delta=R2X - R2X_last, refresh=False)
         assert R2X > 0.0

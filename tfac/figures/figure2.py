@@ -7,7 +7,7 @@ import pandas as pd
 from .common import getSetup
 from ..dataImport import form_tensor, get_factors
 from ..predict import run_model
-from tensorpack import calcR2X
+from ..cmtf import calcR2X, PCArand
 
 
 def get_r2x_results():
@@ -41,7 +41,18 @@ def get_r2x_results():
         print(f"Starting decomposition with {n_components} components.")
         t_fac, pcaFac, _ = get_factors(r=n_components)
         r2x_v_components.loc[n_components, 'CMTF'] = t_fac.R2X
-        r2x_v_components.loc[n_components, 'PCA'] = pcaFac.rsquare[-1]
+        pca = PCArand(
+            pcaFac.data,
+            ncomp=n_components,
+            standardize=False,
+            demean=True,
+            normalize=True,
+            missing='fill-em'
+        )
+        r2x_v_components.loc[n_components, 'PCA'] = calcR2X(
+            pca.projection,
+            mIn=pca.data
+        )
         acc_v_components.loc[n_components, 'CMTF'] = \
             run_model(t_fac.factors[0], labels)[0]
         acc_v_components.loc[n_components, 'PCA'] = \
@@ -143,7 +154,8 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[2].set_ylabel('Prediction Accuracy')
     axs[2].set_xlabel('Number of Components')
     axs[2].set_xticks(acc_v_components.index)
-    axs[2].set_ylim([0.45, 0.75])
+    axs[2].set_yticks(np.arange(0.5, 0.8, 0.05))
+    axs[2].set_ylim([0.5, 0.7])
     axs[2].text(
         -0.25,
         0.9,
@@ -160,7 +172,7 @@ def plot_results(r2x_v_components, r2x_v_scaling, acc_v_components,
     axs[3].legend(['CMTF', 'PCA'])
     axs[3].set_ylabel('Prediction Accuracy')
     axs[3].set_xlabel('Variance Scaling\n(Cytokine/RNA)')
-    axs[3].set_yticks(np.arange(0.5, 0.75, 0.05))
+    axs[3].set_yticks(np.arange(0.5, 0.8, 0.05))
     axs[3].set_ylim([0.5, 0.7])
     axs[3].set_xticks(np.logspace(-10, 10, base=2, num=11))
     axs[3].tick_params(axis='x', pad=-3)

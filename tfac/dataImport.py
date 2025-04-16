@@ -5,9 +5,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
-from sklearn.preprocessing import PowerTransformer, scale
-from statsmodels.multivariate.pca import PCA
-import tensorly as tl
+from sklearn.preprocessing import scale
 
 from .cmtf import perform_CMTF
 
@@ -16,7 +14,7 @@ OPTIMAL_SCALING = 2 ** 7.0
 
 
 @lru_cache
-def import_patient_metadata():
+def import_patient_metadata() -> pd.DataFrame:
     """
     Returns patient meta data, including cohort and outcome.
 
@@ -36,7 +34,7 @@ def import_patient_metadata():
 
 
 @lru_cache
-def import_validation_patient_metadata():
+def import_validation_patient_metadata() -> pd.DataFrame:
     """
     Returns validation patient meta data, including cohort and outcome.
 
@@ -53,7 +51,7 @@ def import_validation_patient_metadata():
 
 
 @lru_cache
-def import_cytokines(scale_cyto=True, transpose=True):
+def import_cytokines(scale_cyto=True):
     """
     Return plasma and serum cytokine data.
 
@@ -90,17 +88,13 @@ def import_cytokines(scale_cyto=True, transpose=True):
 
     # If a sample isn't in the metadata, remove it from the cytokines
     patients = set(import_patient_metadata().index)
-    plasma_cyto = plasma_cyto.reindex(set(plasma_cyto.index).intersection(patients))
-    serum_cyto = serum_cyto.reindex(set(serum_cyto.index).intersection(patients))
+    plasma_cyto = plasma_cyto.reindex(list(set(plasma_cyto.index).intersection(patients)))
+    serum_cyto = serum_cyto.reindex(list(set(serum_cyto.index).intersection(patients)))
 
-    if transpose:
-        plasma_cyto = plasma_cyto.T
-        serum_cyto = serum_cyto.T
-
-    return plasma_cyto, serum_cyto
+    return plasma_cyto.T, serum_cyto.T
 
 
-def import_rna():
+def import_rna() -> pd.DataFrame:
     """
     Return RNA expression modules.
 
@@ -117,13 +111,13 @@ def import_rna():
     rna.index = rna.index.astype("int32")
 
     # Always scale
-    rna.loc[:, :] = scale(rna.to_numpy())
+    rna.loc[:, :] = scale(rna.to_numpy()) # type: ignore
 
     return rna
 
 
 @lru_cache
-def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
+def form_tensor(variance_scaling: float = OPTIMAL_SCALING) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
     """
     Forms a tensor of cytokine data and a matrix of RNA expression data for
     CMTF decomposition.
@@ -137,16 +131,17 @@ def form_tensor(variance_scaling: float = OPTIMAL_SCALING):
         patient_data (pandas.DataFrame): patient data, including status, data
             types, and cohort
     """
-    plasma_cyto, serum_cyto = import_cytokines(transpose=False)
+    plasma_cyto, serum_cyto = import_cytokines()
     rna = import_rna()
     patient_data = import_patient_metadata()
 
-    serum_cyto = serum_cyto.reindex(patient_data.index).to_numpy(dtype=float).T
-    plasma_cyto = plasma_cyto.reindex(patient_data.index).to_numpy(dtype=float).T
+    serum_cyto = serum_cyto.T.reindex(patient_data.index).to_numpy(dtype=float).T
+    plasma_cyto = plasma_cyto.T.reindex(patient_data.index).to_numpy(dtype=float).T
     rna = rna.reindex(patient_data.index).to_numpy(dtype=float)
 
     tensor = np.stack(
-        (serum_cyto, plasma_cyto)
+        (serum_cyto, plasma_cyto),
+        dtype=float
     ).T
 
     # Put on similar scale
@@ -226,4 +221,4 @@ def reorder_table(df):
     """
     y = sch.linkage(df.to_numpy(), method='centroid')
     index = sch.dendrogram(y, orientation='right', no_plot=True)['leaves']
-    return df.iloc[index, :]
+    return df.iloc[index]

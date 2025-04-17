@@ -5,7 +5,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import PowerTransformer, scale
 
 from .cmtf import perform_CMTF
 

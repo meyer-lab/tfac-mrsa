@@ -73,3 +73,5 @@ def makeFigure():
 
     ax.set_ylabel('Cell Type')
     ax.set_xlabel('Component')
+
+    return fig

@@ -63,6 +63,15 @@ def perform_CMTF(
     acc_fail: int = 0  # How many times acceleration have failed
     max_fail: int = 4  # Increase acc_pow with one after max_fail failure
 
+    # Check if verbose was not set
+    if progress is None:
+        # Check if this is an automated build
+        progress = "CI" not in os.environ
+
+    acc_pow: float = 2.0  # Extrapolate to the iteration^(1/acc_pow) ahead
+    acc_fail: int = 0  # How many times acceleration have failed
+    max_fail: int = 4  # Increase acc_pow with one after max_fail failure
+
     # SVD init mode 0
     unfold = np.hstack((tl.unfold(tOrig, 0), mOrig))
     pca = PCArand(unfold, ncomp=r, missing="fill-em")

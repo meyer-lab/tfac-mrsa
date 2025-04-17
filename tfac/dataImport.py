@@ -5,7 +5,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import PowerTransformer, scale
 
 from .cmtf import perform_CMTF
 
@@ -172,7 +172,41 @@ def get_factors(variance_scaling: float = OPTIMAL_SCALING, r=8):
     return t_fac, pcaFac, patient_data
 
 
-def reorder_table(df: pd.DataFrame) -> pd.DataFrame:
+def get_cibersort_results(power_transform=True, citeseq=False):
+    """
+    Returns CIBERSORTx results.
+
+    Parameters:
+        power_transform (bool, default: True): power transform CIBERSORT results
+        citeseq (bool, default: False): return citeseq results instead
+
+    Returns:
+        cs_results (pandas.DataFrame): CIBERSORTx results
+    """
+    if citeseq:
+        cs_results = pd.read_csv(
+            join(PATH_HERE, 'tfac', 'data', 'cibersortx',
+                 'cibersort_citeseq.txt'),
+            delimiter='\t',
+            index_col=0
+        )
+    else:
+        cs_results = pd.read_csv(
+            join(PATH_HERE, 'tfac', 'data', 'cibersortx', 'cibersort_lm22.txt'),
+            delimiter='\t',
+            index_col=0
+        )
+    cs_results = cs_results.loc[cs_results.loc[:, 'P-value'] < 0.01, :]
+    cs_results = cs_results.iloc[:, :-3]
+
+    if power_transform:
+        transformer = PowerTransformer()
+        cs_results[:] = transformer.fit_transform(cs_results)
+
+    return cs_results
+
+
+def reorder_table(df):
     """
     Reorder a table's rows using heirarchical clustering. Taken from
     https://github.com/meyer-lab/tfac-ccle/blob/master/tfac/dataHelpers.py#L163
